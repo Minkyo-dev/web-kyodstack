@@ -35,3 +35,13 @@ export const BLOCK_STATUS_LABEL: Record<BlockStatus, string> = {
   skipped: "건너뜀",
   cancelled: "취소",
 };
+
+/** Optional pause reasons (requirements §12). Never required. */
+export const PAUSE_REASONS = ["coffee", "phone", "meeting", "break", "other"] as const;
+export const PAUSE_REASON_LABEL: Record<(typeof PAUSE_REASONS)[number], string> = {
+  coffee: "커피",
+  phone: "전화",
+  meeting: "회의",
+  break: "휴식",
+  other: "기타",
+};

@@ -37,7 +37,8 @@ import { DurationInsight } from "./duration-insight";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
-import { formatMinutes, minutesBetween } from "../utils/duration";
+import { formatMinutes } from "../utils/duration";
+import { focusStats } from "../utils/focus";
 import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone";
 import { Play } from "lucide-react";
 
@@ -336,8 +337,8 @@ function TaskDetail({
                     {x.ended_at ? toLocalTime(x.ended_at, timezone) : "진행 중"}
                     <span className="ml-2 text-xs text-muted-foreground">
                       {x.source === "manual" ? "수동" : "타이머"}
-                      {x.ended_at && ` · ${formatMinutes(minutesBetween(x.started_at, x.ended_at))}`}
-                      {x.focus_score !== null && ` · 집중 ${x.focus_score}`}
+                      {x.ended_at && ` · ${formatMinutes(Math.round(focusStats(x, x.pauses).focusedMs / 60_000))}`}
+                      {x.work_log?.focus_score != null && ` · 집중 ${x.work_log.focus_score}`}
                     </span>
                   </span>
                   {x.ended_at && (

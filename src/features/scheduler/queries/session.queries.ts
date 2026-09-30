@@ -6,7 +6,20 @@ import type {
   SessionWithTask,
 } from "../domain/work-session.types";
 
-const SESSION_SELECT = "*, task:tasks!work_sessions_task_id_user_id_fkey(id, title)";
+const SESSION_SELECT =
+  "*, task:tasks!work_sessions_task_id_user_id_fkey(id, title), pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(id, paused_at, resumed_at, reason), work_log:work_logs!work_logs_session_id_user_id_fkey(id, focus_score, mood_score, energy_score, note)";
+
+type SessionRow = Omit<SessionWithTask, "work_log" | "pauses"> & {
+  pauses: SessionWithTask["pauses"] | null;
+  work_log: SessionWithTask["work_log"] | SessionWithTask["work_log"][];
+};
+
+/** PostgREST may return the 0..1 work log as an array; pauses come in any order. */
+function normalize(row: SessionRow): SessionWithTask {
+  const log = Array.isArray(row.work_log) ? (row.work_log[0] ?? null) : row.work_log;
+  const pauses = [...(row.pauses ?? [])].sort((a, b) => a.paused_at.localeCompare(b.paused_at));
+  return { ...row, pauses, work_log: log };
+}
 
 /** Sessions overlapping [startIso, endIso), including a running one. Bounded (spec §50). */
 export async function listSessionsInRange(
@@ -21,7 +34,7 @@ export async function listSessionsInRange(
     .or(`ended_at.gt.${startIso},ended_at.is.null`)
     .order("started_at");
   if (error) throw fromDbError(error);
-  return data as unknown as SessionWithTask[];
+  return (data as unknown as SessionRow[]).map(normalize);
 }
 
 export async function getActiveSession(
@@ -33,7 +46,7 @@ export async function getActiveSession(
     .is("ended_at", null)
     .maybeSingle();
   if (error) throw fromDbError(error);
-  return data as unknown as SessionWithTask | null;
+  return data ? normalize(data as unknown as SessionRow) : null;
 }
 
 export async function getDailyReflection(

@@ -1,9 +1,24 @@
 import type { Tables } from "@/types/database";
+import type { PAUSE_REASONS } from "./scheduler.constants";
 
 export type WorkSession = Tables<"work_sessions"> & { source: "timer" | "manual" };
 
-/** Session with just enough task info to render on the calendar and in the timer. */
-export type SessionWithTask = WorkSession & { task: { id: string; title: string } };
+export type PauseReason = (typeof PAUSE_REASONS)[number];
+export type SessionPause = { id: string; paused_at: string; resumed_at: string | null; reason: PauseReason | null };
+export type WorkLog = {
+  id: string;
+  focus_score: number | null;
+  mood_score: number | null;
+  energy_score: number | null;
+  note: string | null;
+};
+
+/** Session with its task, pause intervals and work log (focus-flow design §1). */
+export type SessionWithTask = WorkSession & {
+  task: { id: string; title: string };
+  pauses: SessionPause[];
+  work_log: WorkLog | null;
+};
 
 export type DailyReflection = Pick<
   Tables<"daily_reflections">,
@@ -15,6 +30,7 @@ export type TaskPlanActual = {
   planned_minutes: number;
   skipped_minutes: number;
   actual_minutes: number;
+  paused_minutes: number;
   session_count: number;
   average_focus: number | null;
   reschedule_count: number;

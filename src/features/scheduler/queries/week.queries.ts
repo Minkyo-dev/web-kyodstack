@@ -26,8 +26,9 @@ export async function loadWeekInput(
     supabase
       .from("work_sessions")
       .select(
-        "started_at, ended_at, focus_score, mood_score, energy_score, task:tasks!work_sessions_task_id_user_id_fkey(template:task_templates!tasks_template_id_user_id_fkey(name))",
+        "started_at, ended_at, pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(paused_at, resumed_at), work_log:work_logs!work_logs_session_id_user_id_fkey(focus_score, mood_score, energy_score), task:tasks!work_sessions_task_id_user_id_fkey(template:task_templates!tasks_template_id_user_id_fkey(name))",
       )
+      .eq("user_id", userId)
       .lt("started_at", range.end)
       .gt("ended_at", range.start),
     supabase
@@ -80,14 +81,18 @@ export async function loadWeekInput(
     timezone,
     weekStart,
     blocks: blocks.data ?? [],
-    sessions: (sessions.data ?? []).map((s) => ({
-      started_at: s.started_at,
-      ended_at: s.ended_at,
-      focus_score: s.focus_score,
-      mood_score: s.mood_score,
-      energy_score: s.energy_score,
-      templateName: s.task?.template?.name ?? null,
-    })),
+    sessions: (sessions.data ?? []).map((s) => {
+      const log = Array.isArray(s.work_log) ? (s.work_log[0] ?? null) : s.work_log;
+      return {
+        started_at: s.started_at,
+        ended_at: s.ended_at,
+        pauses: s.pauses ?? [],
+        focus_score: log?.focus_score ?? null,
+        mood_score: log?.mood_score ?? null,
+        energy_score: log?.energy_score ?? null,
+        templateName: s.task?.template?.name ?? null,
+      };
+    }),
     reflections: reflections.data ?? [],
     completedTasks: completedRows.map((t) => {
       const base = resolveBaseEstimate({

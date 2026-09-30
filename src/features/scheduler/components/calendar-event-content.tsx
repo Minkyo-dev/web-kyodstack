@@ -56,7 +56,7 @@ function SessionContent({
       </p>
       <p className="truncate text-[11px] tabular-nums opacity-80">
         {start}–{end}
-        {session.focus_score !== null && ` · 집중 ${session.focus_score}`}
+        {session.work_log?.focus_score != null && ` · 집중 ${session.work_log.focus_score}`}
       </p>
     </div>
   );
