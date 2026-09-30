@@ -173,6 +173,15 @@
   border-left-color: var(--success);
   color: var(--muted-foreground);
 }
+.fc .sched-block--missed {
+  background: var(--muted);
+  border-left-color: var(--warning);
+  border-left-style: dashed;
+  color: var(--muted-foreground);
+}
+.fc .sched-block--not-started {
+  border-left-color: var(--warning);
+}
 .fc .sched-block--skipped {
   background: var(--muted);
   border-left-color: var(--muted-foreground);

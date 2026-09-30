@@ -9,7 +9,7 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const OPEN_TASK_STATUSES = ["inbox", "planned", "in_progress"] as const;
 
-export const BLOCK_STATUSES = ["planned", "completed", "skipped", "cancelled"] as const;
+export const BLOCK_STATUSES = ["planned", "completed", "skipped", "cancelled", "missed"] as const;
 export type BlockStatus = (typeof BLOCK_STATUSES)[number];
 
 export const BLOCK_SOURCES = ["manual", "duration_recommendation", "ai_recommendation"] as const;
@@ -34,6 +34,7 @@ export const BLOCK_STATUS_LABEL: Record<BlockStatus, string> = {
   completed: "완료",
   skipped: "건너뜀",
   cancelled: "취소",
+  missed: "놓침",
 };
 
 /** Optional pause reasons (requirements §12). Never required. */

@@ -24,6 +24,7 @@ export type SchedulerSettings = Pick<
   | "min_block_minutes"
   | "max_focus_block_minutes"
   | "auto_schedule_mode"
+  | "show_actual_default"
 >;
 
 export type SchedulerContext = {

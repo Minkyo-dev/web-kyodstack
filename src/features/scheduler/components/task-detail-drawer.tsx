@@ -320,6 +320,9 @@ function TaskDetail({
                           <BlockButton blockId={b.id} status="skipped" label="건너뜀" />
                           <BlockButton blockId={b.id} status="cancelled" label="삭제" />
                         </>
+                      ) : b.status === "missed" ? (
+                        // Missed blocks are history; they can only be removed (ADR 0012).
+                        <BlockButton blockId={b.id} status="cancelled" label="삭제" />
                       ) : (
                         <BlockButton blockId={b.id} status="planned" label="되돌리기" />
                       )}
