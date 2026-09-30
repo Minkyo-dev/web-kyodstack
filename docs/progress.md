@@ -56,8 +56,8 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 
 ## Phase 5 — AI
 - [x] Step 14: `weekly_reviews`, `ai_recommendations` (RLS, composite FKs, decided_at ⇔ status) + atomic
-      `accept_ai_recommendation` + SQL test; `AiProvider` interface, `AnthropicProvider` (claude-opus-5-5, structured output,
-      server-side fallback) and `FakeProvider`; versioned prompts (v1)
+      `accept_ai_recommendation` + SQL test; `AiProvider` interface, `AnthropicProvider` (default claude-haiku-4-5-20251001, structured output;
+      effort/server-side fallback only on newer models) and `FakeProvider`; versioned prompts (v1)
 - [x] Deterministic `computeWeeklyMetrics` v1 (planned/actual/ratio, completed/created, skipped, reschedules with minutes and days shifted,
       focus/mood/energy, deep work, top/under/over task types, best/worst 3-hour focus windows) + `remainingCapacityMinutes`
 - [x] Recommendation guardrails (`sanitizeRecommendations`), no LLM call when there is no capacity or no active project, expire-then-insert idempotency

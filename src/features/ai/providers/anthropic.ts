@@ -6,6 +6,14 @@ import { log } from "@/lib/logger";
 import type { AiProvider, StructuredRequest, StructuredResult } from "../services/provider";
 
 /**
+ * Haiku 4.5 has no `effort` control and no server-side refusal fallback; sending either
+ * would 400. Newer models get both.
+ */
+function supportsEffortAndFallback(model: string) {
+  return !model.startsWith("claude-haiku-4-5");
+}
+
+/**
  * Claude via the official SDK with structured outputs. The response is parsed against the
  * Zod schema by the SDK and validated again here (spec §31). A refusal or unparseable
  * output never reaches the database.
@@ -25,14 +33,14 @@ export class AnthropicProvider implements AiProvider {
     const startedAt = Date.now();
     let response;
     try {
+      const advanced = supportsEffortAndFallback(this.model);
       response = await this.client.beta.messages.parse({
         model: this.model,
         max_tokens: 16000,
         // Server-side refusal fallback: routes a declined request to a suitable model.
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
+        ...(advanced && { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }),
         output_config: {
-          effort: req.effort ?? "medium",
+          ...(advanced && { effort: req.effort ?? "medium" }),
           format: betaZodOutputFormat(req.schema),
         },
         system: req.system,

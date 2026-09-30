@@ -41,5 +41,5 @@ export async function getAiProvider(): Promise<AiProvider> {
     throw new AppError("AI_PROVIDER_ERROR", "AI API 키가 설정되지 않았습니다.");
   }
   const { AnthropicProvider } = await import("../providers/anthropic");
-  return new AnthropicProvider(serverEnv.AI_API_KEY, serverEnv.AI_MODEL ?? "claude-opus-5-5");
+  return new AnthropicProvider(serverEnv.AI_API_KEY, serverEnv.AI_MODEL ?? "claude-haiku-4-5-20251001");
 }

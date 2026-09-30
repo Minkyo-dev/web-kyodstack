@@ -5,8 +5,10 @@
 ## Decision
 - **Provider boundary:** the domain depends on `AiProvider.generateStructured()` (`features/ai/services/provider.ts`).
   The first implementation is `AnthropicProvider` (official `@anthropic-ai/sdk`, `client.beta.messages.parse` +
-  `betaZodOutputFormat`). The default model is `claude-opus-5-5` (override with `AI_MODEL`), at effort `medium`.
-  The server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) is on by default.
+  `betaZodOutputFormat`). The default model is `claude-haiku-4-5-20251001` (override with `AI_MODEL`), chosen for cost and speed
+  (changed from `claude-opus-5-5` on 2026-09-29). Haiku 4.5 supports neither `effort` nor the server-side refusal
+  fallback, so both are sent only to newer models (effort `medium`, `fallbacks: "default"`, beta
+  `server-side-fallback-2026-07-01`).
   `AI_PROVIDER=fake` gives deterministic canned output for local and offline work; it is refused in production.
 - **Validation (spec §31):** SDK schema parse → our own Zod `safeParse` → refusal, `max_tokens` or null output fails
   with `AI_PROVIDER_ERROR` / `AI_OUTPUT_INVALID`, and nothing is persisted. API error messages are logged
