@@ -1,0 +1,53 @@
+import { expect, type Page } from "@playwright/test";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+export const E2E_PREFIX = "[e2e]";
+
+export function credentials() {
+  const email = process.env.E2E_EMAIL;
+  const password = process.env.E2E_PASSWORD;
+  if (!email || !password) throw new Error("Set E2E_EMAIL and E2E_PASSWORD (never commit them).");
+  return { email, password };
+}
+
+export async function login(page: Page) {
+  const { email, password } = credentials();
+  await page.goto("/login?next=/scheduler");
+  await page.getByLabel("이메일").fill(email);
+  await page.getByLabel("비밀번호").fill(password);
+  await page.getByRole("button", { name: "로그인" }).click();
+  await expect(page).toHaveURL(/\/scheduler/);
+}
+
+/** Direct DB access as the same user (RLS applies) for assertions and cleanup. */
+export async function dbAsUser(): Promise<SupabaseClient> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+  const client = createClient(url, key, { auth: { persistSession: false } });
+  const { error } = await client.auth.signInWithPassword(credentials());
+  if (error) throw error;
+  return client;
+}
+
+export async function cleanup(db: SupabaseClient) {
+  await db.from("tasks").delete().like("title", `${E2E_PREFIX}%`);
+}
+
+/** Center of the time-grid cell for a local date + time (HH:mm). */
+export async function slotPoint(page: Page, date: string, time: string) {
+  const col = page.locator(`td.fc-timegrid-col[data-date="${date}"]`);
+  const row = page.locator(`td.fc-timegrid-slot-lane[data-time="${time}:00"]`);
+  await row.scrollIntoViewIfNeeded();
+  const c = await col.boundingBox();
+  const r = await row.boundingBox();
+  if (!c || !r) throw new Error(`slot ${date} ${time} not visible`);
+  return { x: c.x + c.width / 2, y: r.y + 2 };
+}
+
+export async function dragTo(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 5, from.y + 5, { steps: 5 });
+  await page.mouse.move(to.x, to.y, { steps: 20 });
+  await page.mouse.up();
+}
