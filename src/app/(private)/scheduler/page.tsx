@@ -9,6 +9,12 @@ import {
   listBlocksInRange,
 } from "@/features/scheduler/queries/schedule.queries";
 import {
+  getActiveSession,
+  getDailyReflection,
+  listSessionsInRange,
+} from "@/features/scheduler/queries/session.queries";
+import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
+import {
   addLocalDays,
   isLocalDateString,
   localDayRange,
@@ -45,11 +51,19 @@ export default async function SchedulerPage({
   ).end;
   const todayRange = localDayRange(today, timezone);
 
-  const [todayTasks, blocks, templates] = await Promise.all([
+  // Parallel initial read (spec §51).
+  const [todayTasks, blocks, templates, sessions, activeSession, reflection] = await Promise.all([
     listTodayTasks(supabase, today, todayRange.start),
     listBlocksInRange(supabase, rangeStart, rangeEnd),
     listTemplates(supabase),
+    listSessionsInRange(supabase, rangeStart, rangeEnd),
+    getActiveSession(supabase),
+    getDailyReflection(supabase, today),
   ]);
+
+  // Plan vs actual only for tasks visible on this screen.
+  const visibleTaskIds = [...new Set([...todayTasks.map((t) => t.id), ...blocks.map((b) => b.task_id)])];
+  const planActual = await listTaskPlanActual(supabase, visibleTaskIds);
 
   return (
     <SchedulerWorkspace
@@ -60,6 +74,10 @@ export default async function SchedulerPage({
       todayTasks={todayTasks}
       blocks={blocks}
       templates={templates}
+      sessions={sessions}
+      activeSession={activeSession}
+      reflection={reflection}
+      planActual={planActual}
     />
   );
 }

@@ -42,7 +42,9 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/features/scheduler/queries` | server reads (`listTodayTasks`, `listBlocksInRange`, `getSchedulerContext`) |
 | `src/features/scheduler/services` | business rules (template find-or-create, delete protection, block sizing, RPC calls) |
 | `src/features/scheduler/actions` | thin `"use server"` wrappers → `runAction` + `revalidatePath("/scheduler")` |
-| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar` |
+| `src/features/scheduler/services/work-session.service.ts` | start (RPC) / stop / manual (overlap check) / delete |
+| `src/features/scheduler/queries/session.queries.ts`, `analytics.queries.ts` | sessions in range, active session, reflection, `task_plan_actual` |
+| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput` |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 
 ## Calendar data flow

@@ -754,7 +754,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      task_plan_actual: {
+        Row: {
+          actual_minutes: number | null
+          average_focus: number | null
+          completed_at: string | null
+          complexity: number | null
+          planned_minutes: number | null
+          reschedule_count: number | null
+          session_count: number | null
+          skipped_minutes: number | null
+          status: string | null
+          task_id: string | null
+          template_id: string | null
+          user_estimated_minutes: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_schedule_block: {
@@ -801,6 +818,30 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "schedule_blocks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      start_work_session: {
+        Args: { p_block_id?: string; p_task_id: string | null }
+        Returns: {
+          created_at: string
+          ended_at: string | null
+          energy_score: number | null
+          focus_score: number | null
+          id: string
+          mood_score: number | null
+          note: string | null
+          schedule_block_id: string | null
+          source: string
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_sessions"
           isOneToOne: true
           isSetofReturn: false
         }

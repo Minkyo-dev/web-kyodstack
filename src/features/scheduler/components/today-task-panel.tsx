@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskAction } from "../actions/task.actions";
 import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
+import type { SessionWithTask } from "../domain/work-session.types";
 import { recommendBlockMinutes, resolveBaseEstimate } from "../utils/duration";
 import { TaskListItem } from "./task-list-item";
 
@@ -15,12 +16,14 @@ export function TodayTaskPanel({
   templates,
   settings,
   today,
+  activeSession,
   onOpenTask,
 }: {
   tasks: Task[];
   templates: TaskTemplate[];
   settings: SchedulerSettings;
   today: string;
+  activeSession: SessionWithTask | null;
   onOpenTask: (taskId: string) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
@@ -86,6 +89,8 @@ export function TodayTaskPanel({
               }).minutes,
               settings,
             )}
+            running={activeSession?.task_id === task.id}
+            timerBusy={activeSession !== null}
             onOpen={() => onOpenTask(task.id)}
           />
         ))}
@@ -100,6 +105,8 @@ export function TodayTaskPanel({
             task={task}
             today={today}
             recommendedMinutes={null}
+            running={false}
+            timerBusy
             onOpen={() => onOpenTask(task.id)}
           />
         ))}

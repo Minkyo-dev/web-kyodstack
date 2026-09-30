@@ -25,9 +25,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       and the revisions `created, moved, resized`. The SQL test `supabase/tests/rls/schedule_functions.sql` passes.
 
 ## Phase 2 — Actual Work Tracking
-- [ ] Step 10: work-session timer (one active), manual session, focus/mood/energy
-- [ ] Daily reflection
-- [ ] Step 11: planned vs actual summary bar
+- [x] Step 10: work-session timer via atomic `start_work_session` (starting from a block links both ids; task → in_progress);
+      one active timer (unique index → ACTIVE_TIMER_EXISTS); stop dialog with editable end time + focus/mood/energy/note
+- [x] Manual sessions (overlap with existing or running sessions rejected; ≤16h; no future times); delete a session
+- [x] Daily reflection dialog (auto summary + mood/focus/energy/note, upsert per local day)
+- [x] Step 11: planned vs actual. The metrics bar shows planned / actual (+ running) / focus / completed.
+      The drawer shows per-task estimate / planned / actual / % / focus / move count from the `task_plan_actual` view.
+      Sessions are drawn on the calendar as hatched "실제" events next to the plan blocks.
+- [x] Exit: E2E `tests/e2e/work-tracking.spec.ts` passes, and so does SQL `supabase/tests/rls/work_sessions.sql`
 
 ## Phase 3 — Adaptive Duration
 - [ ] Step 12: duration analytics, task_duration_profiles, correction factor, explanation UI

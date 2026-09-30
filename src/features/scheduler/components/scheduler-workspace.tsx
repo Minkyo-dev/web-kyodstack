@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
+import type {
+  DailyReflection,
+  SessionWithTask,
+  TaskPlanActual,
+} from "../domain/work-session.types";
+import { WorkSessionTimer } from "./work-session-timer";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
@@ -30,10 +36,15 @@ export type SchedulerWorkspaceProps = {
   todayTasks: Task[];
   blocks: CalendarBlock[];
   templates: TaskTemplate[];
+  sessions: SessionWithTask[];
+  activeSession: SessionWithTask | null;
+  reflection: DailyReflection | null;
+  planActual: Record<string, TaskPlanActual>;
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
+  const { sessions, activeSession, reflection, planActual } = props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Any task visible anywhere on screen can be opened in the drawer.
@@ -50,7 +61,10 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
     <div className="flex h-[calc(100dvh-3.25rem)] flex-col md:h-dvh">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <h1 className="text-lg font-semibold">스케줄러</h1>
-        <WeekNavigation week={week} today={today} timezone={context.timezone} />
+        <div className="flex flex-wrap items-center gap-3">
+          <WorkSessionTimer session={activeSession} timezone={context.timezone} />
+          <WeekNavigation week={week} today={today} timezone={context.timezone} />
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
@@ -59,11 +73,13 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           templates={templates}
           settings={context.settings}
           today={today}
+          activeSession={activeSession}
           onOpenTask={setSelectedTaskId}
         />
         <section aria-label="주간 캘린더" className="min-h-[480px] min-w-0 flex-1 md:min-h-0">
           <WeeklyCalendar
             blocks={blocks}
+            sessions={sessions}
             tasksById={tasksById}
             context={context}
             week={week}
@@ -73,11 +89,21 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         </section>
       </div>
 
-      <TodayMetricsBar tasks={todayTasks} blocks={blocks} todayRange={todayRange} />
+      <TodayMetricsBar
+        tasks={todayTasks}
+        blocks={blocks}
+        sessions={sessions}
+        todayRange={todayRange}
+        today={today}
+        reflection={reflection}
+      />
 
       <TaskDetailDrawer
         task={selectedTask}
         blocks={selectedTask ? blocks.filter((b) => b.task_id === selectedTask.id) : []}
+        sessions={selectedTask ? sessions.filter((x) => x.task_id === selectedTask.id) : []}
+        planActual={selectedTask ? (planActual[selectedTask.id] ?? null) : null}
+        activeSession={activeSession}
         templates={templates}
         context={context}
         today={today}

@@ -18,6 +18,7 @@ import interactionPlugin, {
 import luxonPlugin from "@fullcalendar/luxon3";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNow } from "@/hooks/use-now";
 import { cn } from "@/lib/utils";
 import {
   moveScheduleBlockAction,
@@ -25,6 +26,7 @@ import {
 } from "../actions/schedule.actions";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task } from "../domain/task.types";
+import type { SessionWithTask } from "../domain/work-session.types";
 import { findOverlaps } from "../utils/calendar";
 import { CalendarEventContent } from "./calendar-event-content";
 import { CreateInRangeDialog } from "./create-in-range-dialog";
@@ -37,6 +39,7 @@ function minutesToDuration(minutes: number) {
 
 export function WeeklyCalendar({
   blocks: serverBlocks,
+  sessions,
   tasksById,
   context,
   week,
@@ -44,6 +47,7 @@ export function WeeklyCalendar({
   onOpenTask,
 }: {
   blocks: CalendarBlock[];
+  sessions: SessionWithTask[];
   tasksById: Map<string, Task>;
   context: SchedulerContext;
   week: { startDate: string; endDate: string; days: string[] };
@@ -68,9 +72,13 @@ export function WeeklyCalendar({
     today >= week.startDate && today < week.endDate ? today : week.startDate,
   );
 
+  const hasRunning = sessions.some((x) => x.ended_at === null);
+  const now = useNow(60_000, hasRunning);
+
+  // Plan (blocks) and actual (sessions) render side by side; they are never merged (spec §3.2).
   const events = useMemo<EventInput[]>(
-    () =>
-      blocks.map((b) => ({
+    () => [
+      ...blocks.map((b) => ({
         id: b.id,
         title: b.task.title,
         start: b.starts_at,
@@ -79,7 +87,17 @@ export function WeeklyCalendar({
         classNames: [`sched-block`, `sched-block--${b.status}`],
         extendedProps: { block: b },
       })),
-    [blocks],
+      ...sessions.map((x) => ({
+        id: `session-${x.id}`,
+        title: x.task.title,
+        start: x.started_at,
+        end: x.ended_at ?? now.toISOString(),
+        editable: false,
+        classNames: x.ended_at ? ["sched-session"] : ["sched-session", "sched-session--running"],
+        extendedProps: { session: x },
+      })),
+    ],
+    [blocks, sessions, now],
   );
 
   function warnOverlap(blockId: string, start: Date, end: Date) {
@@ -139,7 +157,9 @@ export function WeeklyCalendar({
   function handleEventClick(info: EventClickArg) {
     info.jsEvent.preventDefault();
     const block = info.event.extendedProps.block as CalendarBlock | undefined;
-    if (block) onOpenTask(block.task_id);
+    const session = info.event.extendedProps.session as SessionWithTask | undefined;
+    const taskId = block?.task_id ?? session?.task_id;
+    if (taskId) onOpenTask(taskId);
   }
 
   useEffect(() => {

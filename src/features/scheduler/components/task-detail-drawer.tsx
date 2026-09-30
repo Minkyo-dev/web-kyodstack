@@ -24,20 +24,42 @@ import {
   reopenTaskAction,
   updateTaskAction,
 } from "../actions/task.actions";
+import {
+  createManualWorkSessionAction,
+  deleteWorkSessionAction,
+  startWorkSessionAction,
+} from "../actions/work-session.actions";
 import { BLOCK_STATUS_LABEL, TASK_STATUS_LABEL } from "../domain/scheduler.constants";
+import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
+import { readScore, ScoreInput } from "./score-input";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
-import { formatMinutes, recommendBlockMinutes, resolveBaseEstimate } from "../utils/duration";
+import {
+  formatMinutes,
+  minutesBetween,
+  recommendBlockMinutes,
+  resolveBaseEstimate,
+} from "../utils/duration";
 import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone";
+import { Play } from "lucide-react";
+
+type SessionProps = {
+  sessions: SessionWithTask[];
+  planActual: TaskPlanActual | null;
+  activeSession: SessionWithTask | null;
+};
 
 export function TaskDetailDrawer({
   task,
   blocks,
+  sessions,
+  planActual,
+  activeSession,
   templates,
   context,
   today,
   onClose,
-}: {
+}: SessionProps & {
   task: Task | null;
   blocks: CalendarBlock[];
   templates: TaskTemplate[];
@@ -53,6 +75,9 @@ export function TaskDetailDrawer({
             key={task.id}
             task={task}
             blocks={blocks}
+            sessions={sessions}
+            planActual={planActual}
+            activeSession={activeSession}
             templates={templates}
             context={context}
             today={today}
@@ -67,11 +92,14 @@ export function TaskDetailDrawer({
 function TaskDetail({
   task,
   blocks,
+  sessions,
+  planActual,
+  activeSession,
   templates,
   context,
   today,
   onClose,
-}: {
+}: SessionProps & {
   task: Task;
   blocks: CalendarBlock[];
   templates: TaskTemplate[];
@@ -83,6 +111,8 @@ function TaskDetail({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { timezone, settings } = context;
   const isOpen = task.status !== "completed" && task.status !== "cancelled";
+  const timerHere = activeSession?.task_id === task.id;
+  const canStart = isOpen && activeSession === null;
 
   const base = resolveBaseEstimate({
     userEstimatedMinutes: task.user_estimated_minutes,
@@ -101,6 +131,23 @@ function TaskDetail({
       </SheetHeader>
 
       <div className="space-y-6 px-4 pb-6">
+        {/* ── Timer + plan vs actual (spec §4.1 #9, #12) ─────── */}
+        <section aria-label="계획 대비 실제" className="space-y-3">
+          <div className="flex items-center gap-2">
+            {canStart && (
+              <Button size="sm" disabled={pending} onClick={() => run(() => startWorkSessionAction({ taskId: task.id }))}>
+                <Play aria-hidden />
+                타이머 시작
+              </Button>
+            )}
+            {timerHere && <p className="text-sm text-planned">이 작업의 타이머가 실행 중입니다.</p>}
+            {isOpen && !canStart && !timerHere && (
+              <p className="text-xs text-muted-foreground">다른 작업의 타이머가 실행 중입니다.</p>
+            )}
+          </div>
+          <PlanActualSummary planActual={planActual} estimate={task.user_estimated_minutes} />
+        </section>
+
         {/* ── Edit ─────────────────────────────────────────── */}
         <form
           className="space-y-3"
@@ -250,6 +297,17 @@ function TaskDetail({
                     <span className="flex gap-1">
                       {b.status === "planned" ? (
                         <>
+                          {canStart && (
+                            <Button
+                              size="xs"
+                              disabled={pending}
+                              onClick={() => run(() => startWorkSessionAction({ blockId: b.id }))}
+                              aria-label="이 일정으로 타이머 시작"
+                            >
+                              <Play aria-hidden />
+                              시작
+                            </Button>
+                          )}
                           <BlockButton blockId={b.id} status="completed" label="완료" />
                           <BlockButton blockId={b.id} status="skipped" label="건너뜀" />
                           <BlockButton blockId={b.id} status="cancelled" label="삭제" />
@@ -263,6 +321,42 @@ function TaskDetail({
             </ul>
           </section>
         )}
+
+        {/* ── Actual sessions (spec §4.1 #8, #10) ───────────── */}
+        <section aria-labelledby="sessions-heading" className="space-y-2">
+          <h3 id="sessions-heading" className="text-sm font-semibold">
+            실제 작업 기록
+          </h3>
+          {sessions.length > 0 && (
+            <ul className="divide-y divide-border rounded-md border border-border">
+              {sessions.map((x) => (
+                <li key={x.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <span className="tabular-nums">
+                    {toLocalDate(x.started_at, timezone).slice(5)} {toLocalTime(x.started_at, timezone)}–
+                    {x.ended_at ? toLocalTime(x.ended_at, timezone) : "진행 중"}
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {x.source === "manual" ? "수동" : "타이머"}
+                      {x.ended_at && ` · ${formatMinutes(minutesBetween(x.started_at, x.ended_at))}`}
+                      {x.focus_score !== null && ` · 집중 ${x.focus_score}`}
+                    </span>
+                  </span>
+                  {x.ended_at && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      disabled={pending}
+                      aria-label="작업 기록 삭제"
+                      onClick={() => run(() => deleteWorkSessionAction({ sessionId: x.id }))}
+                    >
+                      삭제
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <ManualSessionForm taskId={task.id} timezone={timezone} today={today} />
+        </section>
 
         {/* ── Task lifecycle ─────────────────────────────────── */}
         <section aria-label="작업 상태" className="flex flex-wrap gap-2 border-t border-border pt-4">
@@ -353,5 +447,109 @@ function ScoreSelect({ id, name, defaultValue }: { id: string; name: string; def
         </option>
       ))}
     </select>
+  );
+}
+
+function PlanActualSummary({
+  planActual,
+  estimate,
+}: {
+  planActual: TaskPlanActual | null;
+  estimate: number | null;
+}) {
+  const planned = planActual?.planned_minutes ?? 0;
+  const actual = planActual?.actual_minutes ?? 0;
+  const ratio = planned > 0 && actual > 0 ? actual / planned : null;
+  return (
+    <dl className="grid grid-cols-4 gap-2 rounded-md border border-border p-3 text-sm">
+      <SummaryItem label="예상" value={estimate ? formatMinutes(estimate) : "—"} />
+      <SummaryItem label="계획" value={formatMinutes(planned)} />
+      <SummaryItem
+        label="실제"
+        value={formatMinutes(actual)}
+        note={ratio !== null ? `계획의 ${Math.round(ratio * 100)}%` : undefined}
+      />
+      <SummaryItem
+        label="집중"
+        value={planActual?.average_focus != null ? planActual.average_focus.toFixed(1) : "—"}
+        note={planActual?.reschedule_count ? `이동 ${planActual.reschedule_count}회` : undefined}
+      />
+    </dl>
+  );
+}
+
+function SummaryItem({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
+      {note && <dd className="text-[11px] text-muted-foreground">{note}</dd>}
+    </div>
+  );
+}
+
+/** Manual actual-work entry (spec §4.1 #10). Overlaps with other sessions are rejected server-side. */
+function ManualSessionForm({ taskId, timezone, today }: { taskId: string; timezone: string; today: string }) {
+  const { run, pending } = useActionRunner();
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        수동으로 기록 추가
+      </Button>
+    );
+  }
+  return (
+    <form
+      aria-label="수동 작업 기록"
+      className="space-y-3 rounded-md border border-border p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const fd = new FormData(form);
+        const date = String(fd.get("date"));
+        run(
+          () =>
+            createManualWorkSessionAction({
+              taskId,
+              startedAt: localDateTimeToIso(date, String(fd.get("start")), timezone),
+              endedAt: localDateTimeToIso(date, String(fd.get("end")), timezone),
+              focusScore: readScore(fd, "manualFocus"),
+              note: String(fd.get("note") ?? "").trim() || null,
+            }),
+          {
+            success: "작업 기록을 추가했습니다.",
+            onSuccess: () => {
+              form.reset();
+              setOpen(false);
+            },
+          },
+        );
+      }}
+    >
+      <div className="flex gap-2">
+        <Field label="날짜" htmlFor="manual-date">
+          <Input id="manual-date" name="date" type="date" required defaultValue={today} max={today} />
+        </Field>
+        <Field label="시작" htmlFor="manual-start">
+          <Input id="manual-start" name="start" type="time" required />
+        </Field>
+        <Field label="종료" htmlFor="manual-end">
+          <Input id="manual-end" name="end" type="time" required />
+        </Field>
+      </div>
+      <ScoreInput name="manualFocus" label="집중" hint="선택" />
+      <Field label="메모 (선택)" htmlFor="manual-note">
+        <Input id="manual-note" name="note" maxLength={2000} />
+      </Field>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={pending}>
+          기록
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+          취소
+        </Button>
+      </div>
+    </form>
   );
 }

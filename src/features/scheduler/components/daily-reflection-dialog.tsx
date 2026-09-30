@@ -1,0 +1,121 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useActionRunner } from "@/hooks/use-action-runner";
+import { upsertDailyReflectionAction } from "../actions/reflection.actions";
+import type { DailyReflection } from "../domain/work-session.types";
+import { formatMinutes } from "../utils/duration";
+import type { DaySummary } from "../utils/metrics";
+import { readScore, ScoreInput } from "./score-input";
+
+/**
+ * End-of-day (spec §38): the app shows what it already knows, and the user adds
+ * only mood/focus/energy/note. Work captured by sessions is never re-entered.
+ */
+export function DailyReflectionDialog({
+  open,
+  date,
+  summary,
+  completed,
+  total,
+  reflection,
+  onClose,
+}: {
+  open: boolean;
+  date: string;
+  summary: DaySummary;
+  completed: number;
+  total: number;
+  reflection: DailyReflection | null;
+  onClose: () => void;
+}) {
+  const { run, pending } = useActionRunner();
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            run(
+              () =>
+                upsertDailyReflectionAction({
+                  reflectionDate: date,
+                  moodScore: readScore(fd, "mood"),
+                  focusScore: readScore(fd, "focus"),
+                  energyScore: readScore(fd, "energy"),
+                  note: String(fd.get("note") ?? "").trim() || null,
+                }),
+              { success: "오늘 회고를 저장했습니다.", onSuccess: onClose },
+            );
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>하루 마무리</DialogTitle>
+            <DialogDescription>{date}</DialogDescription>
+          </DialogHeader>
+
+          <dl className="my-4 grid grid-cols-3 gap-2 rounded-md border border-border p-3 text-sm">
+            <Stat label="계획" value={formatMinutes(summary.plannedMinutes)} />
+            <Stat label="실제" value={formatMinutes(summary.actualMinutes)} />
+            <Stat label="완료" value={`${completed} / ${total}`} />
+          </dl>
+          {summary.runningMinutes > 0 && (
+            <p className="-mt-2 mb-3 text-xs text-warning">
+              실행 중인 타이머는 정지해야 실제 시간에 반영됩니다.
+            </p>
+          )}
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-4">
+              <ScoreInput name="mood" label="기분" defaultValue={reflection?.mood_score} />
+              <ScoreInput name="focus" label="집중" defaultValue={reflection?.focus_score} />
+              <ScoreInput name="energy" label="에너지" defaultValue={reflection?.energy_score} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="reflection-note" className="text-xs text-muted-foreground">
+                메모 (선택)
+              </Label>
+              <Textarea
+                id="reflection-note"
+                name="note"
+                rows={3}
+                maxLength={5000}
+                defaultValue={reflection?.note ?? ""}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              닫기
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {reflection ? "수정" : "저장"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
+    </div>
+  );
+}

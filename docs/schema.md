@@ -31,4 +31,21 @@ This file lists only the **differences and additions** relative to the spec, plu
 | skipped_minutes | the same, restricted to status = skipped |
 | actual_minutes | Σ(ended_at − started_at) of sessions with ended_at not null |
 | plan_completion_ratio | actual_minutes / planned_minutes |
-| Window | Local day or week in `profiles.timezone`; weeks start on `scheduler_settings.week_starts_on` |
+| running_minutes | live elapsed of the running session (UI only, never in finalized metrics) |
+| average_focus (day) | mean `focus_score` of finished sessions that **started** in the window |
+| Window | Local day or week in `profiles.timezone`; weeks start on `scheduler_settings.week_starts_on`. Blocks and sessions that cross the window edge are clipped to it. |
+
+Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, unit-tested).
+
+## Views
+- `task_plan_actual` (`security_invoker = true`, anon revoked): per-task `planned_minutes` (non-cancelled blocks,
+  skipped included), `skipped_minutes`, `actual_minutes` (finished sessions), `session_count`, `average_focus`,
+  and `reschedule_count` (moved + resized revisions). This is the input for Phase 3 duration learning.
+
+## Work session rules (service layer)
+- Only one running timer (partial unique index; service maps 23505 → `ACTIVE_TIMER_EXISTS`).
+- `start_work_session(task, block)` is atomic: it inserts the session and moves the task from inbox/planned to in_progress.
+  Closed tasks are rejected.
+- A session is > 0 and ≤ 16h, and never ends in the future (1-minute skew allowed).
+- Manual sessions may not overlap any other session of the user, including the running one.
+- Stopping never completes the task (spec §22). Completion stays an explicit action.

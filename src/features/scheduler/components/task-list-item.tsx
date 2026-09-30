@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, CalendarCheck, Check, GripVertical } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Check, GripVertical, Play, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { completeTaskAction, reopenTaskAction } from "../actions/task.actions";
+import { startWorkSessionAction } from "../actions/work-session.actions";
 import { TASK_STATUS_LABEL } from "../domain/scheduler.constants";
 import type { Task } from "../domain/task.types";
 import { formatMinutes } from "../utils/duration";
@@ -12,12 +13,18 @@ export function TaskListItem({
   task,
   today,
   recommendedMinutes,
+  running,
+  timerBusy,
   onOpen,
 }: {
   task: Task;
   today: string;
   /** Block length a drop would create; null for tasks that can't be scheduled. */
   recommendedMinutes: number | null;
+  /** This task has the running timer. */
+  running: boolean;
+  /** Some timer is running (only one allowed, spec §24). */
+  timerBusy: boolean;
   onOpen: () => void;
 }) {
   const { run, pending } = useActionRunner();
@@ -79,6 +86,12 @@ export function TaskListItem({
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
           {task.template && <span>{task.template.name}</span>}
           {task.user_estimated_minutes && <span>예상 {formatMinutes(task.user_estimated_minutes)}</span>}
+          {running && (
+            <span className="inline-flex items-center gap-0.5 text-planned">
+              <Timer className="size-3" aria-hidden />
+              진행 중
+            </span>
+          )}
           {task.status === "planned" && (
             <span className="inline-flex items-center gap-0.5">
               <CalendarCheck className="size-3" aria-hidden />
@@ -93,6 +106,18 @@ export function TaskListItem({
           )}
         </p>
       </div>
+
+      {!done && !timerBusy && (
+        <button
+          type="button"
+          onClick={() => run(() => startWorkSessionAction({ taskId: task.id }))}
+          disabled={pending}
+          aria-label={`${task.title} 타이머 시작`}
+          className="mt-0.5 rounded-sm p-0.5 text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+        >
+          <Play className="size-3.5" aria-hidden />
+        </button>
+      )}
     </li>
   );
 }

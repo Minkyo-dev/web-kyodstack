@@ -179,6 +179,27 @@
   color: var(--muted-foreground);
   text-decoration: line-through;
 }
+/* Actual work sessions: hatched, so they differ from plans by pattern, not just color. */
+.fc {
+  --session-bg: color-mix(in oklch, var(--success) 14%, var(--background));
+  --session-stripe: color-mix(in oklch, var(--success) 26%, var(--background));
+}
+.fc .sched-session {
+  background-color: var(--session-bg);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--session-stripe) 0,
+    var(--session-stripe) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  border-left-color: var(--success);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.fc .sched-session--running {
+  border-left-style: dashed;
+}
 .fc .fc-event-mirror {
   background: color-mix(in oklch, var(--planned) 35%, var(--background));
   border-left-color: var(--planned);
