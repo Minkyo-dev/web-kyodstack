@@ -89,7 +89,9 @@ export async function stopWorkSession(
   const { data, error } = await ctx.supabase
     .rpc("stop_work_session", {
       p_session_id: input.sessionId,
-      p_ended_at: endedAt,
+      // Only an explicit correction is sent; otherwise the DB uses now(), the same clock
+      // that stamped the pauses, so app/DB clock skew can't trip "end before pause".
+      p_ended_at: input.endedAt,
       p_focus: input.focusScore ?? undefined,
       p_mood: input.moodScore ?? undefined,
       p_energy: input.energyScore ?? undefined,

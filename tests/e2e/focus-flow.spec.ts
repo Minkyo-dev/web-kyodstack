@@ -66,6 +66,9 @@ test.describe("focus flow", () => {
       .eq("session_id", sessionA!.id);
     expect(logsA).toBe(0);
 
+    // Pause B, then finish it while paused → the open pause closes at the end (DB clock for both)
+    await bar.getByRole("button", { name: "일시정지" }).click();
+    await expect(bar).toContainText("일시정지됨");
     // Finish B → Continue Later → B is partial
     await bar.getByRole("button", { name: "종료" }).click();
     const summary = page.getByRole("dialog", { name: "작업 마치기" });
@@ -74,7 +77,10 @@ test.describe("focus flow", () => {
     await expect(summary).toHaveCount(0);
     await expect(bar).toHaveCount(0);
     await expect(page.getByRole("listitem").filter({ hasText: b })).toContainText("부분 진행");
-    const { data: taskB } = await db.from("tasks").select("status").eq("title", b).single();
+    const { data: taskB } = await db.from("tasks").select("id,status").eq("title", b).single();
     expect(taskB!.status).toBe("in_progress");
+    const { data: sessionB } = await db.from("work_sessions").select("id,ended_at").eq("task_id", taskB!.id).single();
+    const { data: pauseB } = await db.from("work_session_pauses").select("resumed_at").eq("session_id", sessionB!.id).single();
+    expect(Date.parse(pauseB!.resumed_at!)).toBe(Date.parse(sessionB!.ended_at!));
   });
 });
