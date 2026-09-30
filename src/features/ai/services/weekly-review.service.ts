@@ -17,7 +17,7 @@ export async function generateWeeklyReview(ctx: ActionContext, requestedWeek?: s
   const { timezone, settings } = await getSchedulerContext(ctx.supabase, ctx.user.id);
   const weekStart = localWeek(requestedWeek ?? todayLocalDate(timezone), timezone, settings.week_starts_on).startDate;
 
-  const metrics = computeWeeklyMetrics(await loadWeekInput(ctx.supabase, weekStart, timezone));
+  const metrics = computeWeeklyMetrics(await loadWeekInput(ctx.supabase, ctx.user.id, weekStart, timezone));
   const provider = await getAiProvider();
   const result = await provider.generateStructured({
     task: "weekly_review",

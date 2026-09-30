@@ -13,10 +13,15 @@ import {
 /** Enough history for every complexity bucket to reach its 20 most recent samples. */
 const CANDIDATE_LIMIT = 200;
 
-export async function loadDurationProfiles(supabase: SupabaseServerClient): Promise<StoredProfile[]> {
+export async function loadDurationProfiles(
+  supabase: SupabaseServerClient,
+  userId: string,
+): Promise<StoredProfile[]> {
+  // Explicit user scope: also correct under the service role (spec §20), not only RLS.
   const { data, error } = await supabase
     .from("task_duration_profiles")
-    .select("task_template_id, complexity_bucket, sample_count, recommended_correction_factor, median_plan_actual_ratio");
+    .select("task_template_id, complexity_bucket, sample_count, recommended_correction_factor, median_plan_actual_ratio")
+    .eq("user_id", userId);
   if (error) throw fromDbError(error);
   return data.map((p) => ({
     ...p,
@@ -124,4 +129,12 @@ export async function refreshProfilesQuietly(
       });
     }
   }
+}
+
+/** Rebuild every template profile of one user from source data (spec §17.11: derived, rebuildable). */
+export async function rebuildUserProfiles(ctx: ActionContext): Promise<number> {
+  const templates = await ctx.supabase.from("task_templates").select("id").eq("user_id", ctx.user.id);
+  if (templates.error) throw fromDbError(templates.error);
+  for (const t of templates.data) await refreshTemplateProfile(ctx, t.id);
+  return templates.data.length;
 }

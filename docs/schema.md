@@ -57,6 +57,11 @@ This file lists only the **differences and additions** relative to the spec, plu
 | under/overestimatedTaskTypes | tasks completed in the week with a template: Σ actual / Σ base ≥ 1.2 or ≤ 0.8 |
 | reschedule / move / resize, minutesShifted, daysShifted | revisions created in the week (moved + resized) |
 
+## job_runs (Phase 6)
+- Unique `(job_name, user_id, run_key)`. Statuses: running / succeeded / skipped / failed, with `attempts`.
+- Only the service role writes. `authenticated` has SELECT on its own rows only (insert/update/delete revoked).
+- `run_key`: the local date (daily_planner, duration_profile_refresh) or the reviewed week's start (weekly_review).
+
 ## Deferred to later phases (spec §71)
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.

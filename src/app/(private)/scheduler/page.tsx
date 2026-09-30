@@ -72,7 +72,7 @@ export default async function SchedulerPage({
     listSessionsInRange(supabase, rangeStart, rangeEnd),
     getActiveSession(supabase),
     getDailyReflection(supabase, today),
-    loadDurationProfiles(supabase),
+    loadDurationProfiles(supabase, user.id),
     listProjectOptions(supabase),
     listPendingRecommendations(supabase, { date: today }),
   ]);

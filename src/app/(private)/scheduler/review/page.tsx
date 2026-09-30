@@ -26,7 +26,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const { startDate, endDate } = localWeek(anchor, timezone, settings.week_starts_on);
 
   const [input, review] = await Promise.all([
-    loadWeekInput(supabase, startDate, timezone),
+    loadWeekInput(supabase, user.id, startDate, timezone),
     getWeeklyReview(supabase, startDate),
   ]);
   const m = computeWeeklyMetrics(input);

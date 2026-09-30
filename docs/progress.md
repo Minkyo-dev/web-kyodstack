@@ -68,8 +68,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [ ] Real generation smoke run: blocked by the Anthropic account's credit balance (API 400 "credit balance is too low").
       The failure path was verified: 502 + a friendly toast, nothing persisted.
 
-## Phase 6 — Automation (next)
-- [ ] Cron jobs (daily-planner, weekly-review, duration-profile-refresh), idempotent
+## Phase 6 — Automation
+- [x] `job_runs` ledger (unique job/user/run_key; users read-only) + SQL test; pure `decideClaim` (insert/skip/retry ≤ 3) + tests
+- [x] Jobs: daily_planner (local 05–10, per local date), weekly_review (first local day of week → previous week;
+      skips existing/empty weeks), duration_profile_refresh (daily rebuild). Local-time windows are DST-safe (unit-tested).
+- [x] `/api/internal/jobs/*` (GET/POST, Bearer secret, constant-time compare; 503 without a secret) + `vercel.ts` crons (ADR 0010)
+- [x] Explicit `user_id` scoping for every query the jobs reach (week loader, duration profiles, recommendation inputs)
+- [x] Verified: 503 without a secret, 401 with no/wrong token, 500 "SUPABASE_SERVICE_ROLE_KEY is not configured" with the right token
+- [ ] End-to-end job run: needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (and the Anthropic credit for the AI jobs)
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is

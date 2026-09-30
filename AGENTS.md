@@ -35,6 +35,7 @@ Other docs:
 - AI is advisory. Its output is Zod-validated and goes into `ai_recommendations` / `weekly_reviews`, never directly into `tasks`.
 - Deterministic stats come from SQL/TypeScript, never from the LLM.
 - The service role key and AI keys are server-only. Never give them a `NEXT_PUBLIC_` prefix.
+- `createAdminClient()` (service role) is for `/api/internal/jobs/*` only, and every query it reaches must filter by `user_id` explicitly.
 - Never return raw Supabase or provider errors to the browser. Map them to `AppError` codes.
 
 # Code layout

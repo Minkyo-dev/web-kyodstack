@@ -9,6 +9,8 @@ const serverSchema = z.object({
   AI_API_KEY: z.string().min(1).optional(),
   AI_MODEL: z.string().min(1).optional(),
   INTERNAL_JOB_SECRET: z.string().min(16).optional(),
+  /** Vercel Cron sends "Authorization: Bearer $CRON_SECRET"; either secret authorizes jobs. */
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 export const serverEnv = serverSchema.parse(process.env);

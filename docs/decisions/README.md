@@ -27,3 +27,4 @@ Template:
 | 0007 | Tasks with logged work cannot be hard-deleted | accepted |
 | 0008 | Recommended durations round up to 5 minutes | accepted |
 | 0009 | AI provider, contracts and guardrails | accepted |
+| 0010 | Scheduled jobs via Vercel Cron + job ledger | accepted |

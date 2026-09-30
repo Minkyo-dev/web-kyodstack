@@ -8,7 +8,7 @@ import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 export async function loadProjectContext(supabase: SupabaseServerClient, userId: string) {
   const [context, profiles] = await Promise.all([
     getSchedulerContext(supabase, userId),
-    loadDurationProfiles(supabase),
+    loadDurationProfiles(supabase, userId),
   ]);
   return { ...context, profiles, today: todayLocalDate(context.timezone) };
 }

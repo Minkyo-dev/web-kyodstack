@@ -8,9 +8,11 @@ import type { WeekInput } from "../utils/weekly-metrics";
 /** Everything computeWeeklyMetrics needs for one local week. Bounded by the week (spec §50). */
 export async function loadWeekInput(
   supabase: SupabaseServerClient,
+  userId: string,
   weekStart: string,
   timezone: string,
 ): Promise<WeekInput> {
+  // Every read is scoped explicitly, so this is also safe under the service role (spec §20).
   const weekEnd = addLocalDays(weekStart, 7, timezone);
   const range = { start: localDayRange(weekStart, timezone).start, end: localDayRange(weekEnd, timezone).start };
 
@@ -18,6 +20,7 @@ export async function loadWeekInput(
     supabase
       .from("schedule_blocks")
       .select("starts_at, ends_at, status")
+      .eq("user_id", userId)
       .lt("starts_at", range.end)
       .gt("ends_at", range.start),
     supabase
@@ -30,6 +33,7 @@ export async function loadWeekInput(
     supabase
       .from("daily_reflections")
       .select("mood_score, focus_score, energy_score")
+      .eq("user_id", userId)
       .gte("reflection_date", weekStart)
       .lt("reflection_date", weekEnd),
     supabase
@@ -37,17 +41,20 @@ export async function loadWeekInput(
       .select(
         "id, user_estimated_minutes, template:task_templates!tasks_template_id_user_id_fkey(name, default_estimate_minutes)",
       )
+      .eq("user_id", userId)
       .eq("status", "completed")
       .gte("completed_at", range.start)
       .lt("completed_at", range.end),
     supabase
       .from("tasks")
       .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
       .gte("created_at", range.start)
       .lt("created_at", range.end),
     supabase
       .from("schedule_block_revisions")
       .select("change_type, previous_starts_at, new_starts_at")
+      .eq("user_id", userId)
       .gte("created_at", range.start)
       .lt("created_at", range.end),
   ]);
@@ -61,6 +68,8 @@ export async function loadWeekInput(
     const pa = await supabase
       .from("task_plan_actual")
       .select("task_id, actual_minutes")
+      .eq("user_id", userId)
+      .eq("user_id", userId)
       .in("task_id", completedRows.map((t) => t.id));
     if (pa.error) throw fromDbError(pa.error);
     for (const r of pa.data) if (r.task_id) actual.set(r.task_id, Number(r.actual_minutes ?? 0));

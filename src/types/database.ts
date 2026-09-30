@@ -292,6 +292,53 @@ export type Database = {
         }
         Relationships: []
       }
+      job_runs: {
+        Row: {
+          attempts: number
+          detail: Json | null
+          error_code: string | null
+          finished_at: string | null
+          id: string
+          job_name: string
+          run_key: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          detail?: Json | null
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          job_name: string
+          run_key: string
+          started_at?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          detail?: Json | null
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          job_name?: string
+          run_key?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestones: {
         Row: {
           created_at: string

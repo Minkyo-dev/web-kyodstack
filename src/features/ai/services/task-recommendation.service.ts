@@ -35,23 +35,30 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
     ctx.supabase
       .from("schedule_blocks")
       .select("starts_at, ends_at, status")
+      .eq("user_id", ctx.user.id)
       .lt("starts_at", todayRange.end)
       .gt("ends_at", todayRange.start),
-    ctx.supabase.from("projects").select("id, name, description, target_date, priority").eq("status", "active"),
+    ctx.supabase
+      .from("projects")
+      .select("id, name, description, target_date, priority")
+      .eq("user_id", ctx.user.id)
+      .eq("status", "active"),
     ctx.supabase
       .from("milestones")
       .select("id, project_id, name, target_date, status, sort_order")
+      .eq("user_id", ctx.user.id)
       .in("status", ["planned", "in_progress"])
       .order("sort_order"),
     ctx.supabase
       .from("tasks")
       .select("title, status, project_id, milestone_id, user_estimated_minutes, completed_at")
+      .eq("user_id", ctx.user.id)
       .or(
         `status.in.(inbox,planned,in_progress),completed_at.gte.${localDayRange(addLocalDays(today, -RECENT_DAYS, timezone), timezone).start}`,
       )
       .limit(500),
-    loadDurationProfiles(ctx.supabase),
-    ctx.supabase.from("task_templates").select("id, name"),
+    loadDurationProfiles(ctx.supabase, ctx.user.id),
+    ctx.supabase.from("task_templates").select("id, name").eq("user_id", ctx.user.id),
   ]);
   for (const r of [blocks, projects, milestones, tasks, templates]) if (r.error) throw fromDbError(r.error);
 
