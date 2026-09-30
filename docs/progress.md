@@ -45,7 +45,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       10:00–11:20, `recommended_minutes = 80`, and reopening returns to cold start.
 
 ## Phase 4 — Projects
-- [ ] Step 13: projects, milestones, project detail, progress metrics
+- [x] Step 13: `projects`, `milestones` (RLS, composite ownership FKs), `tasks.project_id/milestone_id`.
+      The DB enforces §44: the milestone must belong to the task's project, and a milestone requires a project.
+      Projects and milestones are closed by status, not deleted (task FKs are NO ACTION; account deletion still cascades).
+- [x] `/scheduler/projects` list (status, due D-n / overdue with icon + text, progress, remaining estimate, next milestone)
+      and `/scheduler/projects/[id]` detail (milestones with inline status/edit, per-milestone progress and quick-add, unlinked tasks, settings)
+- [x] Progress = pure `computeProgress`. The remaining estimate uses the personal estimator net of time already spent.
+- [x] The task drawer links a task to a project/milestone (a milestone implies its project); the Today list shows "Project › Milestone"
+- [x] Exit: E2E `tests/e2e/projects.spec.ts` + SQL `supabase/tests/rls/projects.sql` pass
 
 ## Phase 5 — AI
 - [ ] Step 14: provider abstraction, weekly review, recommendations, accept/reject
@@ -57,6 +64,7 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.
   Don't just revoke `is_admin` from anon: the legacy `*_admin_write` policies apply to every role.
+- E2E can target a running dev server with `E2E_BASE_URL=http://localhost:3000` (Next allows one dev server per project).
 - E2E runs against the owner account with `[e2e]`-prefixed data that is cleaned up. Consider a dedicated test user.
 - Korean webfont: Geist has no Hangul glyphs, so the OS fallback font is used. Decide whether to add a Korean font (e.g. Pretendard).
 - AI provider/model (decide at Phase 5). Note: AI SDK 7 requires Node ≥ 22; local Node is 20.19.

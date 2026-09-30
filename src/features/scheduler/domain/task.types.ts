@@ -11,6 +11,8 @@ export type TaskTemplate = Pick<
 export type Task = Omit<TaskRow, "status"> & {
   status: TaskStatus;
   template: Pick<TaskTemplate, "id" | "name" | "default_estimate_minutes"> | null;
+  project: { id: string; name: string } | null;
+  milestone: { id: string; name: string } | null;
 };
 
 export type SchedulerSettings = Pick<

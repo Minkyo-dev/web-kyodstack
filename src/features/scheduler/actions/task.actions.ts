@@ -6,7 +6,7 @@ import * as tasks from "../services/task.service";
 import { createTaskSchema, taskIdSchema, updateTaskSchema } from "../schemas/task.schema";
 
 const done = <T>(value: T) => {
-  revalidatePath("/scheduler");
+  revalidatePath("/scheduler", "layout");
   return value;
 };
 

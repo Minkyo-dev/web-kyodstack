@@ -8,7 +8,7 @@ import { upsertReflectionSchema } from "../schemas/reflection.schema";
 export async function upsertDailyReflectionAction(input: unknown) {
   return runAction("reflection.upsert", upsertReflectionSchema, input, async (data, ctx) => {
     const result = await upsertDailyReflection(ctx, data);
-    revalidatePath("/scheduler");
+    revalidatePath("/scheduler", "layout");
     return result;
   });
 }

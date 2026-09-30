@@ -34,6 +34,7 @@ import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.typ
 import { readScore, ScoreInput } from "./score-input";
 import { estimateDuration, type StoredProfile } from "../utils/estimator";
 import { DurationInsight } from "./duration-insight";
+import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
 import { formatMinutes, minutesBetween } from "../utils/duration";
@@ -45,6 +46,7 @@ type SessionProps = {
   planActual: TaskPlanActual | null;
   activeSession: SessionWithTask | null;
   durationProfiles: StoredProfile[];
+  projectOptions: ProjectOption[];
 };
 
 export function TaskDetailDrawer({
@@ -54,6 +56,7 @@ export function TaskDetailDrawer({
   planActual,
   activeSession,
   durationProfiles,
+  projectOptions,
   templates,
   context,
   today,
@@ -78,6 +81,7 @@ export function TaskDetailDrawer({
             planActual={planActual}
             activeSession={activeSession}
             durationProfiles={durationProfiles}
+            projectOptions={projectOptions}
             templates={templates}
             context={context}
             today={today}
@@ -96,6 +100,7 @@ function TaskDetail({
   planActual,
   activeSession,
   durationProfiles,
+  projectOptions,
   templates,
   context,
   today,
@@ -165,6 +170,8 @@ function TaskDetail({
                   priority: Number(fd.get("priority")),
                   complexity: Number(fd.get("complexity")),
                   templateName: String(fd.get("template") ?? "").trim() || null,
+                  projectId: String(fd.get("projectId") ?? "") || null,
+                  milestoneId: String(fd.get("milestoneId") ?? "") || null,
                 }),
               { success: "저장했습니다." },
             );
@@ -213,6 +220,7 @@ function TaskDetail({
               </Field>
             </div>
           </div>
+          <ProjectPicker task={task} options={projectOptions} />
           <Field label="메모" htmlFor="task-description">
             <Textarea
               id="task-description"
@@ -543,5 +551,58 @@ function ManualSessionForm({ taskId, timezone, today }: { taskId: string; timezo
         </Button>
       </div>
     </form>
+  );
+}
+
+/** Project + milestone selects. Milestones are filtered to the chosen project (spec §44). */
+function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[] }) {
+  const [projectId, setProjectId] = useState(task.project_id ?? "");
+  // Keep the current link selectable even if that project/milestone is closed now.
+  const all = [...options];
+  if (task.project && !all.some((p) => p.id === task.project!.id)) {
+    all.push({ id: task.project.id, name: task.project.name, milestones: [] });
+  }
+  const current = all.find((p) => p.id === projectId);
+  const milestones = [...(current?.milestones ?? [])];
+  if (task.milestone && task.project_id === projectId && !milestones.some((m) => m.id === task.milestone!.id)) {
+    milestones.push(task.milestone);
+  }
+  const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Field label="프로젝트" htmlFor="task-project">
+        <select
+          id="task-project"
+          name="projectId"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          className={selectClass}
+        >
+          <option value="">없음</option>
+          {all.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="마일스톤" htmlFor="task-milestone">
+        <select
+          id="task-milestone"
+          name="milestoneId"
+          key={projectId}
+          defaultValue={task.project_id === projectId ? (task.milestone_id ?? "") : ""}
+          disabled={!projectId}
+          className={selectClass}
+        >
+          <option value="">없음</option>
+          {milestones.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+    </div>
   );
 }

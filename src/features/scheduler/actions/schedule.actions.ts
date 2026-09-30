@@ -11,7 +11,7 @@ import {
 } from "../schemas/schedule.schema";
 
 const done = <T>(value: T) => {
-  revalidatePath("/scheduler");
+  revalidatePath("/scheduler", "layout");
   return value;
 };
 

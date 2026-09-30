@@ -4,6 +4,7 @@ import { AppError, fromDbError } from "@/lib/errors";
 import type { Task } from "../domain/task.types";
 import { TASK_SELECT } from "../queries/select";
 import { refreshProfilesQuietly } from "./duration-profile.service";
+import { resolveTaskLink } from "@/features/projects/services/project.service";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 
 /**
@@ -49,6 +50,7 @@ export async function getTask(ctx: ActionContext, taskId: string): Promise<Task>
 
 export async function createTask(ctx: ActionContext, input: CreateTaskInput): Promise<Task> {
   const templateId = await resolveTemplateId(ctx, input.templateName);
+  const link = await resolveTaskLink(ctx, input);
   const { data, error } = await ctx.supabase
     .from("tasks")
     .insert({
@@ -57,6 +59,7 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
       user_estimated_minutes: input.userEstimatedMinutes ?? null,
       target_date: input.targetDate ?? null,
       template_id: templateId,
+      ...link,
     })
     .select(TASK_SELECT)
     .single();
@@ -67,6 +70,7 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
 export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Promise<Task> {
   const before = await getTask(ctx, input.taskId);
   const templateId = await resolveTemplateId(ctx, input.templateName);
+  const link = await resolveTaskLink(ctx, input);
   const { data, error } = await ctx.supabase
     .from("tasks")
     .update({
@@ -77,6 +81,7 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
       priority: input.priority,
       complexity: input.complexity,
       template_id: templateId,
+      ...link,
     })
     .eq("id", input.taskId)
     .eq("user_id", ctx.user.id)

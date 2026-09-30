@@ -12,6 +12,8 @@ export const createTaskSchema = z.object({
   userEstimatedMinutes: estimate.optional(),
   targetDate: localDate.optional(),
   templateName: z.string().trim().max(100).optional(),
+  projectId: z.uuid().nullable().optional(),
+  milestoneId: z.uuid().nullable().optional(),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
@@ -25,5 +27,8 @@ export const updateTaskSchema = z.object({
   complexity: score,
   /** Empty string or null clears the template; a new name creates it. */
   templateName: z.string().trim().max(100).nullable(),
+  /** A milestone implies its project (spec §44). */
+  projectId: z.uuid().nullable(),
+  milestoneId: z.uuid().nullable(),
 });
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;

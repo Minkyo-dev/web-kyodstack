@@ -10,6 +10,7 @@ import type {
   TaskPlanActual,
 } from "../domain/work-session.types";
 import type { StoredProfile } from "../utils/estimator";
+import type { ProjectOption } from "@/features/projects/domain/project.types";
 import { WorkSessionTimer } from "./work-session-timer";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
@@ -42,11 +43,12 @@ export type SchedulerWorkspaceProps = {
   reflection: DailyReflection | null;
   planActual: Record<string, TaskPlanActual>;
   durationProfiles: StoredProfile[];
+  projectOptions: ProjectOption[];
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual, durationProfiles } = props;
+  const { sessions, activeSession, reflection, planActual, durationProfiles, projectOptions } = props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Any task visible anywhere on screen can be opened in the drawer.
@@ -108,6 +110,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         planActual={selectedTask ? (planActual[selectedTask.id] ?? null) : null}
         activeSession={activeSession}
         durationProfiles={durationProfiles}
+        projectOptions={projectOptions}
         templates={templates}
         context={context}
         today={today}

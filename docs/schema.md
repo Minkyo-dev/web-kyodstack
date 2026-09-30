@@ -28,8 +28,17 @@ This file lists only the **differences and additions** relative to the spec, plu
 - `recommended_correction_factor` is null below 3 samples. Otherwise it is `clamp(median(clamp(actual/base, .5, 3)), .75, 2)`
   over the 20 most recent samples. Estimator version `v1` (`ESTIMATOR_VERSION`).
 
+## projects / milestones (Phase 4)
+- Both have `unique (id, user_id)`, and milestones also have `unique (id, project_id)`.
+- `tasks` has three FKs: `(project_id, user_id)`, `(milestone_id, user_id)` and `(milestone_id, project_id)`.
+  There is also the check `milestone_id is null or project_id is not null`, so a task can never point at another
+  user's project, or at a milestone of a different project (spec §44).
+- The task FKs are NO ACTION: a project or milestone with tasks can't be hard-deleted. Close it with `status`.
+  NO ACTION is checked at statement end, so an account deletion still cascades.
+- `task_plan_actual` now also exposes `project_id` and `milestone_id`.
+- Remaining estimate (v1) = Σ over open tasks of max(personal estimate − actual minutes so far, 0).
+
 ## Deferred to later phases (spec §71)
-- `projects`, `milestones`, `tasks.project_id`, `tasks.milestone_id` → Phase 4
 - `weekly_reviews`, `ai_recommendations` → Phase 5
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.

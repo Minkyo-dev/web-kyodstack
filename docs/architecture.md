@@ -24,6 +24,8 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/login` | (auth) | email + password (ADR 0003) |
 | `/dashboard` | (private) | links to utilities |
 | `/scheduler?week=yyyy-MM-dd` | (private) | Today list + week calendar + task drawer |
+| `/scheduler/projects` | (private) | project list with progress |
+| `/scheduler/projects/[id]` | (private) | milestones, tasks, progress, settings |
 
 Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`, `/finance`, `/english`.
 
@@ -46,6 +48,7 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/features/scheduler/queries/session.queries.ts`, `analytics.queries.ts` | sessions in range, active session, reflection, `task_plan_actual` |
 | `src/features/scheduler/utils/estimator.ts` | pure duration estimator, shared by the server block sizing, the drag preview and the explanation |
 | `src/features/scheduler/services/duration-profile.service.ts` | load profiles; refresh a template's profile (quietly after history changes) |
+| `src/features/projects` | domain, pure `utils/progress.ts`, schemas, `project.service` (incl. `resolveTaskLink`), queries (overview, options), components |
 | `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 

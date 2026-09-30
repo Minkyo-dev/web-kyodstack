@@ -187,6 +187,60 @@ export type Database = {
         }
         Relationships: []
       }
+      milestones: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          project_id: string
+          sort_order: number
+          status: string
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          project_id: string
+          sort_order?: number
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          sort_order?: number
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_project_id_user_id_fkey"
+            columns: ["project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_projects: {
         Row: {
           content: string | null
@@ -300,6 +354,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          priority: number
+          start_date: string | null
+          status: string
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          priority?: number
+          start_date?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          priority?: number
+          start_date?: string | null
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resume_profiles: {
         Row: {
@@ -651,7 +752,9 @@ export type Database = {
           description: string | null
           due_at: string | null
           id: string
+          milestone_id: string | null
           priority: number
+          project_id: string | null
           recommended_minutes: number | null
           sort_order: number
           status: string
@@ -669,7 +772,9 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           id?: string
+          milestone_id?: string | null
           priority?: number
+          project_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
@@ -687,7 +792,9 @@ export type Database = {
           description?: string | null
           due_at?: string | null
           id?: string
+          milestone_id?: string | null
           priority?: number
+          project_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
@@ -699,6 +806,27 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_milestone_id_project_id_fkey"
+            columns: ["milestone_id", "project_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "project_id"]
+          },
+          {
+            foreignKeyName: "tasks_milestone_id_user_id_fkey"
+            columns: ["milestone_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_user_id_fkey"
+            columns: ["project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "user_id"]
+          },
           {
             foreignKeyName: "tasks_template_id_user_id_fkey"
             columns: ["template_id", "user_id"]
@@ -814,7 +942,9 @@ export type Database = {
           average_focus: number | null
           completed_at: string | null
           complexity: number | null
+          milestone_id: string | null
           planned_minutes: number | null
+          project_id: string | null
           reschedule_count: number | null
           session_count: number | null
           skipped_minutes: number | null

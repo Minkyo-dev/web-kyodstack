@@ -17,6 +17,10 @@ export async function login(page: Page) {
   await page.getByLabel("비밀번호").fill(password);
   await page.getByRole("button", { name: "로그인" }).click();
   await expect(page).toHaveURL(/\/scheduler/);
+  // The URL can change before the session cookie lands; later full page loads need it.
+  await expect
+    .poll(async () => (await page.context().cookies()).some((c) => c.name.includes("-auth-token")))
+    .toBe(true);
 }
 
 /** Direct DB access as the same user (RLS applies) for assertions and cleanup. */
@@ -33,6 +37,8 @@ export async function cleanup(db: SupabaseClient) {
   await db.from("tasks").delete().like("title", `${E2E_PREFIX}%`);
   // Templates cascade into task_duration_profiles.
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
+  // Projects cascade into milestones (their tasks were deleted above).
+  await db.from("projects").delete().like("name", `${E2E_PREFIX}%`);
 }
 
 /** Center of the time-grid cell for a local date + time (HH:mm). */

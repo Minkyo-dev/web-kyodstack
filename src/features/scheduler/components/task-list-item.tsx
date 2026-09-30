@@ -86,6 +86,12 @@ export function TaskListItem({
           {task.title}
         </button>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          {task.project && (
+            <span className="text-foreground/80">
+              {task.project.name}
+              {task.milestone && ` › ${task.milestone.name}`}
+            </span>
+          )}
           {task.template && <span>{task.template.name}</span>}
           {task.user_estimated_minutes && <span>예상 {formatMinutes(task.user_estimated_minutes)}</span>}
           {learned && (
