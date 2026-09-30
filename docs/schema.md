@@ -62,6 +62,24 @@ This file lists only the **differences and additions** relative to the spec, plu
 - Only the service role writes. `authenticated` has SELECT on its own rows only (insert/update/delete revoked).
 - `run_key`: the local date (daily_planner, duration_profile_refresh) or the reviewed week's start (weekly_review).
 
+## work_session_pauses / work_logs (Improvement A, ADR 0011)
+Concept map: TimeBlock = `schedule_blocks`, FocusSession = `work_sessions`, WorkLog = `work_logs`,
+DailyReview = `daily_reflections`.
+- `work_session_pauses(session_id, paused_at, resumed_at null, reason)`: an open pause (`resumed_at is null`) means
+  the session is paused. There is at most one open pause per session (partial unique index). Reasons are
+  coffee/phone/meeting/break/other and are optional.
+- `work_logs(task_id, session_id unique null, focus/mood/energy, note ≤ 5000)`: at most one per session.
+  Deleting a session keeps its log as a task-level log (`session_id` set null).
+- `work_sessions` gains `unique (id, user_id)`. Its score/note columns were dropped after the backfill.
+- Functions (security invoker):
+  - `pause_work_session(session, reason?)`, `resume_work_session(session)`.
+  - `stop_work_session(session, ended_at?, focus?, mood?, energy?, note?, complete_task?)`: closes an open pause at
+    the end, upserts the work log, and optionally completes the task. All in one transaction.
+  - `switch_work_session(task?, block?)`: ends the open session (no log) and starts the next.
+  - Errors: `P0002` not found; `23514` `session finished` / `already paused` / `not paused` / `end before start` /
+    `end before pause`; `23505` second open session.
+- `task_plan_actual`: `actual_minutes` = focused minutes. Adds `paused_minutes`. `average_focus` comes from `work_logs`.
+
 ## Deferred to later phases (spec §71)
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.
@@ -69,10 +87,10 @@ This file lists only the **differences and additions** relative to the spec, plu
 |---|---|
 | planned_minutes | Σ(ends_at − starts_at) of blocks in the window with status ≠ cancelled (skipped included) |
 | skipped_minutes | the same, restricted to status = skipped |
-| actual_minutes | Σ(ended_at − started_at) of sessions with ended_at not null |
+| actual_minutes | Σ focused minutes (ended_at − started_at − pauses) of sessions with ended_at not null (v2, ADR 0011) |
 | plan_completion_ratio | actual_minutes / planned_minutes |
 | running_minutes | live elapsed of the running session (UI only, never in finalized metrics) |
-| average_focus (day) | mean `focus_score` of finished sessions that **started** in the window |
+| average_focus (day) | mean work-log `focus_score` of finished sessions that **started** in the window |
 | Window | Local day or week in `profiles.timezone`; weeks start on `scheduler_settings.week_starts_on`. Blocks and sessions that cross the window edge are clipped to it. |
 
 Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, unit-tested).

@@ -77,6 +77,12 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] Verified: 503 without a secret, 401 with no/wrong token, 500 "SUPABASE_SERVICE_ROLE_KEY is not configured" with the right token
 - [ ] End-to-end job run: needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (and the Anthropic credit for the AI jobs)
 
+## Improvement A — focus flow (docs/superpowers/specs/2026-09-29-focus-flow-design.md)
+- [x] Pauses, work logs, atomic stop/switch, actual minutes v2 (migration + SQL tests, ADR 0011)
+- [x] FocusBar, WorkSummaryDialog (complete / continue later), SwitchTaskDialog, partial tasks sized to the remainder
+- [x] Contract: session score/note columns dropped
+- [x] E2E `focus-flow.spec.ts`; `work-tracking.spec.ts` updated (manual entry uses yesterday, so it is time-of-day independent)
+
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.

@@ -1203,11 +1203,7 @@ export type Database = {
         Row: {
           created_at: string
           ended_at: string | null
-          energy_score: number | null
-          focus_score: number | null
           id: string
-          mood_score: number | null
-          note: string | null
           schedule_block_id: string | null
           source: string
           started_at: string
@@ -1218,11 +1214,7 @@ export type Database = {
         Insert: {
           created_at?: string
           ended_at?: string | null
-          energy_score?: number | null
-          focus_score?: number | null
           id?: string
-          mood_score?: number | null
-          note?: string | null
           schedule_block_id?: string | null
           source?: string
           started_at: string
@@ -1233,11 +1225,7 @@ export type Database = {
         Update: {
           created_at?: string
           ended_at?: string | null
-          energy_score?: number | null
-          focus_score?: number | null
           id?: string
-          mood_score?: number | null
-          note?: string | null
           schedule_block_id?: string | null
           source?: string
           started_at?: string
@@ -1481,11 +1469,7 @@ export type Database = {
         Returns: {
           created_at: string
           ended_at: string | null
-          energy_score: number | null
-          focus_score: number | null
           id: string
-          mood_score: number | null
-          note: string | null
           schedule_block_id: string | null
           source: string
           started_at: string
@@ -1513,11 +1497,7 @@ export type Database = {
         Returns: {
           created_at: string
           ended_at: string | null
-          energy_score: number | null
-          focus_score: number | null
           id: string
-          mood_score: number | null
-          note: string | null
           schedule_block_id: string | null
           source: string
           started_at: string
@@ -1537,11 +1517,7 @@ export type Database = {
         Returns: {
           created_at: string
           ended_at: string | null
-          energy_score: number | null
-          focus_score: number | null
           id: string
-          mood_score: number | null
-          note: string | null
           schedule_block_id: string | null
           source: string
           started_at: string

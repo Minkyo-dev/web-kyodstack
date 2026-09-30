@@ -28,3 +28,4 @@ Template:
 | 0008 | Recommended durations round up to 5 minutes | accepted |
 | 0009 | AI provider, contracts and guardrails | accepted |
 | 0010 | Scheduled jobs via Vercel Cron + job ledger | accepted |
+| 0011 | Focus pauses and work logs | accepted |
