@@ -19,32 +19,39 @@ test.describe("actual work tracking", () => {
 
     // Flow 4: start timer from the list → header timer appears → stop with focus 4
     await page.getByRole("button", { name: `${title} 타이머 시작` }).click();
-    const timer = page.getByRole("status", { name: "실행 중인 타이머" });
-    await expect(timer).toContainText(title);
-    // A session can legitimately cross local midnight and render as two segments.
+    const bar = page.getByRole("status", { name: "집중 중인 작업" });
+    await expect(bar).toContainText(title);
     await expect(page.locator(".fc-event.sched-session--running", { hasText: title }).first()).toBeVisible();
 
-    await timer.getByRole("button", { name: "정지" }).click();
-    const stopDialog = page.getByRole("dialog", { name: "작업 종료" });
-    await stopDialog.getByRole("group", { name: "집중" }).getByText("4", { exact: true }).click();
-    await stopDialog.getByRole("button", { name: "기록" }).click();
-    await expect(timer).toHaveCount(0);
+    await bar.getByRole("button", { name: "종료" }).click();
+    const summary = page.getByRole("dialog", { name: "작업 마치기" });
+    await summary.getByRole("group", { name: "집중" }).getByText("4", { exact: true }).click();
+    await summary.getByRole("button", { name: "나중에 계속" }).click();
+    // The modal hides the page from the a11y tree, so wait for the dialog to close (save done) first.
+    await expect(summary).toHaveCount(0);
+    await expect(bar).toHaveCount(0);
 
     const { data: task } = await db.from("tasks").select("id,status").eq("title", title).single();
     expect(task!.status).toBe("in_progress");
     const { data: timed } = await db
       .from("work_sessions")
-      .select("ended_at,focus_score,source")
+      .select("id,ended_at,source")
       .eq("task_id", task!.id)
       .single();
-    expect(timed).toMatchObject({ focus_score: 4, source: "timer" });
+    expect(timed!.source).toBe("timer");
     expect(timed!.ended_at).not.toBeNull();
+    const { data: log } = await db.from("work_logs").select("focus_score").eq("session_id", timed!.id).single();
+    expect(log!.focus_score).toBe(4);
 
-    // Manual entry 00:05–00:50 today → 45 minutes
+    // Manual entry 00:05–00:50 yesterday → 45 minutes. Yesterday, so the times are never in the
+    // future whatever time of day the suite runs.
+    const todayCell = await page.locator("td.fc-timegrid-col.fc-day-today").getAttribute("data-date");
+    const yesterday = new Date(Date.parse(`${todayCell}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
     await page.getByRole("button", { name: title, exact: true }).click();
     const drawer = page.getByRole("dialog", { name: title });
     await drawer.getByRole("button", { name: "수동으로 기록 추가" }).click();
     const manual = drawer.getByRole("form", { name: "수동 작업 기록" });
+    await manual.getByLabel("날짜").fill(yesterday);
     await manual.getByLabel("시작").fill("00:05");
     await manual.getByLabel("종료").fill("00:50");
     await manual.getByRole("button", { name: "기록" }).click();
@@ -52,6 +59,7 @@ test.describe("actual work tracking", () => {
 
     // Overlapping manual entry is rejected (actual time is never double-counted)
     await drawer.getByRole("button", { name: "수동으로 기록 추가" }).click();
+    await manual.getByLabel("날짜").fill(yesterday);
     await manual.getByLabel("시작").fill("00:30");
     await manual.getByLabel("종료").fill("01:00");
     await manual.getByRole("button", { name: "기록" }).click();
