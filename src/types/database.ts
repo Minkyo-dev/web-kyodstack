@@ -818,10 +818,13 @@ export type Database = {
       scheduler_settings: {
         Row: {
           auto_schedule_mode: string
+          commit_lead_minutes: number
           created_at: string
           default_break_minutes: number
           max_focus_block_minutes: number
           min_block_minutes: number
+          min_meaningful_minutes: number
+          planned_work_days: number[]
           show_actual_default: boolean
           slot_minutes: number
           updated_at: string
@@ -833,10 +836,13 @@ export type Database = {
         }
         Insert: {
           auto_schedule_mode?: string
+          commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
           max_focus_block_minutes?: number
           min_block_minutes?: number
+          min_meaningful_minutes?: number
+          planned_work_days?: number[]
           show_actual_default?: boolean
           slot_minutes?: number
           updated_at?: string
@@ -848,10 +854,13 @@ export type Database = {
         }
         Update: {
           auto_schedule_mode?: string
+          commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
           max_focus_block_minutes?: number
           min_block_minutes?: number
+          min_meaningful_minutes?: number
+          planned_work_days?: number[]
           show_actual_default?: boolean
           slot_minutes?: number
           updated_at?: string
@@ -888,6 +897,62 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      stat_snapshots: {
+        Row: {
+          bias: number | null
+          computed_on: string
+          created_at: string
+          formula_version: string
+          id: string
+          sample_count: number
+          scope: string
+          stat_type: string
+          typical_error: number | null
+          user_id: string
+          value: number | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          bias?: number | null
+          computed_on: string
+          created_at?: string
+          formula_version: string
+          id?: string
+          sample_count: number
+          scope?: string
+          stat_type: string
+          typical_error?: number | null
+          user_id: string
+          value?: number | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          bias?: number | null
+          computed_on?: string
+          created_at?: string
+          formula_version?: string
+          id?: string
+          sample_count?: number
+          scope?: string
+          stat_type?: string
+          typical_error?: number | null
+          user_id?: string
+          value?: number | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {
