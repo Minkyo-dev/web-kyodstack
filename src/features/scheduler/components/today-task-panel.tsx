@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskAction } from "../actions/task.actions";
-import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
+import type { SchedulerContext, SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
+import type { CalendarBlock } from "../domain/schedule.types";
+import { useNow } from "@/hooks/use-now";
+import { formatMinutes } from "../utils/duration";
+import { computeDaySummary } from "../utils/metrics";
+import { todaySections } from "../utils/today";
+import { TodaySections } from "./today-sections";
 import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
 import { partialTask } from "../utils/focus";
 import { estimateDuration, type DurationGroup, type GroupLabels } from "../utils/estimator";
@@ -33,6 +39,11 @@ export function TodayTaskPanel({
   tags,
   domains,
   tagFilter,
+  blocks,
+  sessions,
+  context,
+  todayRange,
+  onStartBlock,
   untypedTemplateCount,
   onManageClassification,
   planActual,
@@ -52,6 +63,11 @@ export function TodayTaskPanel({
   domains: DomainRef[];
   /** Selected tag ids (?tags=); "any of". */
   tagFilter: string[];
+  blocks: CalendarBlock[];
+  sessions: SessionWithTask[];
+  context: SchedulerContext;
+  todayRange: { start: string; end: string };
+  onStartBlock: (block: CalendarBlock) => void;
   untypedTemplateCount: number;
   onManageClassification: () => void;
   planActual: Record<string, TaskPlanActual>;
@@ -60,7 +76,7 @@ export function TodayTaskPanel({
   onStartTask: (task: Task) => void;
   onOpenTask: (taskId: string) => void;
 }) {
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Make open tasks draggable onto FullCalendar (external drop → eventReceive).
   useEffect(() => {
@@ -96,9 +112,50 @@ export function TodayTaskPanel({
     };
   }, []);
 
-  const visible = tagFilter.length ? tasks.filter((t) => t.tags.some((g) => tagFilter.includes(g.id))) : tasks;
-  const open = visible.filter((t) => t.status !== "completed");
-  const completed = visible.filter((t) => t.status === "completed");
+  const now = useNow(60_000);
+  const sections = todaySections({ tasks, blocks, sessions, activeSession, now, todayRange, tagFilter });
+  const summary = computeDaySummary({ blocks, sessions, range: todayRange, now });
+  const worked = summary.actualMinutes + summary.runningMinutes;
+  const remaining = summary.plannedMinutes - worked;
+
+  const renderTask = (task: Task) => {
+    if (task.status === "completed") {
+      return (
+        <TaskListItem
+          key={task.id}
+          task={task}
+          today={today}
+          estimate={null}
+          running={false}
+          partial={null}
+          onStart={() => {}}
+          onOpen={() => onOpenTask(task.id)}
+        />
+      );
+    }
+    const est = estimateDuration(task, settings, durationGroups, labels);
+    const running = activeSession?.task_id === task.id;
+    const partial = partialTask({
+      status: task.status,
+      actualMinutes: planActual[task.id]?.actual_minutes ?? 0,
+      hasUpcomingBlock: upcomingTaskIds.has(task.id),
+      running,
+      estimateMinutes: est.minutes,
+      minBlockMinutes: settings.min_block_minutes,
+    });
+    return (
+      <TaskListItem
+        key={task.id}
+        task={task}
+        today={today}
+        estimate={partial?.dropMinutes ? { ...est, minutes: partial.dropMinutes } : est}
+        running={running}
+        partial={partial}
+        onStart={() => onStartTask(task)}
+        onOpen={() => onOpenTask(task.id)}
+      />
+    );
+  };
   // Only tags that appear on today's tasks (plus any still selected) are offered as filters.
   const usedTags = tags.filter((g) => tagFilter.includes(g.id) || tasks.some((t) => t.tags.some((x) => x.id === g.id)));
 
@@ -109,65 +166,31 @@ export function TodayTaskPanel({
     >
       <div className="flex items-baseline justify-between px-4 pt-3 pb-2">
         <h2 id="today-tasks-heading" className="text-sm font-semibold">
-          오늘 할 일
+          오늘
         </h2>
-        <span className="text-xs text-muted-foreground">
-          캘린더로 끌어 일정 추가
-        </span>
+        <span className="text-xs text-muted-foreground">캘린더로 끌어 일정 추가</span>
       </div>
+      <p aria-label="오늘 계획" className="px-4 pb-2 text-xs text-muted-foreground tabular-nums">
+        계획 {formatMinutes(summary.plannedMinutes)} · 작업 {formatMinutes(worked)} ·{" "}
+        {remaining >= 0 ? `남은 ${formatMinutes(remaining)}` : `계획보다 ${formatMinutes(-remaining)} 더 작업`}
+      </p>
 
       <TaskQuickCreate templates={templates} today={today} tags={tags} domains={domains} />
       <TemplateTypeBanner count={untypedTemplateCount} onManage={onManageClassification} />
       <TagFilter tags={usedTags} selected={tagFilter} />
 
-      <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="오늘 할 일 목록">
-        {open.length === 0 && completed.length === 0 && (
-          <li className="px-2 py-6 text-center text-sm text-muted-foreground">
-            아직 할 일이 없습니다.
-          </li>
-        )}
-        {open.map((task) => {
-          const est = estimateDuration(task, settings, durationGroups, labels);
-          const running = activeSession?.task_id === task.id;
-          const partial = partialTask({
-            status: task.status,
-            actualMinutes: planActual[task.id]?.actual_minutes ?? 0,
-            hasUpcomingBlock: upcomingTaskIds.has(task.id),
-            running,
-            estimateMinutes: est.minutes,
-            minBlockMinutes: settings.min_block_minutes,
-          });
-          return (
-            <TaskListItem
-              key={task.id}
-              task={task}
-              today={today}
-              estimate={partial?.dropMinutes ? { ...est, minutes: partial.dropMinutes } : est}
-              running={running}
-              partial={partial}
-              onStart={() => onStartTask(task)}
-              onOpen={() => onOpenTask(task.id)}
-            />
-          );
-        })}
-        {completed.length > 0 && (
-          <li className="px-2 pt-4 pb-1 text-xs font-medium text-muted-foreground">
-            오늘 완료 {completed.length}
-          </li>
-        )}
-        {completed.map((task) => (
-          <TaskListItem
-            key={task.id}
-            task={task}
-            today={today}
-            estimate={null}
-            running={false}
-            partial={null}
-            onStart={() => {}}
-            onOpen={() => onOpenTask(task.id)}
-          />
-        ))}
-      </ul>
+      <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+        <TodaySections
+          sections={sections}
+          context={context}
+          blocks={blocks}
+          sessions={sessions}
+          now={now}
+          renderTask={renderTask}
+          onStartBlock={onStartBlock}
+          onOpenTask={onOpenTask}
+        />
+      </div>
 
       <div className="border-t border-border px-4 py-3">
         <AiRecommendationList

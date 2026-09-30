@@ -30,6 +30,8 @@ import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
 import { WeekNavigation } from "./week-navigation";
+import { WeekSummary } from "./week-summary";
+import { CapacityNotice } from "./capacity-notice";
 
 // FullCalendar touches the DOM on import; render it on the client only.
 const WeeklyCalendar = dynamic(
@@ -171,6 +173,11 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           tags={tags}
           domains={domains}
           tagFilter={tagFilter}
+          blocks={blocks}
+          sessions={sessions}
+          context={context}
+          todayRange={todayRange}
+          onStartBlock={startBlock}
           untypedTemplateCount={classifiedTemplates.filter((t) => !t.task_type).length}
           onManageClassification={() => setClassifyOpen(true)}
           planActual={planActual}
@@ -178,7 +185,17 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           onStartTask={startTask}
           onOpenTask={setSelectedTaskId}
         />
-        <section aria-label="주간 캘린더" className="min-h-[480px] min-w-0 flex-1 md:min-h-0">
+        <section aria-label="주간 캘린더" className="flex min-h-[480px] min-w-0 flex-1 flex-col md:min-h-0">
+          <WeekSummary
+            week={week}
+            blocks={blocks}
+            sessions={sessions}
+            completed={props.weekCompleted}
+            today={today}
+            timezone={context.timezone}
+          />
+          <CapacityNotice capacity={props.capacity} nearBlocks={props.nearBlocks} today={today} timezone={context.timezone} />
+          <div className="min-h-0 flex-1">
           <WeeklyCalendar
             blocks={blocks}
             sessions={sessions}
@@ -190,6 +207,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             onStartBlock={startBlock}
             onOpenTask={setSelectedTaskId}
           />
+          </div>
         </section>
       </div>
 

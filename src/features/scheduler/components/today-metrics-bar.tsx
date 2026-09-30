@@ -7,7 +7,6 @@ import { useNow } from "@/hooks/use-now";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { Task } from "../domain/task.types";
 import type { DailyReflection, SessionWithTask } from "../domain/work-session.types";
-import { formatMinutes } from "../utils/duration";
 import { computeDaySummary } from "../utils/metrics";
 import { DailyReflectionDialog } from "./daily-reflection-dialog";
 
@@ -32,17 +31,12 @@ export function TodayMetricsBar({
 
   const summary = computeDaySummary({ blocks, sessions, range: todayRange, now });
   const completed = tasks.filter((t) => t.status === "completed").length;
-  const actualLabel =
-    formatMinutes(summary.actualMinutes) +
-    (summary.runningMinutes >= 1 ? ` (+${formatMinutes(summary.runningMinutes)} 진행 중)` : "");
 
   return (
     <footer
       aria-label="오늘 요약"
       className="flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-border px-4 py-2 text-sm"
     >
-      <Metric label="계획" value={formatMinutes(summary.plannedMinutes)} />
-      <Metric label="실제" value={actualLabel} />
       <Metric label="집중" value={summary.averageFocus?.toFixed(1) ?? "—"} />
       <Metric label="완료" value={`${completed} / ${tasks.length}`} />
       <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setReflecting(true)}>
