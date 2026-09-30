@@ -8,7 +8,7 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskAction } from "../actions/task.actions";
 import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
 import type { SessionWithTask } from "../domain/work-session.types";
-import { recommendBlockMinutes, resolveBaseEstimate } from "../utils/duration";
+import { estimateDuration, type StoredProfile } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
 
 export function TodayTaskPanel({
@@ -17,6 +17,7 @@ export function TodayTaskPanel({
   settings,
   today,
   activeSession,
+  durationProfiles,
   onOpenTask,
 }: {
   tasks: Task[];
@@ -24,6 +25,7 @@ export function TodayTaskPanel({
   settings: SchedulerSettings;
   today: string;
   activeSession: SessionWithTask | null;
+  durationProfiles: StoredProfile[];
   onOpenTask: (taskId: string) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
@@ -82,13 +84,7 @@ export function TodayTaskPanel({
             key={task.id}
             task={task}
             today={today}
-            recommendedMinutes={recommendBlockMinutes(
-              resolveBaseEstimate({
-                userEstimatedMinutes: task.user_estimated_minutes,
-                templateDefaultMinutes: task.template?.default_estimate_minutes ?? null,
-              }).minutes,
-              settings,
-            )}
+            estimate={estimateDuration(task, settings, durationProfiles)}
             running={activeSession?.task_id === task.id}
             timerBusy={activeSession !== null}
             onOpen={() => onOpenTask(task.id)}
@@ -104,7 +100,7 @@ export function TodayTaskPanel({
             key={task.id}
             task={task}
             today={today}
-            recommendedMinutes={null}
+            estimate={null}
             running={false}
             timerBusy
             onOpen={() => onOpenTask(task.id)}

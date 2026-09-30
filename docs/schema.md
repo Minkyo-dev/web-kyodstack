@@ -19,9 +19,17 @@ This file lists only the **differences and additions** relative to the spec, plu
   Scheduler access requires login, and the RLS test asserts `insufficient_privilege` for anon.
 - Portfolio table renamed to `portfolio_projects` (ADR 0001).
 
+## task_duration_profiles (Phase 3)
+- A derived cache. `refreshTemplateProfile(templateId)` recomputes every bucket of one template from
+  `task_plan_actual` (completed tasks) and deletes buckets that lost all samples, so it doubles as that template's rebuild.
+- A sample is a completed task with a template, 1 min ≤ actual ≤ 16 h, and a base estimate from the user or the template
+  (the generic 60 doesn't count). Its base is the task's **current** estimate: editing the estimate of a completed task
+  retrains the profile.
+- `recommended_correction_factor` is null below 3 samples. Otherwise it is `clamp(median(clamp(actual/base, .5, 3)), .75, 2)`
+  over the 20 most recent samples. Estimator version `v1` (`ESTIMATOR_VERSION`).
+
 ## Deferred to later phases (spec §71)
 - `projects`, `milestones`, `tasks.project_id`, `tasks.milestone_id` → Phase 4
-- `task_duration_profiles` → Phase 3
 - `weekly_reviews`, `ai_recommendations` → Phase 5
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.

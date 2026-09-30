@@ -8,6 +8,18 @@ import type {
   StopWorkSessionInput,
 } from "../schemas/work-session.schema";
 import { minutesBetween } from "../utils/duration";
+import { refreshProfilesQuietly } from "./duration-profile.service";
+
+/** Changing a completed task's actual time changes its learning sample. */
+async function refreshIfCompleted(ctx: ActionContext, taskId: string) {
+  const { data } = await ctx.supabase
+    .from("tasks")
+    .select("status, template_id")
+    .eq("id", taskId)
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (data?.status === "completed") await refreshProfilesQuietly(ctx, [data.template_id]);
+}
 
 const CLOCK_SKEW_MS = 60_000;
 
@@ -73,6 +85,8 @@ export async function stopWorkSession(
     .maybeSingle();
   if (error) throw fromDbError(error);
   if (!data) throw new AppError("CONFLICT", "이미 종료된 타이머입니다.");
+  // The task may have been completed while the timer was still running.
+  await refreshIfCompleted(ctx, data.task_id);
   return data as WorkSession;
 }
 
@@ -114,6 +128,7 @@ export async function createManualWorkSession(
     .select()
     .single();
   if (error) throw fromDbError(error);
+  await refreshIfCompleted(ctx, input.taskId);
   return data as WorkSession;
 }
 
@@ -123,7 +138,8 @@ export async function deleteWorkSession(ctx: ActionContext, sessionId: string): 
     .delete()
     .eq("id", sessionId)
     .eq("user_id", ctx.user.id)
-    .select("id");
+    .select("id, task_id");
   if (error) throw fromDbError(error);
   if (!data?.length) throw new AppError("NOT_FOUND");
+  await refreshIfCompleted(ctx, data[0].task_id);
 }

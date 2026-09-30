@@ -35,9 +35,13 @@ describe("recommendBlockMinutes", () => {
   it("uses the base estimate when there is no learned factor", () => {
     expect(recommendBlockMinutes(60, settings)).toBe(60);
   });
-  it("applies the correction factor (spec §12 example: 60 × 1.35 → 81 → 90 at 15-min slots)", () => {
-    expect(recommendBlockMinutes(60, settings, 1.35)).toBe(90);
-    expect(recommendBlockMinutes(60, { ...settings, slot_minutes: 5 }, 1.33)).toBe(80);
+  it("applies the correction factor and rounds up to 5 min (spec §27: 60 × 1.33 → 80)", () => {
+    expect(recommendBlockMinutes(60, settings, 1.33)).toBe(80);
+    expect(recommendBlockMinutes(60, settings, 80 / 60)).toBe(80); // float noise must not jump to 85
+    expect(recommendBlockMinutes(60, settings, 1.35)).toBe(85);
+  });
+  it("rounds odd base estimates up to 5 min", () => {
+    expect(recommendBlockMinutes(42, settings)).toBe(45);
   });
   it("clamps to min and max focus block", () => {
     expect(recommendBlockMinutes(5, settings)).toBe(15);

@@ -38,7 +38,7 @@ export async function scheduleTask(
   let source: "manual" | "duration_recommendation" = "manual";
   if (!endsAt) {
     const { settings } = await getSchedulerContext(ctx.supabase, ctx.user.id);
-    const rec = await recommendDuration(task, settings);
+    const rec = await recommendDuration(ctx.supabase, task, settings);
     endsAt = addMinutes(new Date(input.startsAt), rec.minutes).toISOString();
     source = "duration_recommendation";
     if (task.recommended_minutes !== rec.minutes) {

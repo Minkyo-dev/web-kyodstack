@@ -1,33 +1,17 @@
 import "server-only";
-import type { Task, SchedulerSettings } from "../domain/task.types";
-import { recommendBlockMinutes, resolveBaseEstimate } from "../utils/duration";
+import type { SupabaseServerClient } from "@/lib/supabase/server";
+import type { SchedulerSettings, Task } from "../domain/task.types";
+import { estimateDuration, type DurationEstimate } from "../utils/estimator";
+import { loadDurationProfiles } from "./duration-profile.service";
 
-export type DurationRecommendation = {
-  minutes: number;
-  baseMinutes: number;
-  baseSource: "user" | "template" | "generic";
-  correctionFactor: number;
-  sampleCount: number;
-};
+export type { DurationEstimate };
 
-/**
- * Spec §26/§27. Step 8 of §71: base estimate only, with no historical learning yet.
- * Phase 3 plugs the task_duration_profiles lookup into `correctionFactor`.
- */
+/** Spec §26/§27: history first (template+complexity → template), then the base estimate. */
 export async function recommendDuration(
-  task: Pick<Task, "user_estimated_minutes" | "template">,
+  supabase: SupabaseServerClient,
+  task: Pick<Task, "user_estimated_minutes" | "complexity" | "template">,
   settings: SchedulerSettings,
-): Promise<DurationRecommendation> {
-  const base = resolveBaseEstimate({
-    userEstimatedMinutes: task.user_estimated_minutes,
-    templateDefaultMinutes: task.template?.default_estimate_minutes ?? null,
-  });
-  const correctionFactor = 1;
-  return {
-    minutes: recommendBlockMinutes(base.minutes, settings, correctionFactor),
-    baseMinutes: base.minutes,
-    baseSource: base.source,
-    correctionFactor,
-    sampleCount: 0,
-  };
+): Promise<DurationEstimate> {
+  const profiles = await loadDurationProfiles(supabase);
+  return estimateDuration(task, settings, profiles);
 }

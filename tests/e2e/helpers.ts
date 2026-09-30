@@ -31,6 +31,8 @@ export async function dbAsUser(): Promise<SupabaseClient> {
 
 export async function cleanup(db: SupabaseClient) {
   await db.from("tasks").delete().like("title", `${E2E_PREFIX}%`);
+  // Templates cascade into task_duration_profiles.
+  await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
 }
 
 /** Center of the time-grid cell for a local date + time (HH:mm). */

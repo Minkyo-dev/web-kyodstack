@@ -9,6 +9,7 @@ import type {
   SessionWithTask,
   TaskPlanActual,
 } from "../domain/work-session.types";
+import type { StoredProfile } from "../utils/estimator";
 import { WorkSessionTimer } from "./work-session-timer";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
@@ -40,11 +41,12 @@ export type SchedulerWorkspaceProps = {
   activeSession: SessionWithTask | null;
   reflection: DailyReflection | null;
   planActual: Record<string, TaskPlanActual>;
+  durationProfiles: StoredProfile[];
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual } = props;
+  const { sessions, activeSession, reflection, planActual, durationProfiles } = props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Any task visible anywhere on screen can be opened in the drawer.
@@ -74,6 +76,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           settings={context.settings}
           today={today}
           activeSession={activeSession}
+          durationProfiles={durationProfiles}
           onOpenTask={setSelectedTaskId}
         />
         <section aria-label="주간 캘린더" className="min-h-[480px] min-w-0 flex-1 md:min-h-0">
@@ -104,6 +107,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         sessions={selectedTask ? sessions.filter((x) => x.task_id === selectedTask.id) : []}
         planActual={selectedTask ? (planActual[selectedTask.id] ?? null) : null}
         activeSession={activeSession}
+        durationProfiles={durationProfiles}
         templates={templates}
         context={context}
         today={today}

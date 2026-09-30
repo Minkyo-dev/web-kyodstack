@@ -8,19 +8,20 @@ import { startWorkSessionAction } from "../actions/work-session.actions";
 import { TASK_STATUS_LABEL } from "../domain/scheduler.constants";
 import type { Task } from "../domain/task.types";
 import { formatMinutes } from "../utils/duration";
+import type { DurationEstimate } from "../utils/estimator";
 
 export function TaskListItem({
   task,
   today,
-  recommendedMinutes,
+  estimate,
   running,
   timerBusy,
   onOpen,
 }: {
   task: Task;
   today: string;
-  /** Block length a drop would create; null for tasks that can't be scheduled. */
-  recommendedMinutes: number | null;
+  /** What a drop would create; null for tasks that can't be scheduled. */
+  estimate: DurationEstimate | null;
   /** This task has the running timer. */
   running: boolean;
   /** Some timer is running (only one allowed, spec §24). */
@@ -30,7 +31,8 @@ export function TaskListItem({
   const { run, pending } = useActionRunner();
   const done = task.status === "completed";
   const overdue = !done && task.target_date !== null && task.target_date < today;
-  const draggable = recommendedMinutes !== null;
+  const draggable = estimate !== null;
+  const learned = estimate !== null && estimate.scope !== "none";
 
   const toggle = () =>
     run(() => (done ? reopenTaskAction : completeTaskAction)({ taskId: task.id }));
@@ -45,7 +47,7 @@ export function TaskListItem({
         "data-draggable-task": "",
         "data-task-id": task.id,
         "data-title": task.title,
-        "data-minutes": String(recommendedMinutes),
+        "data-minutes": String(estimate!.minutes),
       })}
     >
       {draggable ? (
@@ -86,6 +88,11 @@ export function TaskListItem({
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
           {task.template && <span>{task.template.name}</span>}
           {task.user_estimated_minutes && <span>예상 {formatMinutes(task.user_estimated_minutes)}</span>}
+          {learned && (
+            <span title={`비슷한 완료 작업 ${estimate!.sampleCount}개 기준`}>
+              → 추천 {formatMinutes(estimate!.minutes)}
+            </span>
+          )}
           {running && (
             <span className="inline-flex items-center gap-0.5 text-planned">
               <Timer className="size-3" aria-hidden />

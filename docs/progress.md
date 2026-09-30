@@ -35,7 +35,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] Exit: E2E `tests/e2e/work-tracking.spec.ts` passes, and so does SQL `supabase/tests/rls/work_sessions.sql`
 
 ## Phase 3 — Adaptive Duration
-- [ ] Step 12: duration analytics, task_duration_profiles, correction factor, explanation UI
+- [x] Step 12: `task_duration_profiles` (derived cache, RLS, composite FK) + pure estimator `utils/estimator.ts`
+      (eligibility §26.3, ratio clamp [0.5, 3], cold start < 3, median of ≤ 20 recent samples, factor clamp [0.75, 2],
+      p75, EWMA; template+complexity → template → base fallback §26.6; 5-minute rounding, ADR 0008)
+- [x] Refresh the affected template on complete / reopen / edit of a completed task / session add, delete or stop on a completed task.
+      Best-effort: a cache failure never fails the primary write.
+- [x] The same `estimateDuration` drives the server block size, the drag preview and the drawer explanation (§62)
+- [x] Exit: E2E `tests/e2e/duration-learning.spec.ts` passes. Three 60→80 min samples give ×1.3333, the drop creates
+      10:00–11:20, `recommended_minutes = 80`, and reopening returns to cold start.
 
 ## Phase 4 — Projects
 - [ ] Step 13: projects, milestones, project detail, progress metrics

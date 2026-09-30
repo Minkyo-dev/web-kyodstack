@@ -32,14 +32,11 @@ import {
 import { BLOCK_STATUS_LABEL, TASK_STATUS_LABEL } from "../domain/scheduler.constants";
 import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
 import { readScore, ScoreInput } from "./score-input";
+import { estimateDuration, type StoredProfile } from "../utils/estimator";
+import { DurationInsight } from "./duration-insight";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
-import {
-  formatMinutes,
-  minutesBetween,
-  recommendBlockMinutes,
-  resolveBaseEstimate,
-} from "../utils/duration";
+import { formatMinutes, minutesBetween } from "../utils/duration";
 import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone";
 import { Play } from "lucide-react";
 
@@ -47,6 +44,7 @@ type SessionProps = {
   sessions: SessionWithTask[];
   planActual: TaskPlanActual | null;
   activeSession: SessionWithTask | null;
+  durationProfiles: StoredProfile[];
 };
 
 export function TaskDetailDrawer({
@@ -55,6 +53,7 @@ export function TaskDetailDrawer({
   sessions,
   planActual,
   activeSession,
+  durationProfiles,
   templates,
   context,
   today,
@@ -78,6 +77,7 @@ export function TaskDetailDrawer({
             sessions={sessions}
             planActual={planActual}
             activeSession={activeSession}
+            durationProfiles={durationProfiles}
             templates={templates}
             context={context}
             today={today}
@@ -95,6 +95,7 @@ function TaskDetail({
   sessions,
   planActual,
   activeSession,
+  durationProfiles,
   templates,
   context,
   today,
@@ -114,11 +115,7 @@ function TaskDetail({
   const timerHere = activeSession?.task_id === task.id;
   const canStart = isOpen && activeSession === null;
 
-  const base = resolveBaseEstimate({
-    userEstimatedMinutes: task.user_estimated_minutes,
-    templateDefaultMinutes: task.template?.default_estimate_minutes ?? null,
-  });
-  const blockMinutes = recommendBlockMinutes(base.minutes, settings);
+  const estimate = estimateDuration(task, settings, durationProfiles);
 
   return (
     <>
@@ -236,12 +233,7 @@ function TaskDetail({
             <h3 id="schedule-heading" className="text-sm font-semibold">
               일정에 추가
             </h3>
-            <p className="text-xs text-muted-foreground">
-              {formatMinutes(blockMinutes)} 블록이 만들어집니다
-              {base.source === "user" && ` (예상 ${formatMinutes(base.minutes)})`}
-              {base.source === "template" && ` (유형 기본값 ${formatMinutes(base.minutes)})`}
-              {base.source === "generic" && " (예상 시간 미입력, 기본값)"}.
-            </p>
+            <DurationInsight task={task} estimate={estimate} profiles={durationProfiles} />
             <form
               className="flex items-end gap-2"
               onSubmit={(e) => {

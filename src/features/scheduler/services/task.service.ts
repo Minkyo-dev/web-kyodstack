@@ -3,6 +3,7 @@ import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { Task } from "../domain/task.types";
 import { TASK_SELECT } from "../queries/select";
+import { refreshProfilesQuietly } from "./duration-profile.service";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 
 /**
@@ -64,6 +65,7 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
 }
 
 export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Promise<Task> {
+  const before = await getTask(ctx, input.taskId);
   const templateId = await resolveTemplateId(ctx, input.templateName);
   const { data, error } = await ctx.supabase
     .from("tasks")
@@ -82,6 +84,14 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
     .maybeSingle();
   if (error) throw fromDbError(error);
   if (!data) throw new AppError("NOT_FOUND");
+
+  const learningInputsChanged =
+    before.template_id !== templateId ||
+    before.user_estimated_minutes !== input.userEstimatedMinutes ||
+    before.complexity !== input.complexity;
+  if (before.status === "completed" && learningInputsChanged) {
+    await refreshProfilesQuietly(ctx, [before.template_id, templateId]);
+  }
   return data as Task;
 }
 
@@ -145,5 +155,10 @@ export async function transitionTask(
     .maybeSingle();
   if (error) throw fromDbError(error);
   if (!data) throw new AppError("CONFLICT");
+
+  // Completion adds (reopen removes) a learning sample (spec §61).
+  if (kind === "complete" || kind === "reopen") {
+    await refreshProfilesQuietly(ctx, [current.template_id]);
+  }
   return data as Task;
 }

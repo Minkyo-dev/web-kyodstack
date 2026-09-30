@@ -44,7 +44,9 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/features/scheduler/actions` | thin `"use server"` wrappers → `runAction` + `revalidatePath("/scheduler")` |
 | `src/features/scheduler/services/work-session.service.ts` | start (RPC) / stop / manual (overlap check) / delete |
 | `src/features/scheduler/queries/session.queries.ts`, `analytics.queries.ts` | sessions in range, active session, reflection, `task_plan_actual` |
-| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput` |
+| `src/features/scheduler/utils/estimator.ts` | pure duration estimator, shared by the server block sizing, the drag preview and the explanation |
+| `src/features/scheduler/services/duration-profile.service.ts` | load profiles; refresh a template's profile (quietly after history changes) |
+| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 
 ## Calendar data flow

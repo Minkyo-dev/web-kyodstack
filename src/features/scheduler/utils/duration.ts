@@ -22,29 +22,31 @@ export function resolveBaseEstimate(input: {
 }
 
 export type BlockDurationSettings = {
-  slot_minutes: number;
   min_block_minutes: number;
   max_focus_block_minutes: number;
 };
 
+/** Learned/recommended durations round up to 5 minutes (spec §12, §27; ADR 0008). */
+export const DURATION_ROUNDING_MINUTES = 5;
+
 /**
  * Length of the block created when a task is dropped on the calendar (spec §27).
- * `correctionFactor` comes from the learned duration profile (Phase 3); 1 until then.
- * The result is rounded up to the slot increment and clamped to
- * [min_block_minutes, max_focus_block_minutes] (ADR 0006). A longer task is split
- * across several blocks.
+ * `correctionFactor` comes from the learned duration profile (1 when there is none).
+ * The result is rounded up to 5 minutes and clamped to
+ * [min_block_minutes, max_focus_block_minutes] (ADR 0006, 0008). A longer task is
+ * split across several blocks.
  */
 export function recommendBlockMinutes(
   baseMinutes: number,
   settings: BlockDurationSettings,
   correctionFactor = 1,
 ): number {
-  const raw = roundUpToIncrement(baseMinutes * correctionFactor, settings.slot_minutes);
-  const min = roundUpToIncrement(settings.min_block_minutes, settings.slot_minutes);
-  const max = Math.max(
-    min,
-    Math.floor(settings.max_focus_block_minutes / settings.slot_minutes) * settings.slot_minutes,
-  );
+  const step = DURATION_ROUNDING_MINUTES;
+  // Round to 2 decimals first so float noise (79.99999 / 80.0000001) can't jump a step.
+  const scaled = Math.round(baseMinutes * correctionFactor * 100) / 100;
+  const raw = roundUpToIncrement(scaled, step);
+  const min = roundUpToIncrement(settings.min_block_minutes, step);
+  const max = Math.max(min, Math.floor(settings.max_focus_block_minutes / step) * step);
   return Math.min(max, Math.max(min, raw));
 }
 
