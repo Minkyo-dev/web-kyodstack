@@ -49,7 +49,8 @@ export type Commitment = {
 };
 
 /** Every resolved commitment of every block (spec §2 Reliability). */
-export function commitments(input: StatInput): Commitment[] {
+export type CommitmentInput = Pick<StatInput, "now" | "settings" | "blocks" | "revisions" | "sessions">;
+export function commitments(input: CommitmentInput): Commitment[] {
   const lead = input.settings.commit_lead_minutes * MIN;
   const now = t(input.now);
   const out: Commitment[] = [];
