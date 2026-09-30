@@ -18,6 +18,7 @@ import { startWorkSessionAction } from "../actions/work-session.actions";
 import { estimateDuration } from "../utils/estimator";
 import { sessionPlanMinutes } from "../utils/focus";
 import { FocusBar } from "./focus-bar";
+import { SchedulerSettingsMenu } from "./scheduler-settings-menu";
 import { SwitchTaskDialog } from "./switch-task-dialog";
 import { WorkSummaryDialog } from "./work-summary-dialog";
 import { TodayTaskPanel } from "./today-task-panel";
@@ -72,6 +73,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const selectedTask = selectedTaskId ? (tasksById.get(selectedTaskId) ?? null) : null;
 
   const { run } = useActionRunner();
+  const [showActual, setShowActual] = useState(context.settings.show_actual_default);
   type StartTarget = { task: Task; blockId?: string };
   const [summary, setSummary] = useState<{ session: SessionWithTask; thenStart?: StartTarget } | null>(null);
   const [switchTarget, setSwitchTarget] = useState<StartTarget | null>(null);
@@ -120,6 +122,16 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <h1 className="text-lg font-semibold">스케줄러</h1>
         <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showActual}
+              onChange={(e) => setShowActual(e.target.checked)}
+              className="size-3.5 accent-foreground"
+            />
+            실제 작업 보기
+          </label>
+          <SchedulerSettingsMenu showActualDefault={context.settings.show_actual_default} />
           <WeekNavigation week={week} today={today} timezone={context.timezone} />
         </div>
       </header>
@@ -146,7 +158,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             context={context}
             week={week}
             today={today}
-            showActual
+            showActual={showActual}
             onStartBlock={startBlock}
             onOpenTask={setSelectedTaskId}
           />

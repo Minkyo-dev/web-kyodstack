@@ -5,6 +5,6 @@ import type { Database } from "@/types/database";
 export function createClient() {
   return createBrowserClient<Database>(
     publicEnv.SUPABASE_URL,
-    publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    publicEnv.SUPABASE_PUBLISHABLE_KEY,
   );
 }

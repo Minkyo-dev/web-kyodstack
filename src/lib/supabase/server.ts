@@ -11,7 +11,7 @@ export async function createClient() {
 
   return createServerClient<Database>(
     publicEnv.SUPABASE_URL,
-    publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    publicEnv.SUPABASE_PUBLISHABLE_KEY,
     {
       cookies: {
         getAll() {
