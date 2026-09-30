@@ -8,7 +8,7 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskAction } from "../actions/task.actions";
 import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
 import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
-import { partialDropMinutes, remainingMinutes } from "../utils/focus";
+import { partialTask } from "../utils/focus";
 import { estimateDuration, type StoredProfile } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
@@ -97,18 +97,23 @@ export function TodayTaskPanel({
         )}
         {open.map((task) => {
           const est = estimateDuration(task, settings, durationProfiles);
-          const actual = planActual[task.id]?.actual_minutes ?? 0;
-          const isPartial = task.status === "in_progress" && actual > 0 && !upcomingTaskIds.has(task.id);
-          const left = isPartial ? remainingMinutes(est.minutes, actual) : null;
-          const dropMinutes = partialDropMinutes(left, settings.min_block_minutes);
+          const running = activeSession?.task_id === task.id;
+          const partial = partialTask({
+            status: task.status,
+            actualMinutes: planActual[task.id]?.actual_minutes ?? 0,
+            hasUpcomingBlock: upcomingTaskIds.has(task.id),
+            running,
+            estimateMinutes: est.minutes,
+            minBlockMinutes: settings.min_block_minutes,
+          });
           return (
             <TaskListItem
               key={task.id}
               task={task}
               today={today}
-              estimate={dropMinutes ? { ...est, minutes: dropMinutes } : est}
-              running={activeSession?.task_id === task.id}
-              partial={isPartial ? { actualMinutes: actual, remainingMinutes: left } : null}
+              estimate={partial?.dropMinutes ? { ...est, minutes: partial.dropMinutes } : est}
+              running={running}
+              partial={partial}
               onStart={() => onStartTask(task)}
               onOpen={() => onOpenTask(task.id)}
             />

@@ -145,6 +145,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
       </div>
 
       <FocusBar
+        // A new session remounts the bar, so pause-reason chips never carry over to it.
+        key={activeSession?.id ?? "none"}
         session={activeSession}
         plannedMinutes={planFor(activeSession).planned}
         onFinish={() => activeSession && setSummary({ session: activeSession })}

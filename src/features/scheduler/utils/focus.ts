@@ -87,3 +87,26 @@ export function describeRemaining(plannedMinutes: number, focusedMinutes: number
 export function sessionTooLong(startedAt: string, now: Date): boolean {
   return now.getTime() - at(startedAt) > MAX_SESSION_MINUTES * MIN;
 }
+
+/**
+ * Continue Later state for the task list: worked on, unfinished, nothing planned ahead and
+ * not running right now. Null when the task isn't partial.
+ */
+export function partialTask(input: {
+  status: string;
+  actualMinutes: number;
+  hasUpcomingBlock: boolean;
+  running: boolean;
+  estimateMinutes: number | null;
+  minBlockMinutes: number;
+}): { actualMinutes: number; remainingMinutes: number | null; dropMinutes: number | null } | null {
+  if (input.status !== "in_progress" || input.actualMinutes <= 0 || input.hasUpcomingBlock || input.running) {
+    return null;
+  }
+  const left = remainingMinutes(input.estimateMinutes, input.actualMinutes);
+  return {
+    actualMinutes: input.actualMinutes,
+    remainingMinutes: left,
+    dropMinutes: partialDropMinutes(left, input.minBlockMinutes),
+  };
+}

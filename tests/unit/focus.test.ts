@@ -5,6 +5,7 @@ import {
   focusStats,
   focusedMinutesInWindow,
   partialDropMinutes,
+  partialTask,
   remainingMinutes,
   sessionPlanMinutes,
   sessionTooLong,
@@ -97,5 +98,20 @@ describe("sessionTooLong", () => {
   it("true after 16 hours", () => {
     expect(sessionTooLong(t("00:00"), new Date("2026-09-29T16:01:00Z"))).toBe(true);
     expect(sessionTooLong(t("00:00"), new Date("2026-09-29T15:59:00Z"))).toBe(false);
+  });
+});
+
+describe("partialTask", () => {
+  const base = { status: "in_progress", actualMinutes: 45, hasUpcomingBlock: false, running: false, estimateMinutes: 80, minBlockMinutes: 15 };
+  it("worked, unfinished, nothing planned ahead → partial with remainder and drop length", () => {
+    expect(partialTask(base)).toEqual({ actualMinutes: 45, remainingMinutes: 35, dropMinutes: 35 });
+  });
+  it("not partial while its own timer is running (no double badge)", () => {
+    expect(partialTask({ ...base, running: true })).toBeNull();
+  });
+  it("not partial with an upcoming block or no work yet", () => {
+    expect(partialTask({ ...base, hasUpcomingBlock: true })).toBeNull();
+    expect(partialTask({ ...base, actualMinutes: 0 })).toBeNull();
+    expect(partialTask({ ...base, status: "planned" })).toBeNull();
   });
 });
