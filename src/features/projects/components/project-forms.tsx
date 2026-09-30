@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,34 +43,43 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 }
 
 export function ProjectCreateForm() {
+  const router = useRouter();
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
+  // Remounts the date picker after a successful create (form.reset() can't clear it).
+  const [resetKey, setResetKey] = useState(0);
   return (
     <form
       ref={ref}
       aria-label="새 프로젝트"
-      className="flex flex-wrap items-end gap-2"
+      className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         run(() => createProjectAction({ name: str(fd, "name"), targetDate: orNull(str(fd, "targetDate")) }), {
           success: "프로젝트를 만들었습니다.",
-          onSuccess: () => ref.current?.reset(),
+          onSuccess: (project) => {
+            ref.current?.reset();
+            setResetKey((k) => k + 1);
+            // Select the new project so milestones and tasks can be added right away.
+            router.push(`/scheduler/projects?project=${project.id}`);
+          },
         });
       }}
     >
       <Field label="프로젝트 이름" htmlFor="new-project-name">
         <Input id="new-project-name" name="name" required maxLength={120} autoComplete="off" />
       </Field>
-      <div className="w-40">
+      {/* Name gets its own row: the form lives in a narrow side pane. */}
+      <div className="flex items-end gap-2">
         <Field label="목표일 (선택)" htmlFor="new-project-target">
-          <Input id="new-project-target" name="targetDate" type="date" />
+          <DatePicker key={resetKey} id="new-project-target" name="targetDate" clearable />
         </Field>
+        <Button type="submit" disabled={pending}>
+          <Plus aria-hidden />
+          만들기
+        </Button>
       </div>
-      <Button type="submit" disabled={pending}>
-        <Plus aria-hidden />
-        만들기
-      </Button>
     </form>
   );
 }
@@ -120,10 +131,10 @@ export function ProjectEditForm({ project }: { project: Project }) {
           </select>
         </Field>
         <Field label="시작일" htmlFor="project-start">
-          <Input id="project-start" name="startDate" type="date" defaultValue={project.start_date ?? ""} />
+          <DatePicker id="project-start" name="startDate" clearable defaultValue={project.start_date} />
         </Field>
         <Field label="목표일" htmlFor="project-target">
-          <Input id="project-target" name="targetDate" type="date" defaultValue={project.target_date ?? ""} />
+          <DatePicker id="project-target" name="targetDate" clearable defaultValue={project.target_date} />
         </Field>
       </div>
       <Field label="설명" htmlFor="project-description">
@@ -145,6 +156,7 @@ export function ProjectEditForm({ project }: { project: Project }) {
 export function MilestoneCreateForm({ projectId }: { projectId: string }) {
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
+  const [resetKey, setResetKey] = useState(0);
   return (
     <form
       ref={ref}
@@ -156,7 +168,12 @@ export function MilestoneCreateForm({ projectId }: { projectId: string }) {
         run(
           () =>
             createMilestoneAction({ projectId, name: str(fd, "name"), targetDate: orNull(str(fd, "targetDate")) }),
-          { onSuccess: () => ref.current?.reset() },
+          {
+            onSuccess: () => {
+              ref.current?.reset();
+              setResetKey((k) => k + 1);
+            },
+          },
         );
       }}
     >
@@ -165,7 +182,7 @@ export function MilestoneCreateForm({ projectId }: { projectId: string }) {
       </Field>
       <div className="w-40">
         <Field label="목표일 (선택)" htmlFor="new-milestone-target">
-          <Input id="new-milestone-target" name="targetDate" type="date" />
+          <DatePicker key={resetKey} id="new-milestone-target" name="targetDate" clearable />
         </Field>
       </div>
       <Button type="submit" variant="outline" disabled={pending}>
@@ -234,11 +251,11 @@ export function MilestoneEditor({ milestone }: { milestone: Milestone }) {
       </Field>
       <div className="w-40">
         <Field label="목표일" htmlFor={`ms-target-${milestone.id}`}>
-          <Input
+          <DatePicker
             id={`ms-target-${milestone.id}`}
             name="targetDate"
-            type="date"
-            defaultValue={milestone.target_date ?? ""}
+            clearable
+            defaultValue={milestone.target_date}
           />
         </Field>
       </div>

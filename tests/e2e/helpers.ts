@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const E2E_PREFIX = "[e2e]";
@@ -58,4 +58,17 @@ export async function dragTo(page: Page, from: { x: number; y: number }, to: { x
   await page.mouse.move(from.x + 5, from.y + 5, { steps: 5 });
   await page.mouse.move(to.x, to.y, { steps: 20 });
   await page.mouse.up();
+}
+
+/** Pick a local date (yyyy-MM-dd) in a DatePicker: open it, page months until the day shows, click it. */
+export async function pickDate(page: Page, trigger: Locator, date: string) {
+  await trigger.click();
+  const popup = page.locator('[data-slot="popover-content"]');
+  const cell = popup.locator(`[data-date="${date}"]`);
+  for (let i = 0; i < 24 && !(await cell.isVisible()); i++) {
+    const first = await popup.locator("[data-date]").first().getAttribute("data-date");
+    await popup.getByRole("button", { name: date > first! ? "다음 달" : "이전 달" }).click();
+  }
+  await cell.click();
+  await expect(popup).toHaveCount(0);
 }

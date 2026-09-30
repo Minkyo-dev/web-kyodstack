@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +45,7 @@ export function WorkSummaryDialog({
   onDone: () => void;
 }) {
   const { run, pending } = useActionRunner();
+  const formRef = useRef<HTMLFormElement>(null);
   if (!session) return null;
 
   const stats = focusStats(session, session.pauses);
@@ -85,6 +88,7 @@ export function WorkSummaryDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <form
+          ref={formRef}
           onSubmit={(e) => {
             e.preventDefault();
             const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
@@ -148,7 +152,17 @@ export function WorkSummaryDialog({
                     <Label htmlFor="summary-end-date" className="text-xs text-muted-foreground">
                       종료 날짜
                     </Label>
-                    <Input id="summary-end-date" name="endDate" type="date" defaultValue={today} />
+                    <DatePicker
+                      id="summary-end-date"
+                      name="endDate"
+                      defaultValue={today}
+                      max={today}
+                      // The picker fires no native change event on the form; flag the edit ourselves.
+                      onChange={() => {
+                        const flag = formRef.current?.elements.namedItem("endEdited") as HTMLInputElement | null;
+                        if (flag) flag.value = "1";
+                      }}
+                    />
                   </div>
                   <div className="flex-1 space-y-1">
                     <Label htmlFor="summary-end-time" className="text-xs text-muted-foreground">

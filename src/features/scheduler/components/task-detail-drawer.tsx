@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -217,7 +218,13 @@ function TaskDetail({
               />
             </Field>
             <Field label="목표 날짜" htmlFor="task-target-date">
-              <Input id="task-target-date" name="targetDate" type="date" defaultValue={task.target_date ?? ""} />
+              <DatePicker
+                id="task-target-date"
+                name="targetDate"
+                clearable
+                weekStartsOn={settings.week_starts_on}
+                defaultValue={task.target_date}
+              />
             </Field>
             <div className="grid grid-cols-2 gap-2">
               <Field label="우선순위" htmlFor="task-priority">
@@ -266,7 +273,13 @@ function TaskDetail({
               }}
             >
               <Field label="날짜" htmlFor="schedule-date">
-                <Input id="schedule-date" name="date" type="date" required defaultValue={task.target_date ?? today} />
+                <DatePicker
+                  id="schedule-date"
+                  name="date"
+                  required
+                  weekStartsOn={settings.week_starts_on}
+                  defaultValue={task.target_date ?? today}
+                />
               </Field>
               <Field label="시작" htmlFor="schedule-time">
                 <Input
@@ -540,7 +553,7 @@ function ManualSessionForm({ taskId, timezone, today }: { taskId: string; timezo
     >
       <div className="flex gap-2">
         <Field label="날짜" htmlFor="manual-date">
-          <Input id="manual-date" name="date" type="date" required defaultValue={today} max={today} />
+          <DatePicker id="manual-date" name="date" required defaultValue={today} max={today} />
         </Field>
         <Field label="시작" htmlFor="manual-start">
           <Input id="manual-start" name="start" type="time" required />

@@ -90,6 +90,11 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## UI updates
+- [x] `/scheduler/projects` is one page: project list + create on the left, the selected project (`?project=`) with
+      milestones and tasks on the right; `/scheduler/projects/[id]` redirects there
+- [x] Every date field uses the shared calendar `DatePicker` (`src/components/ui/date-picker.tsx`, no new dependency)
+
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.

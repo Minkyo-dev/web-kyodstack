@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { cleanup, dbAsUser, E2E_PREFIX, login } from "./helpers";
+import { cleanup, dbAsUser, E2E_PREFIX, login, pickDate } from "./helpers";
 
 // Spec §49.4 flow 5 (up to the AI step, which arrives in Phase 5) + Phase 4 exit criteria.
 test.describe("projects and milestones", () => {
@@ -15,9 +15,19 @@ test.describe("projects and milestones", () => {
     await expect(page).toHaveURL(/\/scheduler\/projects$/);
     const create = page.getByRole("form", { name: "새 프로젝트" });
     await create.getByLabel("프로젝트 이름").fill(project);
+    // Target date from the calendar picker, 40 days out (crosses a month boundary).
+    const target = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(
+      new Date(Date.now() + 40 * 86_400_000),
+    );
+    await pickDate(page, create.getByLabel("목표일 (선택)"), target);
     await create.getByRole("button", { name: "만들기" }).click();
-    await page.getByRole("link", { name: project }).click();
-    await expect(page.getByRole("heading", { level: 1, name: project })).toBeVisible();
+    // The new project opens in the right pane of the same page.
+    await expect(page).toHaveURL(/\/scheduler\/projects\?project=/);
+    const detail = page.getByRole("region", { name: "프로젝트 상세" });
+    await expect(detail.getByRole("heading", { level: 2, name: project })).toBeVisible();
+    await expect(page.getByRole("link", { name: project })).toHaveAttribute("aria-current", "page");
+    const { data: created } = await (await dbAsUser()).from("projects").select("target_date").eq("name", project).single();
+    expect(created!.target_date).toBe(target);
 
     const addMs = page.getByRole("form", { name: "새 마일스톤" });
     for (const name of ["M1 Data Ingestion", "M2 dbt Models"]) {

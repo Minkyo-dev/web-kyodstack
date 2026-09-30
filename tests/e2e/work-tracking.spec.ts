@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { cleanup, dbAsUser, E2E_PREFIX, login } from "./helpers";
+import { cleanup, dbAsUser, E2E_PREFIX, login, pickDate } from "./helpers";
 
 // Spec §49.4 flow 4 + manual sessions + daily reflection (Phase 2).
 test.describe("actual work tracking", () => {
@@ -51,7 +51,7 @@ test.describe("actual work tracking", () => {
     const drawer = page.getByRole("dialog", { name: title });
     await drawer.getByRole("button", { name: "수동으로 기록 추가" }).click();
     const manual = drawer.getByRole("form", { name: "수동 작업 기록" });
-    await manual.getByLabel("날짜").fill(yesterday);
+    await pickDate(page, manual.getByLabel("날짜"), yesterday);
     await manual.getByLabel("시작").fill("00:05");
     await manual.getByLabel("종료").fill("00:50");
     await manual.getByRole("button", { name: "기록" }).click();
@@ -59,7 +59,7 @@ test.describe("actual work tracking", () => {
 
     // Overlapping manual entry is rejected (actual time is never double-counted)
     await drawer.getByRole("button", { name: "수동으로 기록 추가" }).click();
-    await manual.getByLabel("날짜").fill(yesterday);
+    await pickDate(page, manual.getByLabel("날짜"), yesterday);
     await manual.getByLabel("시작").fill("00:30");
     await manual.getByLabel("종료").fill("01:00");
     await manual.getByRole("button", { name: "기록" }).click();

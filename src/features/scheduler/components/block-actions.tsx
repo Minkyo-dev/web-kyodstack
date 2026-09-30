@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActionRunner } from "@/hooks/use-action-runner";
@@ -149,7 +150,13 @@ export function BlockActions({
                 <Label htmlFor={`pick-date-${block.id}`} className="text-xs text-muted-foreground">
                   날짜
                 </Label>
-                <Input id={`pick-date-${block.id}`} name="date" type="date" required defaultValue={toLocalDate(tomorrow, timezone)} />
+                <DatePicker
+                  id={`pick-date-${block.id}`}
+                  name="date"
+                  required
+                  weekStartsOn={settings.week_starts_on}
+                  defaultValue={toLocalDate(tomorrow, timezone)}
+                />
               </div>
               <div className="flex-1 space-y-1">
                 <Label htmlFor={`pick-time-${block.id}`} className="text-xs text-muted-foreground">
