@@ -48,6 +48,8 @@ type SessionProps = {
   activeSession: SessionWithTask | null;
   durationProfiles: StoredProfile[];
   projectOptions: ProjectOption[];
+  /** Start this task; with another timer running this opens the switch dialog. */
+  onStartTask: (task: Task) => void;
 };
 
 export function TaskDetailDrawer({
@@ -58,6 +60,7 @@ export function TaskDetailDrawer({
   activeSession,
   durationProfiles,
   projectOptions,
+  onStartTask,
   templates,
   context,
   today,
@@ -83,6 +86,7 @@ export function TaskDetailDrawer({
             activeSession={activeSession}
             durationProfiles={durationProfiles}
             projectOptions={projectOptions}
+            onStartTask={onStartTask}
             templates={templates}
             context={context}
             today={today}
@@ -102,6 +106,7 @@ function TaskDetail({
   activeSession,
   durationProfiles,
   projectOptions,
+  onStartTask,
   templates,
   context,
   today,
@@ -119,7 +124,9 @@ function TaskDetail({
   const { timezone, settings } = context;
   const isOpen = task.status !== "completed" && task.status !== "cancelled";
   const timerHere = activeSession?.task_id === task.id;
-  const canStart = isOpen && activeSession === null;
+  const canStart = isOpen && !timerHere;
+  // Starting from a block while another timer runs belongs to sub-project B.
+  const canStartBlock = isOpen && activeSession === null;
 
   const estimate = estimateDuration(task, settings, durationProfiles);
 
@@ -138,13 +145,13 @@ function TaskDetail({
         <section aria-label="계획 대비 실제" className="space-y-3">
           <div className="flex items-center gap-2">
             {canStart && (
-              <Button size="sm" disabled={pending} onClick={() => run(() => startWorkSessionAction({ taskId: task.id }))}>
+              <Button size="sm" disabled={pending} onClick={() => onStartTask(task)}>
                 <Play aria-hidden />
                 타이머 시작
               </Button>
             )}
             {timerHere && <p className="text-sm text-planned">이 작업의 타이머가 실행 중입니다.</p>}
-            {isOpen && !canStart && !timerHere && (
+            {isOpen && activeSession !== null && !timerHere && (
               <p className="text-xs text-muted-foreground">다른 작업의 타이머가 실행 중입니다.</p>
             )}
           </div>
@@ -298,7 +305,7 @@ function TaskDetail({
                     <span className="flex gap-1">
                       {b.status === "planned" ? (
                         <>
-                          {canStart && (
+                          {canStartBlock && (
                             <Button
                               size="xs"
                               disabled={pending}

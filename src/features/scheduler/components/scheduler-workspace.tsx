@@ -190,6 +190,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         activeSession={activeSession}
         durationProfiles={durationProfiles}
         projectOptions={projectOptions}
+        onStartTask={startTask}
         templates={templates}
         context={context}
         today={today}
