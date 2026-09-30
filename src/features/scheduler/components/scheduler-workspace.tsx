@@ -12,7 +12,7 @@ import type {
 import type { StoredProfile } from "../utils/estimator";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
-import { WorkSessionTimer } from "./work-session-timer";
+import { FocusBar } from "./focus-bar";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
@@ -69,7 +69,6 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <h1 className="text-lg font-semibold">스케줄러</h1>
         <div className="flex flex-wrap items-center gap-3">
-          <WorkSessionTimer session={activeSession} timezone={context.timezone} />
           <WeekNavigation week={week} today={today} timezone={context.timezone} />
         </div>
       </header>
@@ -97,6 +96,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           />
         </section>
       </div>
+
+      <FocusBar session={activeSession} plannedMinutes={null} onFinish={() => {}} />
 
       <TodayMetricsBar
         tasks={todayTasks}
