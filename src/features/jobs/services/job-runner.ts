@@ -31,7 +31,7 @@ export async function loadJobUsers(admin: SupabaseServerClient): Promise<JobUser
     admin
       .from("scheduler_settings")
       .select(
-        "user_id, week_starts_on, workday_start, workday_end, slot_minutes, min_block_minutes, max_focus_block_minutes, auto_schedule_mode, show_actual_default",
+        "user_id, week_starts_on, workday_start, workday_end, slot_minutes, min_block_minutes, max_focus_block_minutes, auto_schedule_mode, show_actual_default, planned_work_days, min_meaningful_minutes, commit_lead_minutes",
       ),
   ]);
   if (profiles.error) throw fromDbError(profiles.error);

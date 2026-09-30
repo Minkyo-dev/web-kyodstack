@@ -29,6 +29,9 @@ export type SchedulerSettings = Pick<
   | "max_focus_block_minutes"
   | "auto_schedule_mode"
   | "show_actual_default"
+  | "planned_work_days"
+  | "min_meaningful_minutes"
+  | "commit_lead_minutes"
 >;
 
 export type SchedulerContext = {

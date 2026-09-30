@@ -4,6 +4,7 @@ import { generateDailyRecommendations } from "@/features/ai/services/task-recomm
 import { generateWeeklyReview } from "@/features/ai/services/weekly-review.service";
 import { loadWeekInput } from "@/features/scheduler/queries/week.queries";
 import { rebuildDurationGroups } from "@/features/scheduler/services/duration-groups.service";
+import { writeDailySnapshot } from "@/features/analytics/services/snapshot.service";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
@@ -65,7 +66,8 @@ export function runDurationProfileRefresh(admin: SupabaseServerClient, now = new
     async (ctx): Promise<JobOutcome> => {
       const missed = await markMissedBlocks(ctx.supabase, ctx.user.id);
       const groups = await rebuildDurationGroups(ctx);
-      return { status: "succeeded", detail: { groups, missed } };
+      const snapshots = await writeDailySnapshot(ctx, now);
+      return { status: "succeeded", detail: { groups, missed, snapshots } };
     },
   );
 }
