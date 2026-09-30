@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { completeTaskAction, reopenTaskAction } from "../actions/task.actions";
 import { TASK_STATUS_LABEL } from "../domain/scheduler.constants";
+import { TASK_TYPE_LABEL } from "@/features/classification/domain/classification.types";
+import { TagChips } from "@/features/classification/components/classification-fields";
 import type { Task } from "../domain/task.types";
 import { formatMinutes } from "../utils/duration";
 import type { DurationEstimate } from "../utils/estimator";
@@ -99,7 +101,9 @@ export function TaskListItem({
               {task.milestone && ` › ${task.milestone.name}`}
             </span>
           )}
-          {task.template && <span>{task.template.name}</span>}
+          {task.task_type && <span>{TASK_TYPE_LABEL[task.task_type]}</span>}
+          {task.domain && <span>@{task.domain.name}</span>}
+          <TagChips tags={task.tags} />
           {task.user_estimated_minutes && <span>예상 {formatMinutes(task.user_estimated_minutes)}</span>}
           {learned && (
             <span title={estimate!.reason ?? undefined}>

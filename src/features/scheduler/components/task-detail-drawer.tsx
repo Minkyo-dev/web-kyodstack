@@ -42,6 +42,8 @@ import { formatMinutes } from "../utils/duration";
 import { focusStats } from "../utils/focus";
 import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone";
 import { Play } from "lucide-react";
+import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
+import { DomainSelect, TagEditor, TypeSelect } from "@/features/classification/components/classification-fields";
 
 type SessionProps = {
   sessions: SessionWithTask[];
@@ -49,6 +51,8 @@ type SessionProps = {
   activeSession: SessionWithTask | null;
   durationGroups: DurationGroup[];
   labels: GroupLabels;
+  tags: TagRef[];
+  domains: DomainRef[];
   projectOptions: ProjectOption[];
   /** Start this task; with another timer running this opens the switch dialog. */
   onStartTask: (task: Task) => void;
@@ -62,6 +66,8 @@ export function TaskDetailDrawer({
   activeSession,
   durationGroups,
   labels,
+  tags,
+  domains,
   projectOptions,
   onStartTask,
   templates,
@@ -89,6 +95,8 @@ export function TaskDetailDrawer({
             activeSession={activeSession}
             durationGroups={durationGroups}
             labels={labels}
+            tags={tags}
+            domains={domains}
             projectOptions={projectOptions}
             onStartTask={onStartTask}
             templates={templates}
@@ -110,6 +118,8 @@ function TaskDetail({
   activeSession,
   durationGroups,
   labels,
+  tags,
+  domains,
   projectOptions,
   onStartTask,
   templates,
@@ -185,8 +195,9 @@ function TaskDetail({
                   templateName: String(fd.get("template") ?? "").trim() || null,
                   projectId: String(fd.get("projectId") ?? "") || null,
                   milestoneId: String(fd.get("milestoneId") ?? "") || null,
-                  taskType: task.task_type,
-                  domainId: task.practice_domain_id,
+                  taskType: String(fd.get("taskType") ?? "") || null,
+                  domainId: String(fd.get("domainId") ?? "") || null,
+                  // Tags are edited live by the TagEditor below; keep the current set here.
                   tagIds: task.tags.map((t) => t.id),
                 }),
               { success: "저장했습니다." },
@@ -197,7 +208,13 @@ function TaskDetail({
             <Input id="task-title" name="title" defaultValue={task.title} required maxLength={200} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="작업 유형" htmlFor="task-template">
+            <Field label="유형" htmlFor="task-type">
+              <TypeSelect id="task-type" name="taskType" defaultValue={task.task_type} />
+            </Field>
+            <Field label="영역" htmlFor="task-domain">
+              <DomainSelect id="task-domain" name="domainId" domains={domains} defaultValue={task.practice_domain_id} />
+            </Field>
+            <Field label="템플릿" htmlFor="task-template">
               <Input
                 id="task-template"
                 name="template"
@@ -256,6 +273,11 @@ function TaskDetail({
             저장
           </Button>
         </form>
+
+        <section aria-label="태그" className="space-y-1.5">
+          <h3 className="text-sm font-semibold">태그</h3>
+          <TagEditor key={task.id} taskId={task.id} tags={task.tags} allTags={tags} />
+        </section>
 
         {/* ── Schedule (keyboard / mobile alternative to drag, spec §13) ── */}
         {isOpen && (

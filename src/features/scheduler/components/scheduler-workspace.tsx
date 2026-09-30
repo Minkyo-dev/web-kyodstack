@@ -10,7 +10,7 @@ import type {
   TaskPlanActual,
 } from "../domain/work-session.types";
 import type { DurationGroup } from "../utils/estimator";
-import type { DomainRef } from "@/features/classification/domain/classification.types";
+import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
 import { groupLabels } from "@/features/classification/utils/labels";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
@@ -55,13 +55,14 @@ export type SchedulerWorkspaceProps = {
   planActual: Record<string, TaskPlanActual>;
   durationGroups: DurationGroup[];
   domains: DomainRef[];
+  tags: TagRef[];
   projectOptions: ProjectOption[];
   recommendations: PendingRecommendation[];
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual, durationGroups, domains, projectOptions, recommendations } =
+  const { sessions, activeSession, reflection, planActual, durationGroups, domains, tags, projectOptions, recommendations } =
     props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const labels = useMemo(() => groupLabels(domains), [domains]);
@@ -150,6 +151,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           durationGroups={durationGroups}
           labels={labels}
           recommendations={recommendations}
+          tags={tags}
+          domains={domains}
           planActual={planActual}
           upcomingTaskIds={upcomingTaskIds}
           onStartTask={startTask}
@@ -218,6 +221,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         activeSession={activeSession}
         durationGroups={durationGroups}
         labels={labels}
+        tags={tags}
+        domains={domains}
         projectOptions={projectOptions}
         onStartTask={startTask}
         templates={templates}

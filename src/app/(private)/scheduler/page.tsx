@@ -15,7 +15,7 @@ import {
 } from "@/features/scheduler/queries/session.queries";
 import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
 import { loadDurationGroups } from "@/features/scheduler/services/duration-groups.service";
-import { listDomainRefs } from "@/features/classification/queries/classification.queries";
+import { listDomainRefs, listTags } from "@/features/classification/queries/classification.queries";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
@@ -68,6 +68,7 @@ export default async function SchedulerPage({
     reflection,
     durationGroups,
     domains,
+    tags,
     projectOptions,
     recommendations,
   ] = await Promise.all([
@@ -79,6 +80,7 @@ export default async function SchedulerPage({
     getDailyReflection(supabase, today),
     loadDurationGroups(supabase, user.id),
     listDomainRefs(supabase, user.id),
+    listTags(supabase, user.id),
     listProjectOptions(supabase),
     listPendingRecommendations(supabase, { date: today }),
   ]);
@@ -102,6 +104,7 @@ export default async function SchedulerPage({
       planActual={planActual}
       durationGroups={durationGroups}
       domains={domains}
+      tags={tags}
       projectOptions={projectOptions}
       recommendations={recommendations}
     />

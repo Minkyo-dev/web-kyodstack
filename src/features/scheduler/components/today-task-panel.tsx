@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
@@ -11,6 +12,10 @@ import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.typ
 import { partialTask } from "../utils/focus";
 import { estimateDuration, type DurationGroup, type GroupLabels } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
+import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
+import { parseQuickAdd } from "@/features/classification/utils/quick-add";
+import { TypeSelect } from "@/features/classification/components/classification-fields";
+import { TokenInput } from "@/features/classification/components/token-input";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 
@@ -23,6 +28,8 @@ export function TodayTaskPanel({
   durationGroups,
   labels,
   recommendations,
+  tags,
+  domains,
   planActual,
   upcomingTaskIds,
   onStartTask,
@@ -36,6 +43,8 @@ export function TodayTaskPanel({
   durationGroups: DurationGroup[];
   labels: GroupLabels;
   recommendations: PendingRecommendation[];
+  tags: TagRef[];
+  domains: DomainRef[];
   planActual: Record<string, TaskPlanActual>;
   /** Tasks with a planned block that hasn't ended yet. */
   upcomingTaskIds: Set<string>;
@@ -95,7 +104,7 @@ export function TodayTaskPanel({
         </span>
       </div>
 
-      <TaskQuickCreate templates={templates} today={today} />
+      <TaskQuickCreate templates={templates} today={today} tags={tags} domains={domains} />
 
       <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="오늘 할 일 목록">
         {open.length === 0 && completed.length === 0 && (
@@ -156,10 +165,24 @@ export function TodayTaskPanel({
   );
 }
 
-function TaskQuickCreate({ templates, today }: { templates: TaskTemplate[]; today: string }) {
+function TaskQuickCreate({
+  templates,
+  today,
+  tags,
+  domains,
+}: {
+  templates: TaskTemplate[];
+  today: string;
+  tags: TagRef[];
+  domains: DomainRef[];
+}) {
   const { run, pending } = useActionRunner();
   const formRef = useRef<HTMLFormElement>(null);
   const [showMore, setShowMore] = useState(false);
+  // Remount the token input after a create: it keeps its own text state.
+  const [resetKey, setResetKey] = useState(0);
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [domainId, setDomainId] = useState<string | null>(null);
 
   return (
     <form
@@ -168,31 +191,54 @@ function TaskQuickCreate({ templates, today }: { templates: TaskTemplate[]; toda
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
+        const parsed = parseQuickAdd(String(fd.get("title") ?? ""));
+        if (!parsed.title) {
+          toast.error("제목을 입력해 주세요.");
+          return;
+        }
         const estimate = String(fd.get("estimate") ?? "").trim();
         const template = String(fd.get("template") ?? "").trim();
+        const taskType = String(fd.get("taskType") ?? "");
         run(
           () =>
             createTaskAction({
-              title: fd.get("title"),
+              title: parsed.title,
               userEstimatedMinutes: estimate ? Number(estimate) : undefined,
               templateName: template || undefined,
               targetDate: today,
+              taskType: taskType || undefined,
+              tagIds,
+              tagNames: parsed.tags,
+              domainId: domainId ?? undefined,
+              domainName: domainId ? undefined : (parsed.domain ?? undefined),
             }),
-          { onSuccess: () => formRef.current?.reset() },
+          {
+            onSuccess: (r) => {
+              formRef.current?.reset();
+              setResetKey((k) => k + 1);
+              setTagIds([]);
+              setDomainId(null);
+              if (r.domainCreated) toast.success(`새 영역 ${r.domainCreated}을 만들었어요`);
+            },
+          },
         );
       }}
     >
-      <div className="flex gap-1.5">
+      <div className="flex items-start gap-1.5">
         <label htmlFor="quick-task-title" className="sr-only">
           새 할 일
         </label>
-        <Input
+        <TokenInput
+          key={resetKey}
           id="quick-task-title"
           name="title"
-          placeholder="할 일 추가"
-          required
-          maxLength={200}
-          autoComplete="off"
+          placeholder="할 일 추가 (#태그 @영역)"
+          tags={tags}
+          domains={domains}
+          selectedTagIds={tagIds}
+          onSelectedTagIdsChange={setTagIds}
+          selectedDomainId={domainId}
+          onSelectedDomainIdChange={setDomainId}
           onFocus={() => setShowMore(true)}
         />
         <Button type="submit" size="icon" disabled={pending} aria-label="할 일 추가">
@@ -200,8 +246,14 @@ function TaskQuickCreate({ templates, today }: { templates: TaskTemplate[]; toda
         </Button>
       </div>
       {showMore && (
-        <div className="flex gap-1.5">
-          <div className="w-24 shrink-0">
+        <div className="grid grid-cols-[6rem_5rem_1fr] gap-1.5">
+          <div>
+            <label htmlFor="quick-task-type" className="sr-only">
+              유형
+            </label>
+            <TypeSelect id="quick-task-type" name="taskType" />
+          </div>
+          <div>
             <label htmlFor="quick-task-estimate" className="sr-only">
               예상 시간(분)
             </label>
@@ -216,22 +268,24 @@ function TaskQuickCreate({ templates, today }: { templates: TaskTemplate[]; toda
               placeholder="분"
             />
           </div>
-          <label htmlFor="quick-task-template" className="sr-only">
-            작업 유형
-          </label>
-          <Input
-            id="quick-task-template"
-            name="template"
-            list="task-template-options"
-            placeholder="작업 유형 (선택)"
-            maxLength={100}
-            autoComplete="off"
-          />
-          <datalist id="task-template-options">
-            {templates.map((t) => (
-              <option key={t.id} value={t.name} />
-            ))}
-          </datalist>
+          <div>
+            <label htmlFor="quick-task-template" className="sr-only">
+              템플릿
+            </label>
+            <Input
+              id="quick-task-template"
+              name="template"
+              list="task-template-options"
+              placeholder="템플릿 (선택)"
+              maxLength={100}
+              autoComplete="off"
+            />
+            <datalist id="task-template-options">
+              {templates.map((t) => (
+                <option key={t.id} value={t.name} />
+              ))}
+            </datalist>
+          </div>
         </div>
       )}
     </form>
