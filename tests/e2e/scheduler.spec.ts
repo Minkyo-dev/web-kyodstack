@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { cleanup, dbAsUser, dragTo, E2E_PREFIX, login, slotPoint } from "./helpers";
+import { cleanup, dbAsUser, dragTo, E2E_PREFIX, login, slotPoint, tomorrowColumn } from "./helpers";
 
 const savedEvent = (page: Page, title: string) =>
   page.locator(".fc-event.sched-block", { hasText: title });
@@ -22,7 +22,7 @@ test.describe("scheduler core", () => {
     await expect(item).toBeVisible();
 
     // Flow 2: drag to calendar → 60-min block (no history yet) → survives reload
-    const date = await page.locator("td.fc-timegrid-col.fc-day-today").getAttribute("data-date");
+    const date = await tomorrowColumn(page); // future slot: never "missed"
     expect(date).toBeTruthy();
     const itemBox = (await item.boundingBox())!;
     await dragTo(page, { x: itemBox.x + 40, y: itemBox.y + itemBox.height / 2 }, await slotPoint(page, date!, "10:00"));

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { cleanup, dbAsUser, dragTo, E2E_PREFIX, login, slotPoint } from "./helpers";
+import { cleanup, dbAsUser, dragTo, E2E_PREFIX, login, slotPoint, tomorrowColumn } from "./helpers";
 
 // Spec §69 acceptance (steps 2–7, 14–15, 18) and Phase 3 exit criteria.
 const TEMPLATE = `${E2E_PREFIX} Technical Blog`;
@@ -78,7 +78,7 @@ test.describe("duration learning", () => {
     await page.keyboard.press("Escape");
 
     // Drop at 10:00 → personalized 80-minute block 10:00–11:20.
-    const date = await page.locator("td.fc-timegrid-col.fc-day-today").getAttribute("data-date");
+    const date = await tomorrowColumn(page); // future slot: never "missed"
     const box = (await item.boundingBox())!;
     await dragTo(page, { x: box.x + 40, y: box.y + box.height / 2 }, await slotPoint(page, date!, "10:00"));
     await expect(savedEvent(page, title)).toContainText("10:00–11:20");

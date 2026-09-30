@@ -76,3 +76,18 @@ export async function pickDate(page: Page, trigger: Locator, date: string) {
   await cell.click();
   await expect(popup).toHaveCount(0);
 }
+
+/**
+ * Tomorrow's calendar column (local date). Blocks placed there are always in the future, so they never turn
+ * "missed" regardless of the time the suite runs. Navigates to tomorrow's week when it isn't shown.
+ */
+export async function tomorrowColumn(page: Page): Promise<string> {
+  const today = await page.locator("td.fc-timegrid-col.fc-day-today").getAttribute("data-date");
+  const d = new Date(`${today}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  const tomorrow = d.toISOString().slice(0, 10);
+  const col = page.locator(`td.fc-timegrid-col[data-date="${tomorrow}"]`);
+  if ((await col.count()) === 0) await page.goto(`/scheduler?week=${tomorrow}`);
+  await col.waitFor();
+  return tomorrow;
+}

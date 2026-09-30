@@ -93,6 +93,22 @@ DailyReview = `daily_reflections`.
     `end before pause`; `23505` second open session.
 - `task_plan_actual`: `actual_minutes` = focused minutes. Adds `paused_minutes`. `average_focus` comes from `work_logs`.
 
+## Stat engine (Improvement D2, ADR 0014)
+- `scheduler_settings`:
+  - `planned_work_days smallint[]` (default Mon–Fri; non-empty, values 0–6)
+  - `min_meaningful_minutes` (30, 5–480)
+  - `commit_lead_minutes` (120, 0–1440)
+- `stat_snapshots(user_id, computed_on, stat_type, scope, value, bias, typical_error, sample_count, window_start,
+  window_end, formula_version)`: unique per (user, day, stat, scope). Users only read; the nightly job writes.
+- Stat definitions `stats-v1`:
+
+| stat | window | min | definition |
+|---|---|---|---|
+| Calibration | 28 days (completed) | 8 (5 per type) | mean `100·min(A/P, P/A)`; P = blocks created before the first session, else the estimate; bias/error = median(A/P−1) / median(\|A/P−1\|) |
+| Reliability | 28 days (resolved) | 10 | mean commitment score × 100 (ADR 0014) |
+| Consistency | 42 days, work days from first activity to yesterday | 15 | share of work days with focused ≥ min meaningful |
+| Recovery | 42 days of misses | 5 | 100/75/50/25 by work days to the first meaningful day on the same task; 0 if none in 14 days or cancelled |
+
 ## Calendar planning (Improvement B, ADR 0012)
 - `schedule_blocks.status`: `planned | completed | skipped | cancelled | missed`. Only `mark_missed_blocks` sets
   `missed`. From `missed`, only `cancelled` is allowed (via `set_schedule_block_status` or `unschedule_block`), and
