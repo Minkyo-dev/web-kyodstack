@@ -35,7 +35,7 @@ export async function dbAsUser(): Promise<SupabaseClient> {
 
 export async function cleanup(db: SupabaseClient) {
   await db.from("tasks").delete().like("title", `${E2E_PREFIX}%`);
-  // Templates cascade into task_duration_profiles.
+  // Templates cascade into template_tags.
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
   // Projects cascade into milestones (their tasks were deleted above).
   await db.from("projects").delete().like("name", `${E2E_PREFIX}%`);

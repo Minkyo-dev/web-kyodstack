@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement D1 — classification + recommendation v2 (docs/superpowers/specs/2026-09-30-classification-recommendation-design.md)
+- [x] Task types, practice domains, tags (+ joins), duration groups; template names backfilled as tags (SQL tests, ADR 0013)
+- [x] Estimator v2 (type×domain → type → tag; range, confidence, reason); `task_duration_profiles` dropped
+- [x] Quick add `#tag @domain` with autocomplete; type/domain/tags in list and drawer; tag filter (`?tags=`)
+- [x] Classification management dialog (tags, domains, templates) and the untyped-template banner
+- [x] E2E `classification.spec.ts`; `duration-learning.spec.ts` runs through the tag fallback
+
 ## UI updates
 - [x] `/scheduler/projects` is one page: project list + create on the left, the selected project (`?project=`) with
       milestones and tasks on the right; `/scheduler/projects/[id]` redirects there

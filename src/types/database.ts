@@ -921,60 +921,6 @@ export type Database = {
           },
         ]
       }
-      task_duration_profiles: {
-        Row: {
-          calculated_at: string
-          complexity_bucket: number
-          ewma_plan_actual_ratio: number | null
-          median_actual_minutes: number | null
-          median_plan_actual_ratio: number | null
-          p75_actual_minutes: number | null
-          recommended_correction_factor: number | null
-          sample_count: number
-          task_template_id: string
-          user_id: string
-        }
-        Insert: {
-          calculated_at?: string
-          complexity_bucket?: number
-          ewma_plan_actual_ratio?: number | null
-          median_actual_minutes?: number | null
-          median_plan_actual_ratio?: number | null
-          p75_actual_minutes?: number | null
-          recommended_correction_factor?: number | null
-          sample_count?: number
-          task_template_id: string
-          user_id: string
-        }
-        Update: {
-          calculated_at?: string
-          complexity_bucket?: number
-          ewma_plan_actual_ratio?: number | null
-          median_actual_minutes?: number | null
-          median_plan_actual_ratio?: number | null
-          p75_actual_minutes?: number | null
-          recommended_correction_factor?: number | null
-          sample_count?: number
-          task_template_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_duration_profiles_task_template_id_user_id_fkey"
-            columns: ["task_template_id", "user_id"]
-            isOneToOne: false
-            referencedRelation: "task_templates"
-            referencedColumns: ["id", "user_id"]
-          },
-          {
-            foreignKeyName: "task_duration_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       task_tags: {
         Row: {
           tag_id: string

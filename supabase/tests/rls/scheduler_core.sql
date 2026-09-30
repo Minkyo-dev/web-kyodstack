@@ -137,7 +137,8 @@ declare
 begin
   foreach t in array array[
     'profiles', 'scheduler_settings', 'task_templates', 'tasks', 'schedule_blocks',
-    'schedule_block_revisions', 'work_sessions', 'daily_reflections', 'work_logs', 'work_session_pauses'
+    'schedule_block_revisions', 'work_sessions', 'daily_reflections', 'work_logs', 'work_session_pauses',
+    'tags', 'task_tags', 'template_tags', 'practice_domains', 'duration_groups'
   ] loop
     begin
       execute format('select count(*) from public.%I', t);

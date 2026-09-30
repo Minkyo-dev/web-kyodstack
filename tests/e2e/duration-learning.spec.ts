@@ -19,6 +19,9 @@ test.describe("duration learning", () => {
       .insert({ user_id: userId, name: TEMPLATE })
       .select("id")
       .single();
+    // Templates carry their name as a tag (D1): new tasks from the template inherit it.
+    const { data: tag } = await db.from("tags").insert({ user_id: userId, name: TEMPLATE }).select("id").single();
+    await db.from("template_tags").insert({ template_id: tpl!.id, tag_id: tag!.id, user_id: userId });
     const stamp = Date.now();
     const titles = [1, 2, 3].map((i) => `${E2E_PREFIX} 블로그 ${i} ${stamp}`);
     const { data: tasks, error } = await db
@@ -34,6 +37,7 @@ test.describe("duration learning", () => {
       )
       .select("id, title");
     expect(error).toBeNull();
+    await db.from("task_tags").insert(tasks!.map((t) => ({ task_id: t.id, tag_id: tag!.id, user_id: userId })));
     // Old dates so they never overlap the owner's real sessions.
     await db.from("work_sessions").insert(
       tasks!.map((t, i) => ({
@@ -52,23 +56,16 @@ test.describe("duration learning", () => {
       await page.getByRole("checkbox", { name: `${title} 완료로 표시` }).click();
       await expect(page.getByRole("checkbox", { name: `${title} 완료 취소` })).toBeVisible();
     }
-    await expect
-      .poll(async () => {
-        const { data } = await db
-          .from("task_duration_profiles")
-          .select("sample_count, recommended_correction_factor")
-          .eq("task_template_id", tpl!.id)
-          .eq("complexity_bucket", 0)
-          .maybeSingle();
-        return data ? [data.sample_count, Number(data.recommended_correction_factor)] : null;
-      })
-      .toEqual([3, 1.3333]);
+    const groupCount = async () =>
+      (await db.from("duration_groups").select("sample_count").eq("group_key", `tag:${tag!.id}`).maybeSingle()).data
+        ?.sample_count ?? 0;
+    await expect.poll(groupCount).toBe(3);
 
     // New similar task: estimate 60 → recommended 80, with an explanation.
     const title = `${E2E_PREFIX} 기술 블로그 새 글 ${stamp}`;
     await page.getByLabel("새 할 일").fill(title);
     await page.getByLabel("예상 시간(분)").fill("60");
-    await page.getByLabel("작업 유형").fill(TEMPLATE);
+    await page.getByLabel("템플릿").fill(TEMPLATE);
     await page.getByRole("button", { name: "할 일 추가" }).click();
     const item = page.locator("[data-draggable-task]", { hasText: title });
     await expect(item).toContainText("추천 1h 20m");
@@ -76,8 +73,8 @@ test.describe("duration learning", () => {
     await page.getByRole("button", { name: title, exact: true }).click();
     const drawer = page.getByRole("dialog", { name: title });
     await expect(drawer).toContainText("예상 1h → 추천 1h 20m");
-    // All samples share complexity 3, so the more specific template+complexity profile wins (§26.6).
-    await expect(drawer).toContainText("비슷한 완료 작업 3개 (난이도 3) 기준, 보통 예상보다 33% 더 걸립니다");
+    // v2: no type yet, so the template-name tag group drives it (D1 spec §2).
+    await expect(drawer).toContainText(`#${TEMPLATE} 태그 작업 3개 기준 · 신뢰도 보통`);
     await page.keyboard.press("Escape");
 
     // Drop at 10:00 → personalized 80-minute block 10:00–11:20.
@@ -96,13 +93,7 @@ test.describe("duration learning", () => {
     // Reopening removes a sample → back to cold start (no false confidence, §26.4).
     await page.getByRole("checkbox", { name: `${titles[0]} 완료 취소` }).click();
     await expect(item).not.toContainText("추천", { timeout: 15_000 });
-    const { data: after } = await db
-      .from("task_duration_profiles")
-      .select("sample_count, recommended_correction_factor")
-      .eq("task_template_id", tpl!.id)
-      .eq("complexity_bucket", 0)
-      .single();
-    expect(after).toEqual({ sample_count: 2, recommended_correction_factor: null });
+    await expect.poll(groupCount).toBe(2);
   });
 });
 

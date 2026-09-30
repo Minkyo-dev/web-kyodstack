@@ -19,14 +19,27 @@ This file lists only the **differences and additions** relative to the spec, plu
   Scheduler access requires login, and the RLS test asserts `insufficient_privilege` for anon.
 - Portfolio table renamed to `portfolio_projects` (ADR 0001).
 
-## task_duration_profiles (Phase 3)
-- A derived cache. `refreshTemplateProfile(templateId)` recomputes every bucket of one template from
-  `task_plan_actual` (completed tasks) and deletes buckets that lost all samples, so it doubles as that template's rebuild.
-- A sample is a completed task with a template, 1 min ≤ actual ≤ 16 h, and a base estimate from the user or the template
-  (the generic 60 doesn't count). Its base is the task's **current** estimate: editing the estimate of a completed task
-  retrains the profile.
-- `recommended_correction_factor` is null below 3 samples. Otherwise it is `clamp(median(clamp(actual/base, .5, 3)), .75, 2)`
-  over the 20 most recent samples. Estimator version `v1` (`ESTIMATOR_VERSION`).
+## Classification + duration groups (Improvement D1, ADR 0013)
+- `tasks.task_type` / `task_templates.task_type`: a fixed list (reading, study, coding, debugging, documentation,
+  writing, meeting, planning, design, research, exercise, other), nullable.
+- `practice_domains(user_id, name, parent_id)`: a user-owned tree. The name is unique per user case-insensitively and
+  has no `@`. `tasks.practice_domain_id` / `task_templates.practice_domain_id` are set null when the domain is
+  deleted. Cycles are rejected in the service (`wouldCycle`).
+- `tags(user_id, name, color)`: the name is 1–100 characters without `#` or `,`, unique per user case-insensitively.
+  `task_tags` and `template_tags` are joins with composite ownership FKs (cascade). Deleting a tag removes only links.
+- Migration backfill: every template name became a tag attached to the template and to its tasks
+  (`backfill_template_tags`, owner-only).
+- `duration_groups(user_id, group_key, samples, sample_count)`: a derived cache (replaced `task_duration_profiles`).
+  - `group_key` is `type:<t>|domain:<id>`, `type:<t>` or `tag:<id>`.
+  - `samples` holds the 20 most recent `{base, actual, completed_at}`. `actual` is focused minutes; `base` is the
+    user/template estimate or null.
+  - A full rebuild (the 500 most recent completed tasks) runs after completion/reopen/learning-input edits and nightly.
+- **Estimator v2:**
+  - Group order: type×domain → type → the task's tag with the most samples (≥ 3 usable samples each).
+  - Quantity: with a task estimate, `estimate × clamp(actual/base, .5, 3)`; without one, `actual`.
+  - Point: median, rounded up to 5 and clamped to the block limits. Range: p25–p75.
+  - Confidence: high (n ≥ 5, IQR/median ≤ .25), medium (n ≥ 3, ≤ .5), low (shown as a range only; a drop uses the
+    estimate if any).
 
 ## projects / milestones (Phase 4)
 - Both have `unique (id, user_id)`, and milestones also have `unique (id, project_id)`.
