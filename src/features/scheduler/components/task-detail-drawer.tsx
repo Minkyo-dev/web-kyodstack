@@ -185,6 +185,9 @@ function TaskDetail({
                   templateName: String(fd.get("template") ?? "").trim() || null,
                   projectId: String(fd.get("projectId") ?? "") || null,
                   milestoneId: String(fd.get("milestoneId") ?? "") || null,
+                  taskType: task.task_type,
+                  domainId: task.practice_domain_id,
+                  tagIds: task.tags.map((t) => t.id),
                 }),
               { success: "저장했습니다." },
             );

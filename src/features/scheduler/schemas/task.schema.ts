@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isLocalDateString } from "../utils/timezone";
+import { TASK_TYPES } from "@/features/classification/domain/classification.types";
 
 const localDate = z.string().refine(isLocalDateString, "날짜 형식이 올바르지 않습니다.");
 const score = z.coerce.number().int().min(1).max(5);
@@ -14,6 +15,13 @@ export const createTaskSchema = z.object({
   templateName: z.string().trim().max(100).optional(),
   projectId: z.uuid().nullable().optional(),
   milestoneId: z.uuid().nullable().optional(),
+  taskType: z.enum(TASK_TYPES).optional(),
+  domainId: z.uuid().nullable().optional(),
+  /** "@name" from quick add: found case-insensitively or created. */
+  domainName: z.string().trim().min(1).max(60).optional(),
+  tagIds: z.array(z.uuid()).max(20).optional(),
+  /** "#name" tokens from quick add: found case-insensitively or created. */
+  tagNames: z.array(z.string().trim().min(1).max(100)).max(20).optional(),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
@@ -30,5 +38,8 @@ export const updateTaskSchema = z.object({
   /** A milestone implies its project (spec §44). */
   projectId: z.uuid().nullable(),
   milestoneId: z.uuid().nullable(),
+  taskType: z.enum(TASK_TYPES).nullable(),
+  domainId: z.uuid().nullable(),
+  tagIds: z.array(z.uuid()).max(20),
 });
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;

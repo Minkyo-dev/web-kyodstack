@@ -4,6 +4,8 @@ import { AppError, fromDbError } from "@/lib/errors";
 import type { Task } from "../domain/task.types";
 import { normalizeTask, TASK_SELECT } from "../queries/select";
 import { rebuildDurationGroupsQuietly } from "./duration-groups.service";
+import { ensureDomain, ensureTags, setTaskTags } from "@/features/classification/services/classification.service";
+import type { TaskType } from "@/features/classification/domain/classification.types";
 import { resolveTaskLink } from "@/features/projects/services/project.service";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 
@@ -48,9 +50,40 @@ export async function getTask(ctx: ActionContext, taskId: string): Promise<Task>
   return normalizeTask(data) as unknown as Task;
 }
 
-export async function createTask(ctx: ActionContext, input: CreateTaskInput): Promise<Task> {
+/** Template preset values (D1 spec §1): type, domain and tags a new task inherits. */
+async function templatePreset(ctx: ActionContext, templateId: string | null) {
+  if (!templateId) return { taskType: null, domainId: null, tagIds: [] as string[] };
+  const { data, error } = await ctx.supabase
+    .from("task_templates")
+    .select("task_type, practice_domain_id, tags:template_tags!template_tags_template_id_user_id_fkey(tag_id)")
+    .eq("id", templateId)
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (error) throw fromDbError(error);
+  return {
+    taskType: (data?.task_type ?? null) as TaskType | null,
+    domainId: data?.practice_domain_id ?? null,
+    tagIds: (data?.tags ?? []).map((t) => t.tag_id),
+  };
+}
+
+export type CreatedTask = { task: Task; domainCreated: string | null };
+
+export async function createTask(ctx: ActionContext, input: CreateTaskInput): Promise<CreatedTask> {
   const templateId = await resolveTemplateId(ctx, input.templateName);
   const link = await resolveTaskLink(ctx, input);
+  const preset = await templatePreset(ctx, templateId);
+
+  let domainId = input.domainId ?? preset.domainId;
+  let domainCreated: string | null = null;
+  if (!input.domainId && input.domainName) {
+    const ensured = await ensureDomain(ctx, input.domainName);
+    domainId = ensured.domain.id;
+    if (ensured.created) domainCreated = ensured.domain.name;
+  }
+  const named = input.tagNames?.length ? await ensureTags(ctx, input.tagNames) : [];
+  const tagIds = [...new Set([...preset.tagIds, ...(input.tagIds ?? []), ...named.map((t) => t.id)])];
+
   const { data, error } = await ctx.supabase
     .from("tasks")
     .insert({
@@ -59,12 +92,15 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
       user_estimated_minutes: input.userEstimatedMinutes ?? null,
       target_date: input.targetDate ?? null,
       template_id: templateId,
+      task_type: input.taskType ?? preset.taskType,
+      practice_domain_id: domainId,
       ...link,
     })
-    .select(TASK_SELECT)
+    .select("id")
     .single();
   if (error) throw fromDbError(error);
-  return normalizeTask(data) as unknown as Task;
+  if (tagIds.length > 0) await setTaskTags(ctx, data.id, tagIds);
+  return { task: await getTask(ctx, data.id), domainCreated };
 }
 
 export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Promise<Task> {
@@ -81,6 +117,8 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
       priority: input.priority,
       complexity: input.complexity,
       template_id: templateId,
+      task_type: input.taskType,
+      practice_domain_id: input.domainId,
       ...link,
     })
     .eq("id", input.taskId)
@@ -89,15 +127,21 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
     .maybeSingle();
   if (error) throw fromDbError(error);
   if (!data) throw new AppError("NOT_FOUND");
+  await setTaskTags(ctx, input.taskId, input.tagIds);
 
+  const sameTags =
+    before.tags.length === input.tagIds.length && before.tags.every((t) => input.tagIds.includes(t.id));
   const learningInputsChanged =
     before.template_id !== templateId ||
     before.user_estimated_minutes !== input.userEstimatedMinutes ||
-    before.complexity !== input.complexity;
+    before.task_type !== input.taskType ||
+    before.practice_domain_id !== input.domainId ||
+    !sameTags;
   if (before.status === "completed" && learningInputsChanged) {
     await rebuildDurationGroupsQuietly(ctx);
   }
-  return normalizeTask(data) as unknown as Task;
+  // Re-read so the returned task carries the new tag set.
+  return getTask(ctx, input.taskId);
 }
 
 /**

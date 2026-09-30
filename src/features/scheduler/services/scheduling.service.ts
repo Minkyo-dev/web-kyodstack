@@ -111,7 +111,7 @@ export async function createTaskInRange(
 ): Promise<ScheduleBlock> {
   assertRange(input.startsAt, input.endsAt);
   const { timezone } = await getSchedulerContext(ctx.supabase, ctx.user.id);
-  const task = await createTask(ctx, {
+  const { task } = await createTask(ctx, {
     title: input.title,
     userEstimatedMinutes: Math.round(minutesBetween(input.startsAt, input.endsAt)),
     targetDate: toLocalDate(input.startsAt, timezone),
