@@ -4,7 +4,9 @@ import { MilestoneCreateForm, MilestoneEditor, ProjectEditForm, TaskQuickAdd } f
 import { ProjectTaskRow } from "./project-task-row";
 import { MILESTONE_STATUS_LABEL, PROJECT_STATUS_LABEL } from "../domain/project.types";
 import type { ProjectOverview } from "../queries/project.queries";
-import { estimateDuration, type StoredProfile } from "@/features/scheduler/utils/estimator";
+import { estimateDuration, type DurationGroup } from "@/features/scheduler/utils/estimator";
+import type { DomainRef } from "@/features/classification/domain/classification.types";
+import { groupLabels } from "@/features/classification/utils/labels";
 import type { SchedulerSettings, Task } from "@/features/scheduler/domain/task.types";
 import type { TaskPlanActual } from "@/features/scheduler/domain/work-session.types";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
@@ -20,16 +22,17 @@ export function ProjectDetail({
   project: ProjectOverview;
   planActual: Record<string, TaskPlanActual>;
   recommendations: PendingRecommendation[];
-  ctx: { today: string; settings: SchedulerSettings; profiles: StoredProfile[] };
+  ctx: { today: string; settings: SchedulerSettings; groups: DurationGroup[]; domains: DomainRef[] };
 }) {
   const closed = project.status === "completed" || project.status === "cancelled";
+  const labels = groupLabels(ctx.domains);
 
   const rows = (tasks: Task[]) =>
     tasks.map((t) => (
       <ProjectTaskRow
         key={t.id}
         task={t}
-        estimateMinutes={estimateDuration(t, ctx.settings, ctx.profiles).minutes}
+        estimateMinutes={estimateDuration(t, ctx.settings, ctx.groups, labels).minutes}
         actualMinutes={planActual[t.id]?.actual_minutes ?? 0}
       />
     ));

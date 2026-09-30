@@ -52,8 +52,9 @@ export function TaskListItem({
         "data-title": task.title,
         "data-minutes": String(estimate!.minutes),
         "data-partial": partial?.remainingMinutes ? "" : undefined,
-        "data-recommended": learned ? String(estimate!.minutes) : undefined,
+        "data-recommended": learned && estimate!.confidence !== "low" ? String(estimate!.minutes) : undefined,
         "data-samples": learned ? String(estimate!.sampleCount) : undefined,
+        "data-reason": learned ? (estimate!.reason ?? undefined) : undefined,
       })}
     >
       {draggable ? (
@@ -101,8 +102,14 @@ export function TaskListItem({
           {task.template && <span>{task.template.name}</span>}
           {task.user_estimated_minutes && <span>예상 {formatMinutes(task.user_estimated_minutes)}</span>}
           {learned && (
-            <span title={`비슷한 완료 작업 ${estimate!.sampleCount}개 기준`}>
-              → 추천 {formatMinutes(estimate!.minutes)}
+            <span title={estimate!.reason ?? undefined}>
+              {estimate!.confidence === "low"
+                ? `→ 예상 범위 ${formatMinutes(estimate!.range!.low)}–${formatMinutes(estimate!.range!.high)}`
+                : `→ 추천 ${formatMinutes(estimate!.minutes)}${
+                    estimate!.range && estimate!.range.low !== estimate!.range.high
+                      ? ` (${formatMinutes(estimate!.range.low)}–${formatMinutes(estimate!.range.high)})`
+                      : ""
+                  }`}
             </span>
           )}
           {partial && (

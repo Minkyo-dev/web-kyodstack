@@ -146,16 +146,16 @@ export function WeeklyCalendar({
       const block: CalendarBlock = { ...result.data, task: { ...task, status: task.status === "inbox" ? "planned" : task.status } };
       setBlocks((prev) => [...prev, block]);
       warnOverlap(block.id, new Date(block.starts_at), new Date(block.ends_at));
-      offerKeepEstimate(block, task.user_estimated_minutes, Number(info.event.extendedProps.sampleCount ?? 0));
+      offerKeepEstimate(block, task.user_estimated_minutes, (info.event.extendedProps.reason as string | null) ?? null);
     }
   }
 
   // Recommendation → user confirmation (requirements §7): keep my estimate with one click.
-  function offerKeepEstimate(block: CalendarBlock, estimateMin: number | null, samples: number) {
+  function offerKeepEstimate(block: CalendarBlock, estimateMin: number | null, reason: string | null) {
     const blockMin = Math.round((new Date(block.ends_at).getTime() - new Date(block.starts_at).getTime()) / 60_000);
     if (block.source !== "duration_recommendation" || !estimateMin || Math.abs(blockMin - estimateMin) < 10) return;
     toast(`추천 ${formatMinutes(blockMin)}으로 잡았어요`, {
-      description: samples > 0 ? `비슷한 작업 ${samples}개 기준` : undefined,
+      description: reason ? `${reason} 기준` : undefined,
       duration: 10_000,
       action: {
         label: `${formatMinutes(estimateMin)} 유지`,

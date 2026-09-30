@@ -3,7 +3,7 @@ import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext } from "../domain/task.types";
-import { BLOCK_SELECT } from "./select";
+import { BLOCK_SELECT, normalizeTask } from "./select";
 
 /** Non-cancelled blocks overlapping [startIso, endIso). Always bounded (spec §50). */
 export async function listBlocksInRange(
@@ -19,7 +19,7 @@ export async function listBlocksInRange(
     .gt("ends_at", startIso)
     .order("starts_at");
   if (error) throw fromDbError(error);
-  return data as unknown as CalendarBlock[];
+  return (data ?? []).map((b) => ({ ...b, task: normalizeTask(b.task) })) as unknown as CalendarBlock[];
 }
 
 export async function getSchedulerContext(

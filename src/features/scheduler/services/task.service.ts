@@ -2,8 +2,8 @@ import "server-only";
 import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { Task } from "../domain/task.types";
-import { TASK_SELECT } from "../queries/select";
-import { refreshProfilesQuietly } from "./duration-profile.service";
+import { normalizeTask, TASK_SELECT } from "../queries/select";
+import { rebuildDurationGroupsQuietly } from "./duration-groups.service";
 import { resolveTaskLink } from "@/features/projects/services/project.service";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 
@@ -45,7 +45,7 @@ export async function getTask(ctx: ActionContext, taskId: string): Promise<Task>
     .maybeSingle();
   if (error) throw fromDbError(error);
   if (!data) throw new AppError("NOT_FOUND");
-  return data as Task;
+  return normalizeTask(data) as unknown as Task;
 }
 
 export async function createTask(ctx: ActionContext, input: CreateTaskInput): Promise<Task> {
@@ -64,7 +64,7 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
     .select(TASK_SELECT)
     .single();
   if (error) throw fromDbError(error);
-  return data as Task;
+  return normalizeTask(data) as unknown as Task;
 }
 
 export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Promise<Task> {
@@ -95,9 +95,9 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
     before.user_estimated_minutes !== input.userEstimatedMinutes ||
     before.complexity !== input.complexity;
   if (before.status === "completed" && learningInputsChanged) {
-    await refreshProfilesQuietly(ctx, [before.template_id, templateId]);
+    await rebuildDurationGroupsQuietly(ctx);
   }
-  return data as Task;
+  return normalizeTask(data) as unknown as Task;
 }
 
 /**
@@ -163,7 +163,7 @@ export async function transitionTask(
 
   // Completion adds (reopen removes) a learning sample (spec §61).
   if (kind === "complete" || kind === "reopen") {
-    await refreshProfilesQuietly(ctx, [current.template_id]);
+    await rebuildDurationGroupsQuietly(ctx);
   }
-  return data as Task;
+  return normalizeTask(data) as unknown as Task;
 }

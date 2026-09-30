@@ -33,7 +33,7 @@ import {
 import { BLOCK_STATUS_LABEL, TASK_STATUS_LABEL } from "../domain/scheduler.constants";
 import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
 import { readScore, ScoreInput } from "./score-input";
-import { estimateDuration, type StoredProfile } from "../utils/estimator";
+import { estimateDuration, type DurationGroup, type GroupLabels } from "../utils/estimator";
 import { DurationInsight } from "./duration-insight";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { CalendarBlock } from "../domain/schedule.types";
@@ -47,7 +47,8 @@ type SessionProps = {
   sessions: SessionWithTask[];
   planActual: TaskPlanActual | null;
   activeSession: SessionWithTask | null;
-  durationProfiles: StoredProfile[];
+  durationGroups: DurationGroup[];
+  labels: GroupLabels;
   projectOptions: ProjectOption[];
   /** Start this task; with another timer running this opens the switch dialog. */
   onStartTask: (task: Task) => void;
@@ -59,7 +60,8 @@ export function TaskDetailDrawer({
   sessions,
   planActual,
   activeSession,
-  durationProfiles,
+  durationGroups,
+  labels,
   projectOptions,
   onStartTask,
   templates,
@@ -85,7 +87,8 @@ export function TaskDetailDrawer({
             sessions={sessions}
             planActual={planActual}
             activeSession={activeSession}
-            durationProfiles={durationProfiles}
+            durationGroups={durationGroups}
+            labels={labels}
             projectOptions={projectOptions}
             onStartTask={onStartTask}
             templates={templates}
@@ -105,7 +108,8 @@ function TaskDetail({
   sessions,
   planActual,
   activeSession,
-  durationProfiles,
+  durationGroups,
+  labels,
   projectOptions,
   onStartTask,
   templates,
@@ -129,7 +133,7 @@ function TaskDetail({
   // Starting from a block while another timer runs belongs to sub-project B.
   const canStartBlock = isOpen && activeSession === null;
 
-  const estimate = estimateDuration(task, settings, durationProfiles);
+  const estimate = estimateDuration(task, settings, durationGroups, labels);
 
   return (
     <>
@@ -256,7 +260,7 @@ function TaskDetail({
             <h3 id="schedule-heading" className="text-sm font-semibold">
               일정에 추가
             </h3>
-            <DurationInsight task={task} estimate={estimate} profiles={durationProfiles} />
+            <DurationInsight estimate={estimate} />
             <form
               className="flex items-end gap-2"
               onSubmit={(e) => {

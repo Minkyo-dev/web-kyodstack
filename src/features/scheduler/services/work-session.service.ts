@@ -12,17 +12,17 @@ import type {
 } from "../schemas/work-session.schema";
 import { minutesBetween } from "../utils/duration";
 import { sessionTooLong } from "../utils/focus";
-import { refreshProfilesQuietly } from "./duration-profile.service";
+import { rebuildDurationGroupsQuietly } from "./duration-groups.service";
 
 /** Changing a completed task's actual time changes its learning sample. */
 async function refreshIfCompleted(ctx: ActionContext, taskId: string) {
   const { data } = await ctx.supabase
     .from("tasks")
-    .select("status, template_id")
+    .select("status")
     .eq("id", taskId)
     .eq("user_id", ctx.user.id)
     .maybeSingle();
-  if (data?.status === "completed") await refreshProfilesQuietly(ctx, [data.template_id]);
+  if (data?.status === "completed") await rebuildDurationGroupsQuietly(ctx);
 }
 
 const CLOCK_SKEW_MS = 60_000;

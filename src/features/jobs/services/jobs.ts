@@ -3,7 +3,7 @@ import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { generateDailyRecommendations } from "@/features/ai/services/task-recommendation.service";
 import { generateWeeklyReview } from "@/features/ai/services/weekly-review.service";
 import { loadWeekInput } from "@/features/scheduler/queries/week.queries";
-import { rebuildUserProfiles } from "@/features/scheduler/services/duration-profile.service";
+import { rebuildDurationGroups } from "@/features/scheduler/services/duration-groups.service";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
@@ -64,8 +64,8 @@ export function runDurationProfileRefresh(admin: SupabaseServerClient, now = new
     (u) => todayLocalDate(u.timezone, now),
     async (ctx): Promise<JobOutcome> => {
       const missed = await markMissedBlocks(ctx.supabase, ctx.user.id);
-      const templates = await rebuildUserProfiles(ctx);
-      return { status: "succeeded", detail: { templates, missed } };
+      const groups = await rebuildDurationGroups(ctx);
+      return { status: "succeeded", detail: { groups, missed } };
     },
   );
 }

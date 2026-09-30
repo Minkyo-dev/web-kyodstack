@@ -16,7 +16,10 @@ import type {
 } from "../schemas/schedule.schema";
 import { minutesBetween } from "../utils/duration";
 import { toLocalDate } from "../utils/timezone";
-import { recommendDuration } from "./duration-estimator.service";
+import { estimateDuration } from "../utils/estimator";
+import { groupLabels } from "@/features/classification/utils/labels";
+import { listDomainRefs } from "@/features/classification/queries/classification.queries";
+import { loadDurationGroups } from "./duration-groups.service";
 import { createTask, getTask } from "./task.service";
 
 const MAX_BLOCK_MINUTES = 24 * 60;
@@ -42,7 +45,11 @@ export async function scheduleTask(
   let source: "manual" | "duration_recommendation" = "manual";
   if (!endsAt) {
     const { settings } = await getSchedulerContext(ctx.supabase, ctx.user.id);
-    const rec = await recommendDuration(ctx.supabase, ctx.user.id, task, settings);
+    const [groups, domains] = await Promise.all([
+      loadDurationGroups(ctx.supabase, ctx.user.id),
+      listDomainRefs(ctx.supabase, ctx.user.id),
+    ]);
+    const rec = estimateDuration(task, settings, groups, groupLabels(domains));
     endsAt = addMinutes(new Date(input.startsAt), rec.minutes).toISOString();
     source = "duration_recommendation";
     if (task.recommended_minutes !== rec.minutes) {

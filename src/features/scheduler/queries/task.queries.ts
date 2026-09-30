@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { fromDbError } from "@/lib/errors";
 import type { Task, TaskTemplate } from "../domain/task.types";
-import { TASK_SELECT } from "./select";
+import { normalizeTask, TASK_SELECT } from "./select";
 
 /**
  * Today list: open tasks due today, overdue, or undated, plus tasks
@@ -24,7 +24,7 @@ export async function listTodayTasks(
     .order("created_at", { ascending: true })
     .limit(200);
   if (error) throw fromDbError(error);
-  return sortForToday(data as Task[]);
+  return sortForToday((data ?? []).map((r) => normalizeTask(r)) as unknown as Task[]);
 }
 
 /** Open work first, completed last. */

@@ -1,14 +1,16 @@
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
-import { loadDurationProfiles } from "@/features/scheduler/services/duration-profile.service";
+import { loadDurationGroups } from "@/features/scheduler/services/duration-groups.service";
+import { listDomainRefs } from "@/features/classification/queries/classification.queries";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 
 /** What project pages need to estimate remaining work in the user's own terms. */
 export async function loadProjectContext(supabase: SupabaseServerClient, userId: string) {
-  const [context, profiles] = await Promise.all([
+  const [context, groups, domains] = await Promise.all([
     getSchedulerContext(supabase, userId),
-    loadDurationProfiles(supabase, userId),
+    loadDurationGroups(supabase, userId),
+    listDomainRefs(supabase, userId),
   ]);
-  return { ...context, profiles, today: todayLocalDate(context.timezone) };
+  return { ...context, groups, domains, today: todayLocalDate(context.timezone) };
 }

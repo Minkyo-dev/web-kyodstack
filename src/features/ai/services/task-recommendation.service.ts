@@ -3,7 +3,8 @@ import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import { daysUntil } from "@/features/projects/utils/progress";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
-import { loadDurationProfiles } from "@/features/scheduler/services/duration-profile.service";
+import { loadDurationGroups } from "@/features/scheduler/services/duration-groups.service";
+import { median } from "@/features/scheduler/utils/estimator";
 import { addLocalDays, localDayRange, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import {
   PROJECT_PLANNER_PROMPT_VERSION,
@@ -31,7 +32,7 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
   const today = todayLocalDate(timezone, now);
   const todayRange = localDayRange(today, timezone);
 
-  const [blocks, projects, milestones, tasks, profiles, templates] = await Promise.all([
+  const [blocks, projects, milestones, tasks, groups] = await Promise.all([
     ctx.supabase
       .from("schedule_blocks")
       .select("starts_at, ends_at, status")
@@ -57,10 +58,9 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
         `status.in.(inbox,planned,in_progress),completed_at.gte.${localDayRange(addLocalDays(today, -RECENT_DAYS, timezone), timezone).start}`,
       )
       .limit(500),
-    loadDurationProfiles(ctx.supabase, ctx.user.id),
-    ctx.supabase.from("task_templates").select("id, name").eq("user_id", ctx.user.id),
+    loadDurationGroups(ctx.supabase, ctx.user.id),
   ]);
-  for (const r of [blocks, projects, milestones, tasks, templates]) if (r.error) throw fromDbError(r.error);
+  for (const r of [blocks, projects, milestones, tasks]) if (r.error) throw fromDbError(r.error);
 
   const capacityMinutes = remainingCapacityMinutes({
     now,
@@ -78,7 +78,6 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
   }
 
   const openTitles = tasks.data!.filter((t) => t.status !== "completed").map((t) => t.title);
-  const templateName = new Map(templates.data!.map((t) => [t.id, t.name]));
 
   // Aggregated, minimal input (spec §32.1: no unrelated personal data).
   const input = {
@@ -110,13 +109,14 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
         .data!.filter((t) => t.project_id === p.id && !t.milestone_id && t.status !== "completed")
         .map((t) => t.title),
     })),
-    durationTendencies: profiles
-      .filter((p) => p.complexity_bucket === 0 && p.recommended_correction_factor !== null)
-      .map((p) => ({
-        taskType: templateName.get(p.task_template_id) ?? "unknown",
-        actualVsEstimate: p.recommended_correction_factor,
-        samples: p.sample_count,
-      })),
+    // Per task type: how actual time compares with the estimate (deterministic, from duration_groups).
+    durationTendencies: groups
+      .filter((g) => /^type:[a-z]+$/.test(g.group_key))
+      .map((g) => {
+        const ratios = g.samples.filter((x) => x.base).map((x) => x.actual / x.base!);
+        return { taskType: g.group_key.slice(5), actualVsEstimate: median(ratios), samples: g.sample_count };
+      })
+      .filter((x) => x.actualVsEstimate !== null),
     alreadyOpenTaskTitles: openTitles.slice(0, 100),
   };
 

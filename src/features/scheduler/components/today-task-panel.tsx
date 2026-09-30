@@ -9,7 +9,7 @@ import { createTaskAction } from "../actions/task.actions";
 import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
 import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
 import { partialTask } from "../utils/focus";
-import { estimateDuration, type StoredProfile } from "../utils/estimator";
+import { estimateDuration, type DurationGroup, type GroupLabels } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
@@ -20,7 +20,8 @@ export function TodayTaskPanel({
   settings,
   today,
   activeSession,
-  durationProfiles,
+  durationGroups,
+  labels,
   recommendations,
   planActual,
   upcomingTaskIds,
@@ -32,7 +33,8 @@ export function TodayTaskPanel({
   settings: SchedulerSettings;
   today: string;
   activeSession: SessionWithTask | null;
-  durationProfiles: StoredProfile[];
+  durationGroups: DurationGroup[];
+  labels: GroupLabels;
   recommendations: PendingRecommendation[];
   planActual: Record<string, TaskPlanActual>;
   /** Tasks with a planned block that hasn't ended yet. */
@@ -65,6 +67,7 @@ export function TodayTaskPanel({
               ? Number(itemEl.getAttribute("data-recommended"))
               : undefined,
             sampleCount: Number(itemEl.getAttribute("data-samples") ?? 0),
+            reason: itemEl.getAttribute("data-reason"),
           },
         }),
       });
@@ -101,7 +104,7 @@ export function TodayTaskPanel({
           </li>
         )}
         {open.map((task) => {
-          const est = estimateDuration(task, settings, durationProfiles);
+          const est = estimateDuration(task, settings, durationGroups, labels);
           const running = activeSession?.task_id === task.id;
           const partial = partialTask({
             status: task.status,

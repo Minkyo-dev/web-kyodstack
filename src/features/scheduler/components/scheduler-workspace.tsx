@@ -9,7 +9,9 @@ import type {
   SessionWithTask,
   TaskPlanActual,
 } from "../domain/work-session.types";
-import type { StoredProfile } from "../utils/estimator";
+import type { DurationGroup } from "../utils/estimator";
+import type { DomainRef } from "@/features/classification/domain/classification.types";
+import { groupLabels } from "@/features/classification/utils/labels";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 import { useActionRunner } from "@/hooks/use-action-runner";
@@ -51,16 +53,18 @@ export type SchedulerWorkspaceProps = {
   activeSession: SessionWithTask | null;
   reflection: DailyReflection | null;
   planActual: Record<string, TaskPlanActual>;
-  durationProfiles: StoredProfile[];
+  durationGroups: DurationGroup[];
+  domains: DomainRef[];
   projectOptions: ProjectOption[];
   recommendations: PendingRecommendation[];
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual, durationProfiles, projectOptions, recommendations } =
+  const { sessions, activeSession, reflection, planActual, durationGroups, domains, projectOptions, recommendations } =
     props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const labels = useMemo(() => groupLabels(domains), [domains]);
 
   // Any task visible anywhere on screen can be opened in the drawer.
   const tasksById = useMemo(() => {
@@ -83,7 +87,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
     if (!session) return { planned: null, estimate: null, prior: 0 };
     const block = session.schedule_block_id ? blocks.find((b) => b.id === session.schedule_block_id) : undefined;
     const task = tasksById.get(session.task_id);
-    const estimate = task ? estimateDuration(task, context.settings, durationProfiles).minutes : null;
+    const estimate = task ? estimateDuration(task, context.settings, durationGroups, labels).minutes : null;
     const prior = planActual[session.task_id]?.actual_minutes ?? 0;
     return {
       planned: sessionPlanMinutes({ block: block ?? null, estimateMinutes: estimate, priorActualMinutes: prior }),
@@ -143,7 +147,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           settings={context.settings}
           today={today}
           activeSession={activeSession}
-          durationProfiles={durationProfiles}
+          durationGroups={durationGroups}
+          labels={labels}
           recommendations={recommendations}
           planActual={planActual}
           upcomingTaskIds={upcomingTaskIds}
@@ -211,7 +216,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         sessions={selectedTask ? sessions.filter((x) => x.task_id === selectedTask.id) : []}
         planActual={selectedTask ? (planActual[selectedTask.id] ?? null) : null}
         activeSession={activeSession}
-        durationProfiles={durationProfiles}
+        durationGroups={durationGroups}
+        labels={labels}
         projectOptions={projectOptions}
         onStartTask={startTask}
         templates={templates}

@@ -2,9 +2,11 @@ import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { SchedulerSettings, Task } from "@/features/scheduler/domain/task.types";
-import { TASK_SELECT } from "@/features/scheduler/queries/select";
+import { normalizeTask, TASK_SELECT } from "@/features/scheduler/queries/select";
 import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
-import { estimateDuration, type StoredProfile } from "@/features/scheduler/utils/estimator";
+import { estimateDuration, type DurationGroup } from "@/features/scheduler/utils/estimator";
+import type { DomainRef } from "@/features/classification/domain/classification.types";
+import { groupLabels } from "@/features/classification/utils/labels";
 import type { TaskPlanActual } from "@/features/scheduler/domain/work-session.types";
 import type { Milestone, Project, ProjectOption } from "../domain/project.types";
 import { computeProgress, type Progress } from "../utils/progress";
@@ -21,13 +23,13 @@ export type ProjectOverview = Project & {
   nextMilestone: Milestone | null;
 };
 
-type Ctx = { settings: SchedulerSettings; profiles: StoredProfile[] };
+type Ctx = { settings: SchedulerSettings; groups: DurationGroup[]; domains: DomainRef[] };
 
 function progressOf(tasks: Task[], planActual: Record<string, TaskPlanActual>, ctx: Ctx) {
   return computeProgress(
     tasks.map((t) => ({
       status: t.status,
-      estimateMinutes: estimateDuration(t, ctx.settings, ctx.profiles).minutes,
+      estimateMinutes: estimateDuration(t, ctx.settings, ctx.groups, groupLabels(ctx.domains)).minutes,
       actualMinutes: planActual[t.id]?.actual_minutes ?? 0,
     })),
   );
@@ -66,7 +68,7 @@ async function loadTasks(supabase: SupabaseServerClient, projectId?: string) {
   if (projectId) q = q.eq("project_id", projectId);
   const { data, error } = await q.order("sort_order").order("created_at").limit(1000);
   if (error) throw fromDbError(error);
-  return data as Task[];
+  return (data ?? []).map((r) => normalizeTask(r)) as unknown as Task[];
 }
 
 /** Every project with milestone and task progress (spec §29). A personal-scale read. */
