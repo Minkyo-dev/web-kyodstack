@@ -60,6 +60,11 @@ export function TodayTaskPanel({
             taskId: itemEl.getAttribute("data-task-id"),
             // Partial tasks keep the remainder length instead of a fresh server estimate.
             fixedDuration: itemEl.hasAttribute("data-partial"),
+            // Shown in the drag mirror and in the post-drop toast (calendar-planning design §2).
+            recommendedMinutes: itemEl.hasAttribute("data-recommended")
+              ? Number(itemEl.getAttribute("data-recommended"))
+              : undefined,
+            sampleCount: Number(itemEl.getAttribute("data-samples") ?? 0),
           },
         }),
       });

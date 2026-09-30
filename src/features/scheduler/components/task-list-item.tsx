@@ -52,6 +52,8 @@ export function TaskListItem({
         "data-title": task.title,
         "data-minutes": String(estimate!.minutes),
         "data-partial": partial?.remainingMinutes ? "" : undefined,
+        "data-recommended": learned ? String(estimate!.minutes) : undefined,
+        "data-samples": learned ? String(estimate!.sampleCount) : undefined,
       })}
     >
       {draggable ? (
