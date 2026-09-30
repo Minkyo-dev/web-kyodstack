@@ -6,6 +6,7 @@ import { addLocalDays, localDayRange, toLocalDate } from "@/features/scheduler/u
 import { focusedMinutesInWindow } from "@/features/scheduler/utils/focus";
 import { median } from "@/features/scheduler/utils/estimator";
 import { TASK_TYPES, type TaskType } from "@/features/classification/domain/classification.types";
+import { dailyCapacity } from "./capacity";
 import { STAT_MIN, STATS_VERSION, type StatInput, type Stats, type StatValue } from "../domain/stats.types";
 
 const MIN = 60_000;
@@ -211,9 +212,6 @@ export function computeStats(input: StatInput): Stats {
   const elapsed = finished.reduce((a, s) => a + (t(s.ended_at!) - t(s.started_at)) / MIN, 0);
   const focusedTotal = finished.reduce((a, s) => a + focusedMinutesInWindow(s, s.pauses, t(s.started_at), t(s.ended_at!), now), 0);
   const scores = finished.map((s) => s.focus_score).filter((x): x is number => x !== null);
-  const capacityDays = workDays(since28, today, planned, tz)
-    .map((d) => focusedOnDay(input.sessions, d, tz, now))
-    .filter((m) => m >= min);
   const moves = input.revisions.filter(
     (r) =>
       r.previous_starts_at &&
@@ -258,7 +256,7 @@ export function computeStats(input: StatInput): Stats {
       medianSessionMinutes: sessionMinutes.length ? Math.round(median(sessionMinutes)!) : null,
       pauseRatio: elapsed > 0 ? round2(1 - focusedTotal / elapsed) : null,
       averageFocus: scores.length ? Math.round(mean(scores)! * 10) / 10 : null,
-      dailyCapacityMinutes: capacityDays.length ? Math.round(median(capacityDays)!) : null,
+      dailyCapacityMinutes: dailyCapacity({ sessions: input.sessions, plannedWorkDays: planned, minMeaningfulMinutes: min, timezone: tz, now: input.now }),
       reliableWindow: threeHourWindow(recent.map((c) => ({ at: c.slotStart, value: c.score })), tz, "mean"),
       rescheduleWindow: threeHourWindow(moves.map((r) => ({ at: r.previous_starts_at!, value: 1 })), tz, "count"),
     },
