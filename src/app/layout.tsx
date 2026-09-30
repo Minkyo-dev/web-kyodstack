@@ -23,7 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // Browser extensions (e.g. Trancy) add attributes to <html> before hydration; this only
+    // silences attribute diffs on this element, not in its children.
     <html
+      suppressHydrationWarning
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >

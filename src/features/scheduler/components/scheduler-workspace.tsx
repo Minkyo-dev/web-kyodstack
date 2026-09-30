@@ -167,13 +167,13 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
 
       <FocusBar
         // A new session remounts the bar, so pause-reason chips never carry over to it.
-        key={activeSession?.id ?? "none"}
+        key={`focus-bar-${activeSession?.id ?? "none"}`}
         session={activeSession}
         plannedMinutes={planFor(activeSession).planned}
         onFinish={() => activeSession && setSummary({ session: activeSession })}
       />
       <WorkSummaryDialog
-        key={summary?.session.id ?? "none"}
+        key={`summary-${summary?.session.id ?? "none"}`}
         session={summary?.session ?? null}
         plannedMinutes={summaryPlan.planned}
         estimateMinutes={summaryPlan.estimate}
