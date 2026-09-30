@@ -34,7 +34,7 @@ Other docs:
 - `task_duration_profiles` is derived data and must stay rebuildable.
 - AI is advisory. Its output is Zod-validated and goes into `ai_recommendations` / `weekly_reviews`, never directly into `tasks`.
 - Deterministic stats come from SQL/TypeScript, never from the LLM.
-- The service role key and AI keys are server-only. Never give them a `NEXT_PUBLIC_` prefix.
+- The service role key and AI keys are server-only. Never give them a `SUPABASE_PUBLISHABLE_KEY` prefix.
 - `createAdminClient()` (service role) is for `/api/internal/jobs/*` only, and every query it reaches must filter by `user_id` explicitly.
 - Never return raw Supabase or provider errors to the browser. Map them to `AppError` codes.
 
@@ -73,7 +73,7 @@ npx tsc --noEmit
 npx eslint .
 npx vitest run
 npm run build
-E2E_EMAIL=… E2E_PASSWORD=… npm run test:e2e   # needs NEXT_PUBLIC_* in env (source .env.local)
+E2E_EMAIL=… E2E_PASSWORD=… npm run test:e2e   # needs SUPABASE_PUBLISHABLE_KEY* in env (source .env.local)
 ```
 E2E data must use the `[e2e]` title prefix, so the suite's cleanup can delete it.
 For UI changes, also exercise them in the browser (next-devtools / Playwright MCP) before you report them as working.
