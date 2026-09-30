@@ -4,7 +4,6 @@ import { AlertTriangle, CalendarCheck, Check, GripVertical, Play, Timer } from "
 import { cn } from "@/lib/utils";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { completeTaskAction, reopenTaskAction } from "../actions/task.actions";
-import { startWorkSessionAction } from "../actions/work-session.actions";
 import { TASK_STATUS_LABEL } from "../domain/scheduler.constants";
 import type { Task } from "../domain/task.types";
 import { formatMinutes } from "../utils/duration";
@@ -15,7 +14,8 @@ export function TaskListItem({
   today,
   estimate,
   running,
-  timerBusy,
+  partial,
+  onStart,
   onOpen,
 }: {
   task: Task;
@@ -24,15 +24,18 @@ export function TaskListItem({
   estimate: DurationEstimate | null;
   /** This task has the running timer. */
   running: boolean;
-  /** Some timer is running (only one allowed, spec §24). */
-  timerBusy: boolean;
+  /** Worked on but not finished, with no upcoming block (Continue Later). */
+  partial: { actualMinutes: number; remainingMinutes: number | null } | null;
+  /** Start, or ask to switch when another timer runs (focus-flow design §2). */
+  onStart: () => void;
   onOpen: () => void;
 }) {
   const { run, pending } = useActionRunner();
   const done = task.status === "completed";
   const overdue = !done && task.target_date !== null && task.target_date < today;
   const draggable = estimate !== null;
-  const learned = estimate !== null && estimate.scope !== "none";
+  // A partial task's drop length is its remainder, not a learned recommendation.
+  const learned = estimate !== null && estimate.scope !== "none" && !partial;
 
   const toggle = () =>
     run(() => (done ? reopenTaskAction : completeTaskAction)({ taskId: task.id }));
@@ -48,6 +51,7 @@ export function TaskListItem({
         "data-task-id": task.id,
         "data-title": task.title,
         "data-minutes": String(estimate!.minutes),
+        "data-partial": partial?.remainingMinutes ? "" : undefined,
       })}
     >
       {draggable ? (
@@ -99,6 +103,13 @@ export function TaskListItem({
               → 추천 {formatMinutes(estimate!.minutes)}
             </span>
           )}
+          {partial && (
+            <span className="inline-flex items-center gap-0.5">
+              <Timer className="size-3" aria-hidden />
+              부분 진행 · {formatMinutes(Math.round(partial.actualMinutes))} 작업
+              {partial.remainingMinutes ? ` · 남은 약 ${formatMinutes(partial.remainingMinutes)}` : ""}
+            </span>
+          )}
           {running && (
             <span className="inline-flex items-center gap-0.5 text-planned">
               <Timer className="size-3" aria-hidden />
@@ -120,11 +131,10 @@ export function TaskListItem({
         </p>
       </div>
 
-      {!done && !timerBusy && (
+      {!done && !running && (
         <button
           type="button"
-          onClick={() => run(() => startWorkSessionAction({ taskId: task.id }))}
-          disabled={pending}
+          onClick={onStart}
           aria-label={`${task.title} 타이머 시작`}
           className="mt-0.5 rounded-sm p-0.5 text-muted-foreground hover:text-foreground md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
         >

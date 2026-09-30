@@ -118,7 +118,12 @@ export function WeeklyCalendar({
       return;
     }
     // Keep the temporary event while the server sizes and saves the block.
-    const result = await scheduleTaskAction({ taskId, startsAt: start.toISOString() });
+    const fixedEnd = info.event.extendedProps.fixedDuration === true ? info.event.end : null;
+    const result = await scheduleTaskAction({
+      taskId,
+      startsAt: start.toISOString(),
+      ...(fixedEnd ? { endsAt: fixedEnd.toISOString() } : {}),
+    });
     info.event.remove();
     if (!result.ok) {
       toast.error(result.message);

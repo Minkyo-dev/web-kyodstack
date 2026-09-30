@@ -12,7 +12,14 @@ import type {
 import type { StoredProfile } from "../utils/estimator";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
+import { useActionRunner } from "@/hooks/use-action-runner";
+import { useNow } from "@/hooks/use-now";
+import { startWorkSessionAction } from "../actions/work-session.actions";
+import { estimateDuration } from "../utils/estimator";
+import { sessionPlanMinutes } from "../utils/focus";
 import { FocusBar } from "./focus-bar";
+import { SwitchTaskDialog } from "./switch-task-dialog";
+import { WorkSummaryDialog } from "./work-summary-dialog";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
@@ -64,6 +71,43 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
 
   const selectedTask = selectedTaskId ? (tasksById.get(selectedTaskId) ?? null) : null;
 
+  const { run } = useActionRunner();
+  const [summary, setSummary] = useState<{ session: SessionWithTask; thenStart?: Task } | null>(null);
+  const [switchTarget, setSwitchTarget] = useState<Task | null>(null);
+
+  // "Planned" for a session: its block, else what is left of the personal estimate (focus-flow design §2).
+  const planFor = (session: SessionWithTask | null) => {
+    if (!session) return { planned: null, estimate: null, prior: 0 };
+    const block = session.schedule_block_id ? blocks.find((b) => b.id === session.schedule_block_id) : undefined;
+    const task = tasksById.get(session.task_id);
+    const estimate = task ? estimateDuration(task, context.settings, durationProfiles).minutes : null;
+    const prior = planActual[session.task_id]?.actual_minutes ?? 0;
+    return {
+      planned: sessionPlanMinutes({ block: block ?? null, estimateMinutes: estimate, priorActualMinutes: prior }),
+      estimate,
+      prior,
+    };
+  };
+
+  // One open timer: starting another task goes through the switch dialog (requirements §13).
+  const startTask = (task: Task) => {
+    if (!activeSession) return run(() => startWorkSessionAction({ taskId: task.id }));
+    if (activeSession.task_id !== task.id) setSwitchTarget(task);
+  };
+
+  const now = useNow(60_000);
+  const upcomingTaskIds = useMemo(
+    () =>
+      new Set(
+        blocks
+          .filter((b) => b.status === "planned" && new Date(b.ends_at).getTime() > now.getTime())
+          .map((b) => b.task_id),
+      ),
+    [blocks, now],
+  );
+
+  const summaryPlan = planFor(summary?.session ?? null);
+
   return (
     <div className="flex h-[calc(100dvh-3.25rem)] flex-col md:h-dvh">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
@@ -82,6 +126,9 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           activeSession={activeSession}
           durationProfiles={durationProfiles}
           recommendations={recommendations}
+          planActual={planActual}
+          upcomingTaskIds={upcomingTaskIds}
+          onStartTask={startTask}
           onOpenTask={setSelectedTaskId}
         />
         <section aria-label="주간 캘린더" className="min-h-[480px] min-w-0 flex-1 md:min-h-0">
@@ -97,7 +144,34 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         </section>
       </div>
 
-      <FocusBar session={activeSession} plannedMinutes={null} onFinish={() => {}} />
+      <FocusBar
+        session={activeSession}
+        plannedMinutes={planFor(activeSession).planned}
+        onFinish={() => activeSession && setSummary({ session: activeSession })}
+      />
+      <WorkSummaryDialog
+        key={summary?.session.id ?? "none"}
+        session={summary?.session ?? null}
+        plannedMinutes={summaryPlan.planned}
+        estimateMinutes={summaryPlan.estimate}
+        priorActualMinutes={summaryPlan.prior}
+        timezone={context.timezone}
+        onClose={() => setSummary(null)}
+        onDone={() => {
+          const next = summary?.thenStart;
+          setSummary(null);
+          if (next) run(() => startWorkSessionAction({ taskId: next.id }));
+        }}
+      />
+      <SwitchTaskDialog
+        current={activeSession}
+        target={switchTarget}
+        onCancel={() => setSwitchTarget(null)}
+        onFinishFirst={() => {
+          if (activeSession && switchTarget) setSummary({ session: activeSession, thenStart: switchTarget });
+          setSwitchTarget(null);
+        }}
+      />
 
       <TodayMetricsBar
         tasks={todayTasks}

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskAction } from "../actions/task.actions";
 import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types";
-import type { SessionWithTask } from "../domain/work-session.types";
+import type { SessionWithTask, TaskPlanActual } from "../domain/work-session.types";
+import { partialDropMinutes, remainingMinutes } from "../utils/focus";
 import { estimateDuration, type StoredProfile } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
@@ -21,6 +22,9 @@ export function TodayTaskPanel({
   activeSession,
   durationProfiles,
   recommendations,
+  planActual,
+  upcomingTaskIds,
+  onStartTask,
   onOpenTask,
 }: {
   tasks: Task[];
@@ -30,6 +34,10 @@ export function TodayTaskPanel({
   activeSession: SessionWithTask | null;
   durationProfiles: StoredProfile[];
   recommendations: PendingRecommendation[];
+  planActual: Record<string, TaskPlanActual>;
+  /** Tasks with a planned block that hasn't ended yet. */
+  upcomingTaskIds: Set<string>;
+  onStartTask: (task: Task) => void;
   onOpenTask: (taskId: string) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
@@ -48,7 +56,11 @@ export function TodayTaskPanel({
           title: itemEl.getAttribute("data-title") ?? "",
           duration: { minutes: Number(itemEl.getAttribute("data-minutes")) },
           create: true,
-          extendedProps: { taskId: itemEl.getAttribute("data-task-id") },
+          extendedProps: {
+            taskId: itemEl.getAttribute("data-task-id"),
+            // Partial tasks keep the remainder length instead of a fresh server estimate.
+            fixedDuration: itemEl.hasAttribute("data-partial"),
+          },
         }),
       });
     });
@@ -83,17 +95,25 @@ export function TodayTaskPanel({
             아직 할 일이 없습니다.
           </li>
         )}
-        {open.map((task) => (
-          <TaskListItem
-            key={task.id}
-            task={task}
-            today={today}
-            estimate={estimateDuration(task, settings, durationProfiles)}
-            running={activeSession?.task_id === task.id}
-            timerBusy={activeSession !== null}
-            onOpen={() => onOpenTask(task.id)}
-          />
-        ))}
+        {open.map((task) => {
+          const est = estimateDuration(task, settings, durationProfiles);
+          const actual = planActual[task.id]?.actual_minutes ?? 0;
+          const isPartial = task.status === "in_progress" && actual > 0 && !upcomingTaskIds.has(task.id);
+          const left = isPartial ? remainingMinutes(est.minutes, actual) : null;
+          const dropMinutes = partialDropMinutes(left, settings.min_block_minutes);
+          return (
+            <TaskListItem
+              key={task.id}
+              task={task}
+              today={today}
+              estimate={dropMinutes ? { ...est, minutes: dropMinutes } : est}
+              running={activeSession?.task_id === task.id}
+              partial={isPartial ? { actualMinutes: actual, remainingMinutes: left } : null}
+              onStart={() => onStartTask(task)}
+              onOpen={() => onOpenTask(task.id)}
+            />
+          );
+        })}
         {completed.length > 0 && (
           <li className="px-2 pt-4 pb-1 text-xs font-medium text-muted-foreground">
             오늘 완료 {completed.length}
@@ -106,7 +126,8 @@ export function TodayTaskPanel({
             today={today}
             estimate={null}
             running={false}
-            timerBusy
+            partial={null}
+            onStart={() => {}}
             onOpen={() => onOpenTask(task.id)}
           />
         ))}
