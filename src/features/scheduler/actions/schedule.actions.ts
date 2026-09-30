@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
 import * as scheduling from "../services/scheduling.service";
 import {
+  blockIdSchema,
   createTaskInRangeSchema,
   moveBlockSchema,
+  rescheduleBlockSchema,
   scheduleTaskSchema,
   setBlockStatusSchema,
+  updateSchedulerSettingsSchema,
 } from "../schemas/schedule.schema";
 
 const done = <T>(value: T) => {
@@ -36,5 +39,23 @@ export async function setScheduleBlockStatusAction(input: unknown) {
 export async function createTaskInRangeAction(input: unknown) {
   return runAction("schedule.createInRange", createTaskInRangeSchema, input, async (data, ctx) =>
     done(await scheduling.createTaskInRange(ctx, data)),
+  );
+}
+
+export async function rescheduleBlockAction(input: unknown) {
+  return runAction("schedule.reschedule", rescheduleBlockSchema, input, async (data, ctx) =>
+    done(await scheduling.rescheduleBlock(ctx, data)),
+  );
+}
+
+export async function unscheduleBlockAction(input: unknown) {
+  return runAction("schedule.unschedule", blockIdSchema, input, async ({ blockId }, ctx) =>
+    done(await scheduling.unscheduleBlock(ctx, blockId)),
+  );
+}
+
+export async function updateSchedulerSettingsAction(input: unknown) {
+  return runAction("scheduler.settings", updateSchedulerSettingsSchema, input, async (data, ctx) =>
+    done(await scheduling.updateSchedulerSettings(ctx, data)),
   );
 }

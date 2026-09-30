@@ -30,3 +30,11 @@ export const createTaskInRangeSchema = z.object({
   endsAt: instant,
 });
 export type CreateTaskInRangeInput = z.infer<typeof createTaskInRangeSchema>;
+
+export const rescheduleBlockSchema = z.object({ blockId: z.uuid(), startsAt: instant });
+export type RescheduleBlockInput = z.infer<typeof rescheduleBlockSchema>;
+
+export const blockIdSchema = z.object({ blockId: z.uuid() });
+
+export const updateSchedulerSettingsSchema = z.object({ showActualDefault: z.boolean() });
+export type UpdateSchedulerSettingsInput = z.infer<typeof updateSchedulerSettingsSchema>;

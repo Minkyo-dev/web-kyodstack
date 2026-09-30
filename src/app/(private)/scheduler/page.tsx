@@ -15,6 +15,7 @@ import {
 } from "@/features/scheduler/queries/session.queries";
 import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
 import { loadDurationProfiles } from "@/features/scheduler/services/duration-profile.service";
+import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
 import {
@@ -38,6 +39,8 @@ export default async function SchedulerPage({
 
   const context = await getSchedulerContext(supabase, user.id);
   const { timezone, settings } = context;
+  // Ended blocks without a session become missed before we read them (ADR 0012).
+  await markMissedBlocks(supabase, user.id);
 
   const today = todayLocalDate(timezone);
   const anchor = week && isLocalDateString(week) ? week : today;
