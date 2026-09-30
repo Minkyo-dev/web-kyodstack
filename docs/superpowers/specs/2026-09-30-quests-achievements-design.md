@@ -26,7 +26,7 @@ reward_xp int, swap_used bool default false, generated_by text default 'system',
   quest per user.
 - `period_end` is inclusive (daily: same day; weekly: last day of the week; recovery: the day after creation).
 - RLS: select own. Insert/update own (the service generates and updates with the user's client; the nightly job
-  uses the service role). No delete.
+  uses the service role). Delete own exists only for E2E cleanup (same stance as `xp_events`, ADR 0016).
 
 ### `quest_objectives`
 `id, quest_id, user_id, position smallint, metric text, params jsonb default '{}', target_value numeric,
@@ -35,8 +35,8 @@ current_value numeric default 0, completed_at timestamptz`.
 - Unique `(quest_id, position)`. RLS: select/insert/update own.
 
 ### `user_achievements`, `user_titles`
-`(user_id, key, unlocked_at)`, primary key `(user_id, key)`. RLS: select/insert own; no update/delete (never
-re-locked).
+`(user_id, key, unlocked_at)`, primary key `(user_id, key)`. RLS: select/insert/delete own; no update. The app never
+re-locks; own delete exists only for E2E cleanup.
 
 ### `player_profiles.equipped_title text null`
 - A trigger rejects a value that is not in the user's `user_titles` (null always allowed). Column privilege: users
