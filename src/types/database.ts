@@ -266,6 +266,38 @@ export type Database = {
           },
         ]
       }
+      duration_groups: {
+        Row: {
+          group_key: string
+          sample_count: number
+          samples: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          group_key: string
+          sample_count?: number
+          samples?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          group_key?: string
+          sample_count?: number
+          samples?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duration_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_tokens: {
         Row: {
           created_at: string
@@ -450,6 +482,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      practice_domains: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_domains_parent_id_user_id_fkey"
+            columns: ["parent_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "practice_domains"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "practice_domains_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       private_apps: {
         Row: {
@@ -818,6 +889,38 @@ export type Database = {
         }
         Relationships: []
       }
+      tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_duration_profiles: {
         Row: {
           calculated_at: string
@@ -872,6 +975,53 @@ export type Database = {
           },
         ]
       }
+      task_tags: {
+        Row: {
+          tag_id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          tag_id: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          tag_id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_tags_tag_id_user_id_fkey"
+            columns: ["tag_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "task_tags_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "task_tags_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "task_tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_templates: {
         Row: {
           active: boolean
@@ -880,6 +1030,8 @@ export type Database = {
           default_estimate_minutes: number | null
           id: string
           name: string
+          practice_domain_id: string | null
+          task_type: string | null
           updated_at: string
           user_id: string
         }
@@ -890,6 +1042,8 @@ export type Database = {
           default_estimate_minutes?: number | null
           id?: string
           name: string
+          practice_domain_id?: string | null
+          task_type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -900,10 +1054,19 @@ export type Database = {
           default_estimate_minutes?: number | null
           id?: string
           name?: string
+          practice_domain_id?: string | null
+          task_type?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "task_templates_practice_domain_id_user_id_fkey"
+            columns: ["practice_domain_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "practice_domains"
+            referencedColumns: ["id", "user_id"]
+          },
           {
             foreignKeyName: "task_templates_user_id_fkey"
             columns: ["user_id"]
@@ -922,12 +1085,14 @@ export type Database = {
           due_at: string | null
           id: string
           milestone_id: string | null
+          practice_domain_id: string | null
           priority: number
           project_id: string | null
           recommended_minutes: number | null
           sort_order: number
           status: string
           target_date: string | null
+          task_type: string | null
           template_id: string | null
           title: string
           updated_at: string
@@ -942,12 +1107,14 @@ export type Database = {
           due_at?: string | null
           id?: string
           milestone_id?: string | null
+          practice_domain_id?: string | null
           priority?: number
           project_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
           target_date?: string | null
+          task_type?: string | null
           template_id?: string | null
           title: string
           updated_at?: string
@@ -962,12 +1129,14 @@ export type Database = {
           due_at?: string | null
           id?: string
           milestone_id?: string | null
+          practice_domain_id?: string | null
           priority?: number
           project_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
           target_date?: string | null
+          task_type?: string | null
           template_id?: string | null
           title?: string
           updated_at?: string
@@ -990,6 +1159,13 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
           {
+            foreignKeyName: "tasks_practice_domain_id_user_id_fkey"
+            columns: ["practice_domain_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "practice_domains"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "tasks_project_id_user_id_fkey"
             columns: ["project_id", "user_id"]
             isOneToOne: false
@@ -1005,6 +1181,46 @@ export type Database = {
           },
           {
             foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_tags: {
+        Row: {
+          tag_id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          tag_id: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          tag_id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_tags_tag_id_user_id_fkey"
+            columns: ["tag_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "template_tags_template_id_user_id_fkey"
+            columns: ["template_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "template_tags_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1343,12 +1559,14 @@ export type Database = {
           due_at: string | null
           id: string
           milestone_id: string | null
+          practice_domain_id: string | null
           priority: number
           project_id: string | null
           recommended_minutes: number | null
           sort_order: number
           status: string
           target_date: string | null
+          task_type: string | null
           template_id: string | null
           title: string
           updated_at: string
@@ -1361,6 +1579,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      backfill_template_tags: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       create_schedule_block: {
         Args: {
