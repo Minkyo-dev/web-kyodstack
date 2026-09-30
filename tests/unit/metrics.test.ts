@@ -4,10 +4,16 @@ import { computeDaySummary, formatElapsed } from "@/features/scheduler/utils/met
 // Toronto 2026-09-29 = [04:00Z, next day 04:00Z)
 const range = { start: "2026-09-29T04:00:00.000Z", end: "2026-09-30T04:00:00.000Z" };
 const blk = (s: string, e: string, status = "planned") => ({ starts_at: s, ends_at: e, status });
-const ses = (s: string, e: string | null, focus: number | null = null) => ({
+const ses = (
+  s: string,
+  e: string | null,
+  focus: number | null = null,
+  pauses: { paused_at: string; resumed_at: string | null }[] = [],
+) => ({
   started_at: s,
   ended_at: e,
-  focus_score: focus,
+  pauses,
+  work_log: focus === null ? null : { focus_score: focus },
 });
 
 describe("computeDaySummary", () => {
@@ -59,5 +65,32 @@ describe("formatElapsed", () => {
   it("formats H:MM:SS", () => {
     expect(formatElapsed(0)).toBe("0:00:00");
     expect(formatElapsed(89 * 60_000 + 5_000)).toBe("1:29:05");
+  });
+});
+
+describe("computeDaySummary v2 (pauses)", () => {
+  it("actual subtracts pauses; a pause crossing midnight only counts inside the day", () => {
+    const r = computeDaySummary({
+      blocks: [],
+      sessions: [
+        // 03:00–05:00Z = 23:00–01:00 Toronto; pause 03:50–04:20Z crosses local midnight (04:00Z)
+        ses("2026-09-29T03:00:00Z", "2026-09-29T05:00:00Z", null, [
+          { paused_at: "2026-09-29T03:50:00Z", resumed_at: "2026-09-29T04:20:00Z" },
+        ]),
+      ],
+      range,
+    });
+    // inside [04:00Z, …): 04:00–05:00 = 60 min, minus 04:00–04:20 = 20 → 40
+    expect(r.actualMinutes).toBe(40);
+  });
+
+  it("running minutes exclude an open pause", () => {
+    const r = computeDaySummary({
+      blocks: [],
+      sessions: [ses("2026-09-29T20:00:00Z", null, null, [{ paused_at: "2026-09-29T20:10:00Z", resumed_at: null }])],
+      range,
+      now: new Date("2026-09-29T20:30:00Z"),
+    });
+    expect(r.runningMinutes).toBe(10);
   });
 });

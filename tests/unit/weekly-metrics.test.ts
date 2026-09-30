@@ -13,9 +13,16 @@ const base: WeekInput = {
   createdTaskCount: 0,
   revisions: [],
 };
-const ses = (start: string, end: string | null, focus: number | null, type: string | null = null) => ({
+const ses = (
+  start: string,
+  end: string | null,
+  focus: number | null,
+  type: string | null = null,
+  pauses: { paused_at: string; resumed_at: string | null }[] = [],
+) => ({
   started_at: start,
   ended_at: end,
+  pauses,
   focus_score: focus,
   mood_score: null,
   energy_score: null,
@@ -101,5 +108,19 @@ describe("computeWeeklyMetrics", () => {
     expect(m.planCompletionRatio).toBeNull();
     expect(m.averageFocus).toBeNull();
     expect(m.bestFocusWindow).toBeNull();
+  });
+
+  it("v2: actual and deep work use focused minutes", () => {
+    const m = computeWeeklyMetrics({
+      ...base,
+      sessions: [
+        ses("2026-09-29T14:00:00Z", "2026-09-29T15:00:00Z", null, null, [
+          { paused_at: "2026-09-29T14:20:00Z", resumed_at: "2026-09-29T14:35:00Z" },
+        ]),
+      ],
+    });
+    expect(m.version).toBe("v2");
+    expect(m.actualMinutes).toBe(45);
+    expect(m.deepWorkMinutes).toBe(0); // 45 < 50 focused minutes
   });
 });

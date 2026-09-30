@@ -5,12 +5,20 @@
  * Definitions (v1). Keep docs/schema.md in sync:
  * - planned: Σ non-cancelled block time inside the window (skipped included)
  * - skipped: Σ skipped block time inside the window
- * - actual:  Σ finished session time inside the window (sessions crossing midnight are split)
- * - running: live elapsed of the running session inside the window (UI only, never finalized)
- * - averageFocus: mean focus_score of finished sessions that started in the window
+ * - actual:  Σ focused minutes (wall − pauses, v2) of finished sessions inside the window
+ *            (sessions and pauses crossing midnight are split)
+ * - running: live focused minutes of the running session inside the window (UI only, never finalized)
+ * - averageFocus: mean work-log focus_score of finished sessions that started in the window
  */
+import { focusedMinutesInWindow, type PauseLike } from "./focus";
+
 type BlockLike = { starts_at: string; ends_at: string; status: string };
-type SessionLike = { started_at: string; ended_at: string | null; focus_score: number | null };
+type SessionLike = {
+  started_at: string;
+  ended_at: string | null;
+  pauses: PauseLike[];
+  work_log: { focus_score: number | null } | null;
+};
 
 export type DaySummary = {
   plannedMinutes: number;
@@ -50,12 +58,14 @@ export function computeDaySummary(input: {
   const focus: number[] = [];
   for (const s of input.sessions) {
     const start = new Date(s.started_at).getTime();
+    const m = focusedMinutesInWindow(s, s.pauses, from, to, now);
     if (s.ended_at === null) {
-      runningMinutes += clippedMinutes(start, now, from, to);
+      runningMinutes += m;
       continue;
     }
-    actualMinutes += clippedMinutes(start, new Date(s.ended_at).getTime(), from, to);
-    if (s.focus_score !== null && start >= from && start < to) focus.push(s.focus_score);
+    actualMinutes += m;
+    const focusScore = s.work_log?.focus_score ?? null;
+    if (focusScore !== null && start >= from && start < to) focus.push(focusScore);
   }
 
   return {

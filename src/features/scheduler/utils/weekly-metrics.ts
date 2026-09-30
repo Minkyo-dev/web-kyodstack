@@ -1,13 +1,14 @@
 /**
- * Weekly metrics (spec §36, §37, §59, §60). Deterministic and pure: the LLM receives
+ * Weekly metrics (spec §36, §37, §59, §60). v2: actual = focused minutes (wall − pauses). Deterministic and pure: the LLM receives
  * this object and never computes statistics itself (spec §3.5).
  *
  * Definitions are versioned (METRICS_VERSION). docs/schema.md documents them.
  * Change a formula only together with the version.
  */
+import { focusedMinutesInWindow, type PauseLike } from "./focus";
 import { toLocalDate } from "./timezone";
 
-export const METRICS_VERSION = "v1";
+export const METRICS_VERSION = "v2";
 const DEEP_WORK_MIN_SESSION = 50; // minutes
 const FOCUS_WINDOW_HOURS = 3;
 const FOCUS_WINDOW_MIN_MINUTES = 60;
@@ -22,6 +23,7 @@ export type WeekInput = {
   sessions: {
     started_at: string;
     ended_at: string | null;
+    pauses: PauseLike[];
     focus_score: number | null;
     mood_score: number | null;
     energy_score: number | null;
@@ -115,7 +117,7 @@ export function computeWeeklyMetrics(input: WeekInput): WeeklyMetrics {
 
   for (const s of input.sessions) {
     if (!s.ended_at) continue; // running sessions never enter finalized metrics (§60)
-    const m = clip(s.started_at, s.ended_at, from, to);
+    const m = focusedMinutesInWindow(s, s.pauses, from, to, to);
     if (m <= 0) continue;
     actualMinutes += m;
     if (m >= DEEP_WORK_MIN_SESSION) deepWorkMinutes += m;
