@@ -33,3 +33,4 @@ Template:
 | 0013 | Classification axes, tags and estimator v2 | accepted |
 | 0014 | Stat engine: live stats, nightly snapshots, commitment rules | accepted |
 | 0015 | Today view, week summary, capacity notice | accepted |
+| 0016 | XP ledger, level and opt-in backfill | accepted |

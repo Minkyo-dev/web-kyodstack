@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement E1 — XP, level, notifications (docs/superpowers/specs/2026-09-30-xp-level-design.md)
+- [x] `player_profiles`, `xp_events`, `award_xp` (invoker) with the cache trigger (SQL tests, ADR 0016)
+- [x] Pure XP rules `xp-v1`, level curve, practice level, day facts from sessions/completions/commitments
+- [x] Progress on core actions (`ActionResult.progress`), nightly reconcile, opt-in backfill and settings actions
+- [x] Level line, +XP chip, level-up event; progress page player section, settings, practice levels
+- [x] E2E `gamification.spec.ts`; E2E cleanup removes XP from test sources
+
 ## Improvement D3 — Today view + capacity (docs/superpowers/specs/2026-09-30-today-summary-capacity-design.md)
 - [x] Pure `todaySections`, overload rule, overflow selection; shared `dailyCapacity` used by the stat engine (ADR 0015)
 - [x] Page loads capacity, week completed count and today/tomorrow blocks

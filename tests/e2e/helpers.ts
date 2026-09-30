@@ -34,6 +34,18 @@ export async function dbAsUser(): Promise<SupabaseClient> {
 }
 
 export async function cleanup(db: SupabaseClient) {
+  // XP earned from E2E sources (tasks, their sessions and blocks) and synthetic "e2e" events.
+  const { data: e2eTasks } = await db.from("tasks").select("id").like("title", `${E2E_PREFIX}%`);
+  const taskIds = (e2eTasks ?? []).map((t) => t.id);
+  if (taskIds.length) {
+    const [s, b] = await Promise.all([
+      db.from("work_sessions").select("id").in("task_id", taskIds),
+      db.from("schedule_blocks").select("id").in("task_id", taskIds),
+    ]);
+    const sources = [...taskIds, ...(s.data ?? []).map((x) => x.id), ...(b.data ?? []).map((x) => x.id)];
+    for (let i = 0; i < sources.length; i += 100) await db.from("xp_events").delete().in("source_id", sources.slice(i, i + 100));
+  }
+  await db.from("xp_events").delete().eq("source_type", "e2e");
   await db.from("tasks").delete().like("title", `${E2E_PREFIX}%`);
   // Templates cascade into template_tags.
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);

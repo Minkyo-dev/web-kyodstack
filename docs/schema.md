@@ -109,6 +109,16 @@ DailyReview = `daily_reflections`.
 | Consistency | 42 days, work days from first activity to yesterday | 15 | share of work days with focused ≥ min meaningful |
 | Recovery | 42 days of misses | 5 | 100/75/50/25 by work days to the first meaningful day on the same task; 0 if none in 14 days or cancelled |
 
+## Gamification E1 (ADR 0016)
+- `player_profiles(user_id pk, level, total_xp, gamification_enabled, quest_terminology, animations_enabled,
+  achievement_toasts, backfilled_at)`: `level`/`total_xp` are a cache of the ledger, written only by the
+  `xp_events` trigger; users update settings columns and `backfilled_at` only.
+- `xp_events(user_id, rule focus|completion|commitment, source_type, source_id, local_date, xp 1–120, metadata)`:
+  unique per (user, rule, source). Users select/insert/delete own rows, never update.
+- `award_xp(p_events jsonb, p_user_id uuid default null)`: idempotent insert; returns `(total_xp, level,
+  previous_level)`. `xp_level(total)`: L → L+1 costs `100 + 50·L`.
+- Rules `xp-v1` live in `features/gamification/utils/xp-rules.ts` (ADR 0016).
+
 ## Calendar planning (Improvement B, ADR 0012)
 - `schedule_blocks.status`: `planned | completed | skipped | cancelled | missed`. Only `mark_missed_blocks` sets
   `missed`. From `missed`, only `cancelled` is allowed (via `set_schedule_block_status` or `unschedule_block`), and
