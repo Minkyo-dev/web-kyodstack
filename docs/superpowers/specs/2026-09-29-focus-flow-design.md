@@ -2,7 +2,8 @@
 
 - Date: 2026-09-29
 - Source: `docs/improve-requirements.md` §9–§16, §27, §29 (principles 4–6)
-- Scope: bundle A of three (A focus flow → B calendar planning → C Today/summary)
+- Scope: sub-project A of the growth system (`2026-09-30-growth-system-architecture.md`: A → B → D → E → F)
+- Revised 2026-09-30: work results move to a new `work_logs` table (umbrella decision 2).
 
 ## Goal
 Make "start → work (with pauses) → stop → reflect → complete or continue later" feel natural, and make
@@ -43,13 +44,13 @@ actual minutes mean **focused** minutes (wall time minus pauses). This feeds the
 |---|---|---|
 | `pause_work_session(p_session_id, p_reason default null)` | Inserts an open pause at `now()`. | `P0002` session not found / not own; `23514` session finished or already paused |
 | `resume_work_session(p_session_id)` | Sets `resumed_at = now()` on the open pause. | `P0002`; `23514` not paused |
-| `stop_work_session(p_session_id, p_ended_at default null, p_focus, p_mood, p_energy, p_note, p_complete_task default false)` | Locks the open session. `ended_at = coalesce(p_ended_at, now())`. Closes an open pause at `ended_at`. Rejects `ended_at` earlier than the latest `paused_at`. Writes scores/note. If `p_complete_task`, completes the task (`status = completed`, `completed_at = now()`) in the same transaction. | `P0002`; `23514` already finished, or end before a pause |
+| `stop_work_session(p_session_id, p_ended_at default null, p_focus, p_mood, p_energy, p_note, p_complete_task default false)` | Locks the open session. `ended_at = coalesce(p_ended_at, now())`. Closes an open pause at `ended_at`. Rejects `ended_at` earlier than the latest `paused_at`. Upserts the session's `work_logs` row with the scores/note. If `p_complete_task`, completes the task (`status = completed`, `completed_at = now()`) in the same transaction. | `P0002`; `23514` already finished, or end before a pause |
 | `switch_work_session(p_task_id, p_block_id default null)` | Stops the caller's open session at `now()` (closing any open pause, no scores), then runs the same logic as `start_work_session` for the new task. One transaction. | as `start_work_session`; `P0002` when there is no open session |
 
 - 16-hour and future-time limits stay in the service (`assertSessionRange`) before calling `stop_work_session`.
 - The service maps errors as today: `23505` → `ACTIVE_TIMER_EXISTS`, `23514`/finished → `CONFLICT`, `P0002` → `NOT_FOUND`.
 - Pause reasons can be set after the fact on the open pause via a plain RLS-guarded update (`setPauseReason`).
-- The session note can be saved while running (`updateSessionNote`), a plain RLS-guarded update on an open session.
+- The note can be saved while running (`saveWorkLogNote`): it upserts the session's `work_logs` row (note only).
 
 ### Actual minutes v2
 `actual = (ended_at − started_at) − Σ(pause.resumed_at − pause.paused_at)`
@@ -59,6 +60,27 @@ actual minutes mean **focused** minutes (wall time minus pauses). This feeds the
 - `computeDaySummary` and `computeWeeklyMetrics` subtract pause intervals clipped to the same window as the session.
   Bump the metric version to v2 in `docs/schema.md`.
 - Manual sessions have no pauses. Editing pauses is out of scope.
+
+### `work_logs` (new; umbrella decision 2)
+| column | type | notes |
+|---|---|---|
+| id | uuid pk | |
+| user_id | uuid | → profiles, cascade |
+| task_id | uuid | `(task_id, user_id)` → tasks, cascade |
+| session_id | uuid null | `(session_id, user_id)` → `work_sessions(id, user_id)`, on delete set null (session_id); partial unique (one log per session) |
+| focus_score, mood_score, energy_score | smallint null | 1–5 |
+| note | text null | ≤ 5000 chars |
+| created_at, updated_at | timestamptz | |
+
+- RLS: select/insert/update/delete own rows. `anon` revoked.
+- A log's `task_id` must equal its session's `task_id` (checked in the DB functions and the service).
+- **Expand → backfill → contract.** This migration creates `work_logs` and copies every session that has any score
+  or note into it (idempotent: `on conflict (session_id) do nothing`). After the code reads and writes only
+  `work_logs`, a second migration in this sub-project drops `focus_score`, `mood_score`, `energy_score` and `note`
+  from `work_sessions`.
+- Readers switch to `work_logs`: `task_plan_actual.average_focus`, day/week metrics (focus/mood/energy averages),
+  the drawer's session list, and the weekly-review metrics input.
+- Manual sessions (`createManualWorkSession`) write their scores/note to `work_logs` in the same service call.
 
 ## 2. UI flow
 
@@ -99,8 +121,10 @@ actual minutes mean **focused** minutes (wall time minus pauses). This feeds the
 FocusBar spans the width; the expanded panel and summary open as bottom sheets.
 
 ## 3. Code changes
-- Migration `focus_pauses`: table, RLS, indexes, four functions, view redefinition. Regenerate types, run advisors.
-- `features/scheduler/services/work-session.service.ts`: pause, resume, setPauseReason, updateSessionNote,
+- Migration `focus_pauses`: pauses + `work_logs` tables, RLS, indexes, four functions, backfill, view redefinition.
+  Regenerate types, run advisors.
+- Contract migration `drop_session_scores` after the code switch: drops the moved columns from `work_sessions`.
+- `features/scheduler/services/work-session.service.ts`: pause, resume, setPauseReason, saveWorkLogNote,
   stop via RPC, switch.
 - `features/scheduler/actions/work-session.actions.ts`: matching actions (Zod → user → service → `ActionResult`).
 - `features/scheduler/queries/session.queries.ts`: load pauses with sessions.
@@ -119,7 +143,8 @@ FocusBar spans the width; the expanded panel and summary open as bottom sheets.
 ## 5. Tests
 - SQL `supabase/tests/rls/focus_pauses.sql`: cannot pause another user's session; no second open pause;
   stop while paused closes the pause; switch is atomic and leaves exactly one open session;
-  stop + complete is atomic; the view subtracts pauses.
+  stop + complete is atomic; the view subtracts pauses; stop upserts exactly one `work_logs` row; `work_logs` RLS;
+  the backfill copies scored sessions once.
 - Unit: `focus.ts`; day/week metrics with pauses crossing the window edge.
 - E2E `tests/e2e/focus-flow.spec.ts`: start → pause (reason) → resume → finish summary → Continue Later →
   partial badge; switch dialog "보류하고 시작". Update `work-tracking.spec.ts` for the new summary dialog.
