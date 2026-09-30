@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as scheduling from "../services/scheduling.service";
 import {
   blockIdSchema,
@@ -33,6 +34,7 @@ export async function moveScheduleBlockAction(input: unknown) {
 export async function setScheduleBlockStatusAction(input: unknown) {
   return runAction("schedule.status", setBlockStatusSchema, input, async (data, ctx) =>
     done(await scheduling.setBlockStatus(ctx, data)),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
 

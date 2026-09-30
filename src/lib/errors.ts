@@ -1,3 +1,5 @@
+import type { ProgressDelta } from "./progress";
+
 export const ERROR_CODES = [
   "AUTH_REQUIRED",
   "NOT_FOUND",
@@ -39,7 +41,7 @@ export class AppError extends Error {
 
 /** Serializable result returned from every Server Action. Never carries raw DB errors. */
 export type ActionResult<T = void> =
-  | { ok: true; data: T }
+  | { ok: true; data: T; progress?: ProgressDelta }
   | {
       ok: false;
       code: ErrorCode;

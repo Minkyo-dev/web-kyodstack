@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as tasks from "../services/task.service";
 import { createTaskSchema, taskIdSchema, updateTaskSchema } from "../schemas/task.schema";
 
@@ -31,6 +32,7 @@ export async function deleteTaskAction(input: unknown) {
 export async function completeTaskAction(input: unknown) {
   return runAction("task.complete", taskIdSchema, input, async ({ taskId }, ctx) =>
     done(await tasks.transitionTask(ctx, taskId, "complete")),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
 

@@ -4,6 +4,7 @@ import { requireUser, type AuthUser } from "@/lib/auth";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import { AppError, fail, ok, type ActionResult } from "@/lib/errors";
 import { log } from "@/lib/logger";
+import type { ProgressDelta } from "@/lib/progress";
 
 export type ActionContext = { user: AuthUser; supabase: SupabaseServerClient };
 
@@ -16,6 +17,7 @@ export async function runAction<S extends z.ZodType, T>(
   schema: S,
   input: unknown,
   handler: (data: z.infer<S>, ctx: ActionContext) => Promise<T>,
+  options: { progress?: (ctx: ActionContext) => Promise<ProgressDelta | null> } = {},
 ): Promise<ActionResult<T>> {
   const startedAt = Date.now();
   let userId: string | undefined;
@@ -31,9 +33,12 @@ export async function runAction<S extends z.ZodType, T>(
     const user = await requireUser();
     userId = user.id;
     const supabase = await createClient();
-    const data = await handler(parsed.data, { user, supabase });
+    const ctx = { user, supabase };
+    const data = await handler(parsed.data, ctx);
+    // Gamification never fails a core action: the hook itself logs and swallows its errors.
+    const progress = options.progress ? await options.progress(ctx) : null;
     log({ action, userId, success: true, durationMs: Date.now() - startedAt });
-    return ok(data);
+    return progress ? { ok: true, data, progress } : ok(data);
   } catch (error) {
     const appError = error instanceof AppError ? error : new AppError("INTERNAL_ERROR");
     log({

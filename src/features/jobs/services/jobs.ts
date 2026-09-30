@@ -5,6 +5,7 @@ import { generateWeeklyReview } from "@/features/ai/services/weekly-review.servi
 import { loadWeekInput } from "@/features/scheduler/queries/week.queries";
 import { rebuildDurationGroups } from "@/features/scheduler/services/duration-groups.service";
 import { writeDailySnapshot } from "@/features/analytics/services/snapshot.service";
+import { reconcileProgress } from "@/features/gamification/services/progress.service";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
@@ -67,7 +68,8 @@ export function runDurationProfileRefresh(admin: SupabaseServerClient, now = new
       const missed = await markMissedBlocks(ctx.supabase, ctx.user.id);
       const groups = await rebuildDurationGroups(ctx);
       const snapshots = await writeDailySnapshot(ctx, now);
-      return { status: "succeeded", detail: { groups, missed, snapshots } };
+      const xp = await reconcileProgress(ctx, now);
+      return { status: "succeeded", detail: { groups, missed, snapshots, xp } };
     },
   );
 }

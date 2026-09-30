@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as sessions from "../services/work-session.service";
 import {
   manualWorkSessionSchema,
@@ -28,6 +29,7 @@ export async function startWorkSessionAction(input: unknown) {
 export async function stopWorkSessionAction(input: unknown) {
   return runAction("session.stop", stopWorkSessionSchema, input, async (data, ctx) =>
     done(await sessions.stopWorkSession(ctx, data)),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
 
@@ -70,5 +72,6 @@ export async function saveWorkLogNoteAction(input: unknown) {
 export async function switchWorkSessionAction(input: unknown) {
   return runAction("session.switch", switchWorkSessionSchema, input, async (data, ctx) =>
     done(await sessions.switchWorkSession(ctx, data)),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
