@@ -87,6 +87,11 @@ test.describe("duration learning", () => {
     await expect(savedEvent(page, title)).toContainText("10:00–11:20");
     const { data: task } = await db.from("tasks").select("id, recommended_minutes").eq("title", title).single();
     expect(task!.recommended_minutes).toBe(80);
+    // Recommendation differs from the 60-minute estimate by ≥ 10 → toast offers keeping it.
+    await page.getByRole("button", { name: "1h 유지" }).click();
+    await expect(savedEvent(page, title)).toContainText("10:00–11:00");
+    const { data: kept } = await db.from("schedule_blocks").select("starts_at, ends_at").eq("task_id", task!.id).single();
+    expect((Date.parse(kept!.ends_at) - Date.parse(kept!.starts_at)) / 60_000).toBe(60);
 
     // Reopening removes a sample → back to cold start (no false confidence, §26.4).
     await page.getByRole("checkbox", { name: `${titles[0]} 완료 취소` }).click();

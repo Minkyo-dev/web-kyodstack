@@ -1664,7 +1664,7 @@ Do not rely on UI route protection as authorization.
 The Supabase service role key:
 
 - MUST never enter browser code
-- MUST never use a `NEXT_PUBLIC_*` environment variable
+- MUST never use a `SUPABASE_PUBLISHABLE_KEY*` environment variable
 - MAY be used only for trusted background jobs requiring elevated privileges
 - SHOULD be avoided when user-scoped authenticated access works
 
@@ -2481,8 +2481,8 @@ to the browser.
 Example:
 
 ```text
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
 
 SUPABASE_SERVICE_ROLE_KEY=
 
@@ -2494,7 +2494,7 @@ INTERNAL_JOB_SECRET=
 
 Rules:
 
-- public Supabase publishable values may use `NEXT_PUBLIC_*`
+- public Supabase publishable values may use `SUPABASE_PUBLISHABLE_KEY*`
 - service role key must never be public
 - AI API keys must be server-only
 - internal job secret must be server-only

@@ -83,6 +83,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] Contract: session score/note columns dropped
 - [x] E2E `focus-flow.spec.ts`; `work-tracking.spec.ts` updated (manual entry uses yesterday, so it is time-of-day independent)
 
+## Improvement B — calendar planning (docs/superpowers/specs/2026-09-30-calendar-planning-design.md)
+- [x] `missed` status, `mark_missed_blocks` (page load + nightly), `unschedule_block`, `show_actual_default` (SQL tests, ADR 0012)
+- [x] `utils/block-state.ts`: not started / missed / running, next free slot, same time tomorrow (DST-safe)
+- [x] Block card ▶ / ⋯ (complete, reschedule today/tomorrow/pick, skip, unschedule); start from a block via the switch dialog
+- [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
+- [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
+
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.

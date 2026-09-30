@@ -80,6 +80,22 @@ DailyReview = `daily_reflections`.
     `end before pause`; `23505` second open session.
 - `task_plan_actual`: `actual_minutes` = focused minutes. Adds `paused_minutes`. `average_focus` comes from `work_logs`.
 
+## Calendar planning (Improvement B, ADR 0012)
+- `schedule_blocks.status`: `planned | completed | skipped | cancelled | missed`. Only `mark_missed_blocks` sets
+  `missed`. From `missed`, only `cancelled` is allowed (via `set_schedule_block_status` or `unschedule_block`), and
+  a missed block can't be moved.
+- `mark_missed_blocks(p_user_id) returns int`: planned blocks that ended with no linked session and no same-task
+  session starting in [start − 30 min, end) become missed. The function is idempotent. A signed-in caller may only
+  pass their own id (else `42501`); the service role may pass any id. It is called on scheduler page load and by
+  the nightly `duration_profile_refresh` job.
+- `unschedule_block(p_block_id)`: cancels a planned/missed block, writes the cancel revision, and returns a
+  `planned` task to `inbox` when no other planned block remains. Errors: `P0002`, and `23514` when the block is
+  already closed.
+- "Not started" (start + 15 min, before the end, no session) is derived in `utils/block-state.ts`, never stored.
+- `scheduler_settings.show_actual_default boolean default false`: the initial state of the calendar's
+  "실제 작업 보기" toggle. Running sessions are always shown.
+- Rescheduling moves the block while it hasn't ended; after it ends, a new block is created (same length).
+
 ## Deferred to later phases (spec §71)
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.

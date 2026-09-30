@@ -25,8 +25,8 @@ export async function login(page: Page) {
 
 /** Direct DB access as the same user (RLS applies) for assertions and cleanup. */
 export async function dbAsUser(): Promise<SupabaseClient> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
   const client = createClient(url, key, { auth: { persistSession: false } });
   const { error } = await client.auth.signInWithPassword(credentials());
   if (error) throw error;
