@@ -26,25 +26,27 @@ animations_enabled bool not null default true, achievement_toasts bool not null 
 backfilled_at timestamptz, created_at, updated_at`.
 - `level` and `total_xp` are a cache, rebuildable from `xp_events`.
 - RLS: users select, insert and update their own row. Column privileges limit `authenticated` updates to the
-  settings columns and `backfilled_at`; `level` and `total_xp` are written only by `award_xp`.
+  settings columns and `backfilled_at`; `level` and `total_xp` are written only by the ledger trigger.
 - `quest_terminology` is stored now; its UI arrives in E2.
 
 ### `xp_events`
 `id uuid pk, user_id, rule text check in ('focus','completion','commitment'), source_type text, source_id uuid,
 local_date date not null, xp int not null check (xp > 0), metadata jsonb not null default '{}', created_at`.
 - Unique `(user_id, rule, source_id)`. Index `(user_id, local_date)`.
-- RLS: select own rows only. No insert/update/delete policy for users: writes go through `award_xp`.
+- RLS: select, insert and delete own rows; no update. Checks: `rule` in the set, `xp` between 1 and 120.
 - `local_date` is the user's local day the XP belongs to (session end, completion time, commitment resolution).
   It makes daily caps a simple sum.
+- An after-statement trigger (security definer, not callable) recomputes `player_profiles.total_xp`/`level` from the
+  ledger on insert and delete. The owner can technically write their own ledger (the server evaluates with the
+  user's JWT); in a single-owner tool this protects against accidents, not against the owner. Own delete exists so
+  E2E cleanup can remove XP from test sources.
 
-### `award_xp(p_events jsonb) returns table(total_xp int, level int, previous_level int)`
-- `security definer`, `search_path = ''`, executable by `authenticated` and `service_role` only.
-- The user is `auth.uid()`; the service role must pass `p_user_id` (a second overload `award_xp(p_user_id uuid,
-  p_events jsonb)` executable by `service_role` only).
-- In one transaction: insert events with `on conflict do nothing`, recompute `total_xp` as the ledger sum and
-  `level` from it, upsert the profile cache, return the new and previous level.
-- Definer is needed because users have no insert policy on `xp_events`. It validates every event (rule in the set,
-  xp between 1 and 120, `local_date` not in the future by more than a day).
+### `award_xp(p_events jsonb, p_user_id uuid default null) returns table(total_xp int, level int, previous_level int)`
+- `security invoker`, `search_path = ''`, executable by `authenticated` and `service_role`.
+- The user is `coalesce(auth.uid(), p_user_id)`: an authenticated caller always awards to themselves; the nightly
+  job (service role) passes `p_user_id`.
+- Inserts events with `on conflict do nothing` (idempotent) and returns the cached totals plus the level before the
+  call. `xp_level(total)` mirrors `levelFor`.
 
 ## 2. Rules (pure, `features/gamification/utils/xp-rules.ts`, `XP_RULES_VERSION = "xp-v1"`)
 
@@ -63,7 +65,8 @@ type Existing = { rule: XpRule; sourceId: string; xp: number }[];               
 - **Focus:** timer sessions with ≥ 10 focused minutes. `focusXp(m) = 0.5·min(m,30) + 0.2·clamp(m−30,0,60) +
   0.05·max(m−90,0)`, rounded down, capped at 30 per session. Manual sessions earn nothing.
 - **Completion:** +20 per completed task whose total focused minutes are ≥ 10.
-- **Commitment:** +10 per final commitment with score ≥ 0.75. Proactive moves earn nothing.
+- **Commitment:** +10 per kept final commitment (resolved by a session or completion) with score ≥ 0.75. Proactive
+  moves and early skips/cancels earn nothing.
 - **Order and caps:** sources are taken in time order (session end, completion time, resolution time). Sources
   already in `existing` are skipped. The remaining day budget per rule is `cap − Σ existing xp for that rule`
   (focus 120, completion 5 × 20 = 100, commitment no cap). An event that would pass the budget is trimmed to the
@@ -148,7 +151,7 @@ data.
 
 ## 7. Deviations (ADR 0016)
 - Opt-in: gamification is off until enabled (requirements show ON by default); enabling runs the backfill.
-- Ledger writes only through `award_xp` (definer, validated), not via an insert policy.
+- Ledger writes through `award_xp` (invoker) with insert/delete-own policies and a definer cache trigger.
 - `xp_events.local_date` added for caps and per-day views.
 - Commitment XP reuses D2's `commitments()` (final commitments only).
 - Quest terminology is stored in E1, shown from E2.
