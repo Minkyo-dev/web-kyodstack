@@ -8,10 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
 import { levelFor } from "@/features/gamification/utils/level";
 import { LevelLine } from "@/features/gamification/components/level-line";
-import {
-  ProgressNotifier,
-  type PlayerView,
-} from "@/features/gamification/components/progress-notifier";
+import { ProgressNotifier, type PlayerView } from "@/features/gamification/components/progress-notifier";
 
 export default async function PrivateLayout({
   children,
@@ -21,11 +18,7 @@ export default async function PrivateLayout({
   const user = await requireUserOrRedirect();
   const profile = await getPlayerProfile(await createClient(), user.id);
   const player: PlayerView | null = profile?.gamification_enabled
-    ? {
-        ...levelFor(profile.total_xp),
-        total: profile.total_xp,
-        animations: profile.animations_enabled,
-      }
+    ? { ...levelFor(profile.total_xp), total: profile.total_xp, animations: profile.animations_enabled }
     : null;
 
   return (
@@ -39,10 +32,7 @@ export default async function PrivateLayout({
           <div className="md:mt-4 md:flex-1">
             <PrivateNav />
           </div>
-          <form
-            action={logout}
-            className="md:border-t md:border-border md:pt-3"
-          >
+          <form action={logout} className="md:border-t md:border-border md:pt-3">
             <p className="hidden truncate px-3 pb-2 text-xs text-muted-foreground md:block">
               {user.email}
             </p>

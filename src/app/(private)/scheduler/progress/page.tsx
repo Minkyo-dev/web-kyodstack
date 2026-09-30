@@ -10,6 +10,9 @@ import { PatternList } from "@/features/analytics/components/pattern-list";
 import { DomainBars } from "@/features/analytics/components/domain-bars";
 import { WorkStandardsDialog } from "@/features/analytics/components/work-standards-dialog";
 import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
+import { getPlayerProfile, xpByRuleSince } from "@/features/gamification/queries/xp.queries";
+import { EnableCard } from "@/features/gamification/components/enable-card";
+import { PlayerSection } from "@/features/gamification/components/player-section";
 
 export const metadata: Metadata = { title: "진행", robots: { index: false } };
 
@@ -22,6 +25,10 @@ export default async function ProgressPage() {
   const stats = computeStats(input);
   const today = toLocalDate(now, input.timezone);
   const snapshots = await listSnapshots(supabase, user.id, addLocalDays(today, -56, input.timezone));
+  const profile = await getPlayerProfile(supabase, user.id);
+  const week = profile?.gamification_enabled
+    ? await xpByRuleSince(supabase, user.id, addLocalDays(today, -6, input.timezone))
+    : null;
   const series = (type: StatType) => snapshots.filter((r) => r.stat_type === type && r.scope === "overall");
 
   return (
@@ -30,6 +37,8 @@ export default async function ProgressPage() {
         <h1 className="text-2xl font-semibold">진행</h1>
         <WorkStandardsDialog settings={input.settings} />
       </header>
+
+      {profile?.gamification_enabled && week ? <PlayerSection profile={profile} week={week} /> : <EnableCard />}
 
       <section aria-labelledby="stats-heading" className="space-y-3">
         <h2 id="stats-heading" className="text-lg font-semibold">
@@ -65,7 +74,7 @@ export default async function ProgressPage() {
       </section>
 
       <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} />
-      <DomainBars domains={stats.domains} />
+      <DomainBars domains={stats.domains} practice={!!profile?.gamification_enabled} />
     </div>
   );
 }

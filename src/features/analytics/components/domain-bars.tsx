@@ -1,8 +1,9 @@
 import { formatMinutes } from "@/features/scheduler/utils/duration";
+import { practiceLevel } from "@/features/gamification/utils/level";
 import type { Stats } from "../domain/stats.types";
 
-/** Practice time per domain; parents include their children (D2 spec §2). Levels come in E. */
-export function DomainBars({ domains }: { domains: Stats["domains"] }) {
+/** Practice time per domain; parents include their children (D2 spec §2). Practice levels when gamification is on (E1). */
+export function DomainBars({ domains, practice = false }: { domains: Stats["domains"]; practice?: boolean }) {
   const top = domains.slice(0, 8);
   const max = Math.max(1, ...top.map((d) => d.recentMinutes));
   return (
@@ -19,6 +20,7 @@ export function DomainBars({ domains }: { domains: Stats["domains"] }) {
               <div className="flex justify-between gap-2 text-sm">
                 <span className={d.parentId ? "pl-3" : undefined}>{d.name}</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
+                  {practice && `Practice Lv.${practiceLevel(d.totalMinutes)} · `}
                   최근 4주 {formatMinutes(d.recentMinutes)} · 전체 {formatMinutes(d.totalMinutes)}
                 </span>
               </div>
