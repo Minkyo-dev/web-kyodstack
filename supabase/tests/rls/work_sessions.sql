@@ -43,13 +43,18 @@ begin
   exception when check_violation then null;
   end;
 
-  -- stop (plain update) then a finished manual session
+  -- stop (plain update) then a finished manual session; scores live in work_logs
   update public.work_sessions
-     set ended_at = started_at + interval '50 minutes', focus_score = 4
+     set ended_at = started_at + interval '50 minutes'
    where id = s.id;
-  insert into public.work_sessions (user_id, task_id, started_at, ended_at, source, focus_score)
+  insert into public.work_logs (user_id, task_id, session_id, focus_score)
+  values ('00000000-0000-4000-a000-00000000000a', b.task_id, s.id, 4);
+  insert into public.work_sessions (user_id, task_id, started_at, ended_at, source)
   values ('00000000-0000-4000-a000-00000000000a', b.task_id,
-          '2026-09-29 20:00Z', '2026-09-29 20:30Z', 'manual', 2);
+          '2026-09-29 20:00Z', '2026-09-29 20:30Z', 'manual')
+  returning * into s;
+  insert into public.work_logs (user_id, task_id, session_id, focus_score)
+  values ('00000000-0000-4000-a000-00000000000a', b.task_id, s.id, 2);
 
   -- manual session must be closed
   begin

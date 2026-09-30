@@ -40,7 +40,8 @@ export async function startWorkSession(
   input: StartWorkSessionInput,
 ): Promise<WorkSession> {
   const { data, error } = await ctx.supabase
-    .rpc("start_work_session", { p_task_id: input.taskId ?? null, p_block_id: input.blockId })
+    // The SQL param accepts null (start from a block); the generated type doesn't say so.
+    .rpc("start_work_session", { p_task_id: (input.taskId ?? null) as string, p_block_id: input.blockId })
     .single();
   if (error) {
     if (error.code === "23505") throw new AppError("ACTIVE_TIMER_EXISTS");

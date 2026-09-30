@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_grants: {
+        Row: {
+          created_at: string
+          granted_by: string
+          id: string
+          resource: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by: string
+          id?: string
+          resource: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string
+          id?: string
+          resource?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_recommendations: {
         Row: {
           created_at: string
@@ -107,6 +131,13 @@ export type Database = {
             foreignKeyName: "ai_recommendations_task_id_user_id_fkey"
             columns: ["task_id", "user_id"]
             isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id", "user_id"]
           },
@@ -118,30 +149,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      access_grants: {
-        Row: {
-          created_at: string
-          granted_by: string
-          id: string
-          resource: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          granted_by: string
-          id?: string
-          resource: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          granted_by?: string
-          id?: string
-          resource?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -718,6 +725,13 @@ export type Database = {
             foreignKeyName: "schedule_blocks_task_id_user_id_fkey"
             columns: ["task_id", "user_id"]
             isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "schedule_blocks_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id", "user_id"]
           },
@@ -1016,6 +1030,175 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          issues: Json
+          metrics: Json
+          model: string | null
+          positives: Json
+          prompt_version: string | null
+          provider: string | null
+          recommendations: Json
+          summary: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issues?: Json
+          metrics: Json
+          model?: string | null
+          positives?: Json
+          prompt_version?: string | null
+          provider?: string | null
+          recommendations?: Json
+          summary: string
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issues?: Json
+          metrics?: Json
+          model?: string | null
+          positives?: Json
+          prompt_version?: string | null
+          provider?: string | null
+          recommendations?: Json
+          summary?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_logs: {
+        Row: {
+          created_at: string
+          energy_score: number | null
+          focus_score: number | null
+          id: string
+          mood_score: number | null
+          note: string | null
+          session_id: string | null
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          energy_score?: number | null
+          focus_score?: number | null
+          id?: string
+          mood_score?: number | null
+          note?: string | null
+          session_id?: string | null
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          energy_score?: number | null
+          focus_score?: number | null
+          id?: string
+          mood_score?: number | null
+          note?: string | null
+          session_id?: string | null
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_logs_session_id_user_id_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "work_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "work_logs_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "work_logs_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "work_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_session_pauses: {
+        Row: {
+          created_at: string
+          id: string
+          paused_at: string
+          reason: string | null
+          resumed_at: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          paused_at: string
+          reason?: string | null
+          resumed_at?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          paused_at?: string
+          reason?: string | null
+          resumed_at?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_session_pauses_session_id_user_id_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "work_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "work_session_pauses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_sessions: {
         Row: {
           created_at: string
@@ -1074,67 +1257,18 @@ export type Database = {
             foreignKeyName: "work_sessions_task_id_user_id_fkey"
             columns: ["task_id", "user_id"]
             isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "work_sessions_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "work_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      weekly_reviews: {
-        Row: {
-          created_at: string
-          id: string
-          issues: Json
-          metrics: Json
-          model: string | null
-          positives: Json
-          prompt_version: string | null
-          provider: string | null
-          recommendations: Json
-          summary: string
-          updated_at: string
-          user_id: string
-          week_start: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          issues?: Json
-          metrics: Json
-          model?: string | null
-          positives?: Json
-          prompt_version?: string | null
-          provider?: string | null
-          recommendations?: Json
-          summary: string
-          updated_at?: string
-          user_id: string
-          week_start: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          issues?: Json
-          metrics?: Json
-          model?: string | null
-          positives?: Json
-          prompt_version?: string | null
-          provider?: string | null
-          recommendations?: Json
-          summary?: string
-          updated_at?: string
-          user_id?: string
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_reviews_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1151,6 +1285,7 @@ export type Database = {
           completed_at: string | null
           complexity: number | null
           milestone_id: string | null
+          paused_minutes: number | null
           planned_minutes: number | null
           project_id: string | null
           reschedule_count: number | null
@@ -1162,7 +1297,43 @@ export type Database = {
           user_estimated_minutes: number | null
           user_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_milestone_id_project_id_fkey"
+            columns: ["milestone_id", "project_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "project_id"]
+          },
+          {
+            foreignKeyName: "tasks_milestone_id_user_id_fkey"
+            columns: ["milestone_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_user_id_fkey"
+            columns: ["project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_template_id_user_id_fkey"
+            columns: ["template_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -1248,26 +1419,38 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      start_work_session: {
-        Args: { p_block_id?: string; p_task_id: string | null }
+      pause_work_session: {
+        Args: { p_reason?: string; p_session_id: string }
         Returns: {
           created_at: string
-          ended_at: string | null
-          energy_score: number | null
-          focus_score: number | null
           id: string
-          mood_score: number | null
-          note: string | null
-          schedule_block_id: string | null
-          source: string
-          started_at: string
-          task_id: string
-          updated_at: string
+          paused_at: string
+          reason: string | null
+          resumed_at: string | null
+          session_id: string
           user_id: string
         }
         SetofOptions: {
           from: "*"
-          to: "work_sessions"
+          to: "work_session_pauses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      resume_work_session: {
+        Args: { p_session_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          paused_at: string
+          reason: string | null
+          resumed_at: string | null
+          session_id: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_session_pauses"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1293,6 +1476,86 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      start_work_session: {
+        Args: { p_block_id?: string; p_task_id: string }
+        Returns: {
+          created_at: string
+          ended_at: string | null
+          energy_score: number | null
+          focus_score: number | null
+          id: string
+          mood_score: number | null
+          note: string | null
+          schedule_block_id: string | null
+          source: string
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      stop_work_session: {
+        Args: {
+          p_complete_task?: boolean
+          p_ended_at?: string
+          p_energy?: number
+          p_focus?: number
+          p_mood?: number
+          p_note?: string
+          p_session_id: string
+        }
+        Returns: {
+          created_at: string
+          ended_at: string | null
+          energy_score: number | null
+          focus_score: number | null
+          id: string
+          mood_score: number | null
+          note: string | null
+          schedule_block_id: string | null
+          source: string
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      switch_work_session: {
+        Args: { p_block_id?: string; p_task_id?: string }
+        Returns: {
+          created_at: string
+          ended_at: string | null
+          energy_score: number | null
+          focus_score: number | null
+          id: string
+          mood_score: number | null
+          note: string | null
+          schedule_block_id: string | null
+          source: string
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
@@ -1311,12 +1574,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1340,11 +1603,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1365,11 +1628,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1390,11 +1653,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1407,11 +1670,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
