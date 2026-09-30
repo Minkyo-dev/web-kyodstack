@@ -432,6 +432,53 @@ export type Database = {
           },
         ]
       }
+      player_profiles: {
+        Row: {
+          achievement_toasts: boolean
+          animations_enabled: boolean
+          backfilled_at: string | null
+          created_at: string
+          gamification_enabled: boolean
+          level: number
+          quest_terminology: boolean
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_toasts?: boolean
+          animations_enabled?: boolean
+          backfilled_at?: string | null
+          created_at?: string
+          gamification_enabled?: boolean
+          level?: number
+          quest_terminology?: boolean
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_toasts?: boolean
+          animations_enabled?: boolean
+          backfilled_at?: string | null
+          created_at?: string
+          gamification_enabled?: boolean
+          level?: number
+          quest_terminology?: boolean
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_projects: {
         Row: {
           content: string | null
@@ -1494,6 +1541,50 @@ export type Database = {
           },
         ]
       }
+      xp_events: {
+        Row: {
+          created_at: string
+          id: string
+          local_date: string
+          metadata: Json
+          rule: string
+          source_id: string
+          source_type: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          local_date: string
+          metadata?: Json
+          rule: string
+          source_id: string
+          source_type: string
+          user_id: string
+          xp: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          local_date?: string
+          metadata?: Json
+          rule?: string
+          source_id?: string
+          source_type?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       task_plan_actual: {
@@ -1590,6 +1681,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      award_xp: {
+        Args: { p_events: Json; p_user_id?: string }
+        Returns: {
+          level: number
+          previous_level: number
+          total_xp: number
+        }[]
       }
       backfill_template_tags: {
         Args: { p_user_id: string }
@@ -1790,6 +1889,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      xp_level: { Args: { p_total: number }; Returns: number }
     }
     Enums: {
       [_ in never]: never
