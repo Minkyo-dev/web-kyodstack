@@ -57,7 +57,8 @@ test.describe("projects and milestones", () => {
 
     // Completing updates project + milestone progress (understood without opening tasks).
     await page.getByRole("checkbox", { name: `${task} 완료로 표시` }).click();
-    await expect(page.getByRole("checkbox", { name: `${task} 완료 취소` })).toBeVisible();
+    // Completed tasks move into the collapsed "오늘 완료" group.
+    await expect(page.getByRole("checkbox", { name: `${task} 완료 취소`, includeHidden: true })).toBeAttached();
     await page.getByRole("link", { name: "프로젝트" }).click();
     const row = page.getByRole("link", { name: project });
     await expect(row).toContainText("완료 1/1");

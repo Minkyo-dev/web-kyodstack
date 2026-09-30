@@ -90,6 +90,12 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement D3 — Today view + capacity (docs/superpowers/specs/2026-09-30-today-summary-capacity-design.md)
+- [x] Pure `todaySections`, overload rule, overflow selection; shared `dailyCapacity` used by the stat engine (ADR 0015)
+- [x] Page loads capacity, week completed count and today/tomorrow blocks
+- [x] Today panel sections (지금/다음/이후/미배정/오늘 완료), week summary line, capacity notice with the 계획 조정 dialog
+- [x] E2E `today.spec.ts`
+
 ## Improvement D2 — stat engine + progress (docs/superpowers/specs/2026-09-30-stat-engine-progress-design.md)
 - [x] Work-standard settings and `stat_snapshots` (SQL tests, ADR 0014)
 - [x] Pure `computeStats` (Calibration, Reliability, Consistency, Recovery, patterns, domains) with requirement examples as tests

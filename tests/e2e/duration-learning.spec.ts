@@ -54,7 +54,8 @@ test.describe("duration learning", () => {
     // Completing each task refreshes the template profile (spec §61).
     for (const title of titles) {
       await page.getByRole("checkbox", { name: `${title} 완료로 표시` }).click();
-      await expect(page.getByRole("checkbox", { name: `${title} 완료 취소` })).toBeVisible();
+      // Completed tasks move into the collapsed "오늘 완료" group.
+      await expect(page.getByRole("checkbox", { name: `${title} 완료 취소`, includeHidden: true })).toBeAttached();
     }
     const groupCount = async () =>
       (await db.from("duration_groups").select("sample_count").eq("group_key", `tag:${tag!.id}`).maybeSingle()).data
@@ -91,9 +92,14 @@ test.describe("duration learning", () => {
     expect((Date.parse(kept!.ends_at) - Date.parse(kept!.starts_at)) / 60_000).toBe(60);
 
     // Reopening removes a sample → back to cold start (no false confidence, §26.4).
+    await page.getByText(/^오늘 완료 \d+$/).click();
     await page.getByRole("checkbox", { name: `${titles[0]} 완료 취소` }).click();
-    await expect(item).not.toContainText("추천", { timeout: 15_000 });
     await expect.poll(groupCount).toBe(2);
+    // The task now only has a block tomorrow, so it is out of Today (D3); check through its calendar event.
+    await savedEvent(page, title).click();
+    const reopened = page.getByRole("dialog", { name: title });
+    await expect(reopened).toContainText("3개 이상 쌓이면 실제 기록으로 추천");
+    await expect(reopened).not.toContainText("→ 추천");
   });
 });
 
