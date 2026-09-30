@@ -3,7 +3,8 @@ import { requireUserOrRedirect } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulerWorkspace } from "@/features/scheduler/components/scheduler-workspace";
 import { WEEK_FETCH_BUFFER_DAYS } from "@/features/scheduler/domain/scheduler.constants";
-import { listTemplates, listTodayTasks } from "@/features/scheduler/queries/task.queries";
+import { countCompletedInRange, listTemplates, listTodayTasks } from "@/features/scheduler/queries/task.queries";
+import { loadDailyCapacity } from "@/features/analytics/queries/capacity.queries";
 import {
   getSchedulerContext,
   listBlocksInRange,
@@ -63,6 +64,11 @@ export default async function SchedulerPage({
     timezone,
   ).end;
   const todayRange = localDayRange(today, timezone);
+  const tomorrowRange = localDayRange(addLocalDays(today, 1, timezone), timezone);
+  const weekRange = {
+    start: localDayRange(currentWeek.startDate, timezone).start,
+    end: localDayRange(currentWeek.endDate, timezone).start,
+  };
 
   // Parallel initial read (spec §51).
   const [
@@ -76,6 +82,9 @@ export default async function SchedulerPage({
     domains,
     tags,
     classifiedTemplates,
+    capacity,
+    weekCompleted,
+    nearBlocks,
     projectOptions,
     recommendations,
   ] = await Promise.all([
@@ -89,6 +98,10 @@ export default async function SchedulerPage({
     listDomainRefs(supabase, user.id),
     listTags(supabase, user.id),
     listTemplatesWithClassification(supabase, user.id),
+    loadDailyCapacity(supabase, user.id, new Date(), settings, timezone),
+    countCompletedInRange(supabase, weekRange.start, weekRange.end),
+    // Today and tomorrow, whatever week is displayed (capacity notice).
+    listBlocksInRange(supabase, todayRange.start, tomorrowRange.end),
     listProjectOptions(supabase),
     listPendingRecommendations(supabase, { date: today }),
   ]);
@@ -115,6 +128,9 @@ export default async function SchedulerPage({
       tags={tags}
       tagFilter={tagFilter}
       classifiedTemplates={classifiedTemplates}
+      capacity={capacity}
+      weekCompleted={weekCompleted}
+      nearBlocks={nearBlocks}
       projectOptions={projectOptions}
       recommendations={recommendations}
     />

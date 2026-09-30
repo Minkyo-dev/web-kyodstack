@@ -42,3 +42,19 @@ export async function listTemplates(supabase: SupabaseServerClient): Promise<Tas
   if (error) throw fromDbError(error);
   return data;
 }
+
+/** Tasks completed in [startIso, endIso) — the week summary count (D3 spec §2). */
+export async function countCompletedInRange(
+  supabase: SupabaseServerClient,
+  startIso: string,
+  endIso: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("tasks")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "completed")
+    .gte("completed_at", startIso)
+    .lt("completed_at", endIso);
+  if (error) throw fromDbError(error);
+  return count ?? 0;
+}

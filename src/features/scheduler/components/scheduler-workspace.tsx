@@ -61,6 +61,11 @@ export type SchedulerWorkspaceProps = {
   tags: TagRef[];
   tagFilter: string[];
   classifiedTemplates: TemplateWithClassification[];
+  /** Typical daily focused minutes (null: not enough history). */
+  capacity: number | null;
+  weekCompleted: number;
+  /** Today's and tomorrow's blocks, for the capacity notice. */
+  nearBlocks: CalendarBlock[];
   projectOptions: ProjectOption[];
   recommendations: PendingRecommendation[];
 };
