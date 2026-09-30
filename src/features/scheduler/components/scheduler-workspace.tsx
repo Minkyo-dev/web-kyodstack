@@ -72,8 +72,9 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const selectedTask = selectedTaskId ? (tasksById.get(selectedTaskId) ?? null) : null;
 
   const { run } = useActionRunner();
-  const [summary, setSummary] = useState<{ session: SessionWithTask; thenStart?: Task } | null>(null);
-  const [switchTarget, setSwitchTarget] = useState<Task | null>(null);
+  type StartTarget = { task: Task; blockId?: string };
+  const [summary, setSummary] = useState<{ session: SessionWithTask; thenStart?: StartTarget } | null>(null);
+  const [switchTarget, setSwitchTarget] = useState<StartTarget | null>(null);
 
   // "Planned" for a session: its block, else what is left of the personal estimate (focus-flow design §2).
   const planFor = (session: SessionWithTask | null) => {
@@ -92,7 +93,13 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   // One open timer: starting another task goes through the switch dialog (requirements §13).
   const startTask = (task: Task) => {
     if (!activeSession) return run(() => startWorkSessionAction({ taskId: task.id }));
-    if (activeSession.task_id !== task.id) setSwitchTarget(task);
+    if (activeSession.task_id !== task.id) setSwitchTarget({ task });
+  };
+
+  // Starting from a calendar block links the session to the block (calendar-planning design §2).
+  const startBlock = (block: CalendarBlock) => {
+    if (!activeSession) return run(() => startWorkSessionAction({ blockId: block.id }));
+    setSwitchTarget({ task: block.task, blockId: block.id });
   };
 
   const now = useNow(60_000);
@@ -139,6 +146,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             context={context}
             week={week}
             today={today}
+            showActual
+            onStartBlock={startBlock}
             onOpenTask={setSelectedTaskId}
           />
         </section>
@@ -162,7 +171,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         onDone={() => {
           const next = summary?.thenStart;
           setSummary(null);
-          if (next) run(() => startWorkSessionAction({ taskId: next.id }));
+          if (next) run(() => startWorkSessionAction(next.blockId ? { blockId: next.blockId } : { taskId: next.task.id }));
         }}
       />
       <SwitchTaskDialog

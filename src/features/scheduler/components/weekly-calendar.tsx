@@ -27,6 +27,7 @@ import {
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task } from "../domain/task.types";
 import type { SessionWithTask } from "../domain/work-session.types";
+import { blockState } from "../utils/block-state";
 import { findOverlaps } from "../utils/calendar";
 import { CalendarEventContent } from "./calendar-event-content";
 import { CreateInRangeDialog } from "./create-in-range-dialog";
@@ -44,6 +45,8 @@ export function WeeklyCalendar({
   context,
   week,
   today,
+  showActual,
+  onStartBlock,
   onOpenTask,
 }: {
   blocks: CalendarBlock[];
@@ -52,6 +55,9 @@ export function WeeklyCalendar({
   context: SchedulerContext;
   week: { startDate: string; endDate: string; days: string[] };
   today: string;
+  /** Overlay finished sessions; a running session is always shown. */
+  showActual: boolean;
+  onStartBlock: (block: CalendarBlock) => void;
   onOpenTask: (taskId: string) => void;
 }) {
   const { timezone, settings } = context;
@@ -72,8 +78,8 @@ export function WeeklyCalendar({
     today >= week.startDate && today < week.endDate ? today : week.startDate,
   );
 
-  const hasRunning = sessions.some((x) => x.ended_at === null);
-  const now = useNow(60_000, hasRunning);
+  // Ticks every minute: running sessions grow and blocks turn "not started" / "missed" live.
+  const now = useNow(60_000);
 
   // Plan (blocks) and actual (sessions) render side by side; they are never merged (spec §3.2).
   const events = useMemo<EventInput[]>(
@@ -83,11 +89,16 @@ export function WeeklyCalendar({
         title: b.task.title,
         start: b.starts_at,
         end: b.ends_at,
-        editable: b.status === "planned",
-        classNames: [`sched-block`, `sched-block--${b.status}`],
+        editable: b.status === "planned" && blockState(b, sessions, now) !== "missed",
+        classNames: [
+          "sched-block",
+          `sched-block--${b.status}`,
+          blockState(b, sessions, now) === "missed" ? "sched-block--missed" : "",
+          blockState(b, sessions, now) === "not_started" ? "sched-block--not-started" : "",
+        ].filter(Boolean),
         extendedProps: { block: b },
       })),
-      ...sessions.map((x) => ({
+      ...sessions.filter((x) => showActual || x.ended_at === null).map((x) => ({
         id: `session-${x.id}`,
         title: x.task.title,
         start: x.started_at,
@@ -100,7 +111,7 @@ export function WeeklyCalendar({
         extendedProps: { session: x },
       })),
     ],
-    [blocks, sessions, now],
+    [blocks, sessions, now, showActual],
   );
 
   function warnOverlap(blockId: string, start: Date, end: Date) {
@@ -228,7 +239,17 @@ export function WeeklyCalendar({
           eventDurationEditable
           eventStartEditable
           events={events}
-          eventContent={(arg: EventContentArg) => <CalendarEventContent arg={arg} timezone={timezone} />}
+          eventContent={(arg: EventContentArg) => (
+            <CalendarEventContent
+              arg={arg}
+              timezone={timezone}
+              context={context}
+              blocks={blocks}
+              sessions={sessions}
+              now={now}
+              onStartBlock={onStartBlock}
+            />
+          )}
           eventReceive={handleReceive}
           eventDrop={handleChange}
           eventResize={handleChange}

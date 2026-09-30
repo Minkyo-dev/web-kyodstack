@@ -14,7 +14,7 @@ import type { Database } from "@/types/database";
 export function createAdminClient(): SupabaseServerClient {
   const key = serverEnv.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new AppError("INTERNAL_ERROR", "SUPABASE_SERVICE_ROLE_KEY is not configured.");
-  const client = createClient<Database>(publicEnv.NEXT_PUBLIC_SUPABASE_URL, key, {
+  const client = createClient<Database>(publicEnv.SUPABASE_URL, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   // Same query surface as the cookie-based server client; typed as such so the

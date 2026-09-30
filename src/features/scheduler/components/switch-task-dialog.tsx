@@ -24,7 +24,8 @@ export function SwitchTaskDialog({
   onFinishFirst,
 }: {
   current: SessionWithTask | null;
-  target: Task | null;
+  /** The task to start; with a block, the session is linked to that block. */
+  target: { task: Task; blockId?: string } | null;
   onCancel: () => void;
   onFinishFirst: () => void;
 }) {
@@ -39,7 +40,7 @@ export function SwitchTaskDialog({
           <DialogTitle>작업 전환</DialogTitle>
           <DialogDescription>
             지금 작업 중: {current.task.title} · {elapsed}
-            <br />“{target.title}”을(를) 시작할까요?
+            <br />“{target.task.title}”을(를) 시작할까요?
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-wrap gap-2">
@@ -50,10 +51,17 @@ export function SwitchTaskDialog({
             variant="outline"
             disabled={pending}
             onClick={() =>
-              run(() => switchWorkSessionAction({ taskId: target.id }), {
-                success: `${current.task.title}은(는) 보류했습니다.`,
-                onSuccess: onCancel,
-              })
+              run(
+                () =>
+                  switchWorkSessionAction(
+                    // The block decides the task in start_work_session.
+                    target.blockId ? { blockId: target.blockId } : { taskId: target.task.id },
+                  ),
+                {
+                  success: `${current.task.title}은(는) 보류했습니다.`,
+                  onSuccess: onCancel,
+                },
+              )
             }
           >
             보류하고 시작
