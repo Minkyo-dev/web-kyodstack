@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, FolderKanban, LayoutDashboard, NotebookText } from "lucide-react";
+import { BarChart3, CalendarClock, FolderKanban, LayoutDashboard, NotebookText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { href: "/scheduler", label: "스케줄러", icon: CalendarClock, exact: true },
   { href: "/scheduler/projects", label: "프로젝트", icon: FolderKanban, exact: false },
   { href: "/scheduler/review", label: "주간 리뷰", icon: NotebookText, exact: false },
+  { href: "/scheduler/progress", label: "진행", icon: BarChart3, exact: false },
 ] as const;
 
 export function PrivateNav() {

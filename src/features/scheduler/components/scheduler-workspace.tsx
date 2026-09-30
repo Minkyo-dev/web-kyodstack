@@ -22,6 +22,7 @@ import { sessionPlanMinutes } from "../utils/focus";
 import { FocusBar } from "./focus-bar";
 import { SchedulerSettingsMenu } from "./scheduler-settings-menu";
 import { ClassificationDialog } from "@/features/classification/components/classification-dialog";
+import { WorkStandardsDialog } from "@/features/analytics/components/work-standards-dialog";
 import type { TemplateWithClassification } from "@/features/classification/queries/classification.queries";
 import { SwitchTaskDialog } from "./switch-task-dialog";
 import { WorkSummaryDialog } from "./work-summary-dialog";
@@ -72,6 +73,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const labels = useMemo(() => groupLabels(domains), [domains]);
   const { tagFilter, classifiedTemplates } = props;
   const [classifyOpen, setClassifyOpen] = useState(false);
+  const [standardsOpen, setStandardsOpen] = useState(false);
 
   // Any task visible anywhere on screen can be opened in the drawer.
   const tasksById = useMemo(() => {
@@ -145,6 +147,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           <SchedulerSettingsMenu
             showActualDefault={context.settings.show_actual_default}
             onManageClassification={() => setClassifyOpen(true)}
+            onOpenWorkStandards={() => setStandardsOpen(true)}
           />
           <WeekNavigation week={week} today={today} timezone={context.timezone} />
         </div>
@@ -205,6 +208,12 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           setSummary(null);
           if (next) run(() => startWorkSessionAction(next.blockId ? { blockId: next.blockId } : { taskId: next.task.id }));
         }}
+      />
+      <WorkStandardsDialog
+        settings={context.settings}
+        open={standardsOpen}
+        onOpenChange={setStandardsOpen}
+        trigger={false}
       />
       <ClassificationDialog
         open={classifyOpen}

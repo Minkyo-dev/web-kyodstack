@@ -16,9 +16,11 @@ import { updateSchedulerSettingsAction } from "../actions/schedule.actions";
 export function SchedulerSettingsMenu({
   showActualDefault,
   onManageClassification,
+  onOpenWorkStandards,
 }: {
   showActualDefault: boolean;
   onManageClassification: () => void;
+  onOpenWorkStandards: () => void;
 }) {
   const { run } = useActionRunner();
   return (
@@ -41,6 +43,7 @@ export function SchedulerSettingsMenu({
           실제 작업을 기본으로 표시
         </DropdownMenuCheckboxItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onOpenWorkStandards}>작업 기준</DropdownMenuItem>
         <DropdownMenuItem onClick={onManageClassification}>분류 관리</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
