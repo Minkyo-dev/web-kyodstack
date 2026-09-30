@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { useCallback, useContext, useTransition } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/lib/errors";
+import { ProgressSinkContext } from "./progress-sink";
 
 /** Run a Server Action, toast its human-readable error, and expose pending state. */
 export function useActionRunner() {
   const [pending, startTransition] = useTransition();
+  const sink = useContext(ProgressSinkContext);
 
   const run = useCallback(
     <T,>(
@@ -17,6 +19,7 @@ export function useActionRunner() {
         startTransition(async () => {
           const result = await action();
           if (result.ok) {
+            if (result.progress) sink(result.progress);
             if (opts.success) toast.success(opts.success);
             opts.onSuccess?.(result.data);
           } else {
@@ -26,7 +29,7 @@ export function useActionRunner() {
           resolve(result);
         });
       }),
-    [],
+    [sink],
   );
 
   return { run, pending };
