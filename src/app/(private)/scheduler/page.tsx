@@ -16,6 +16,7 @@ import {
 import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
 import { loadDurationProfiles } from "@/features/scheduler/services/duration-profile.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
+import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
 import {
   addLocalDays,
   isLocalDateString,
@@ -54,8 +55,17 @@ export default async function SchedulerPage({
   const todayRange = localDayRange(today, timezone);
 
   // Parallel initial read (spec §51).
-  const [todayTasks, blocks, templates, sessions, activeSession, reflection, durationProfiles, projectOptions] =
-    await Promise.all([
+  const [
+    todayTasks,
+    blocks,
+    templates,
+    sessions,
+    activeSession,
+    reflection,
+    durationProfiles,
+    projectOptions,
+    recommendations,
+  ] = await Promise.all([
     listTodayTasks(supabase, today, todayRange.start),
     listBlocksInRange(supabase, rangeStart, rangeEnd),
     listTemplates(supabase),
@@ -64,6 +74,7 @@ export default async function SchedulerPage({
     getDailyReflection(supabase, today),
     loadDurationProfiles(supabase),
     listProjectOptions(supabase),
+    listPendingRecommendations(supabase, { date: today }),
   ]);
 
   // Plan vs actual only for tasks visible on this screen.
@@ -85,6 +96,7 @@ export default async function SchedulerPage({
       planActual={planActual}
       durationProfiles={durationProfiles}
       projectOptions={projectOptions}
+      recommendations={recommendations}
     />
   );
 }

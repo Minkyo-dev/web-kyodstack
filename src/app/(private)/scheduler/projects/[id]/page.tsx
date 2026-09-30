@@ -20,6 +20,8 @@ import { loadProjectContext } from "@/features/projects/queries/context";
 import { getProjectOverview } from "@/features/projects/queries/project.queries";
 import { estimateDuration } from "@/features/scheduler/utils/estimator";
 import type { Task } from "@/features/scheduler/domain/task.types";
+import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
+import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
 
 export const metadata: Metadata = { title: "프로젝트", robots: { index: false } };
 
@@ -39,6 +41,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     throw e;
   }
   const { overview: project, planActual } = data;
+  const recommendations = await listPendingRecommendations(supabase, { projectId: project.id });
   const closed = project.status === "completed" || project.status === "cancelled";
 
   const rows = (tasks: Task[]) =>
@@ -115,6 +118,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {!closed && <TaskQuickAdd projectId={project.id} milestoneId={null} label={project.name} />}
         </div>
       </section>
+
+      {/* AI-suggested tasks for this project (spec §29); accepted ones become real tasks. */}
+      <div className="rounded-lg border border-border p-4">
+        <AiRecommendationList
+          items={recommendations}
+          emptyText="스케줄러의 'AI 추천'에서 추천을 받으면 이 프로젝트 관련 제안이 여기에 표시됩니다."
+        />
+      </div>
 
       <details className="rounded-lg border border-border p-4">
         <summary className="cursor-pointer text-sm font-medium">프로젝트 설정</summary>

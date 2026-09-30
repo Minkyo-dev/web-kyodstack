@@ -38,8 +38,26 @@ This file lists only the **differences and additions** relative to the spec, plu
 - `task_plan_actual` now also exposes `project_id` and `milestone_id`.
 - Remaining estimate (v1) = Σ over open tasks of max(personal estimate − actual minutes so far, 0).
 
+## weekly_reviews / ai_recommendations (Phase 5)
+- `weekly_reviews` is unique on `(user_id, week_start)`, so generation is an upsert. `metrics` stores the exact
+  input the LLM saw, together with provider, model and prompt_version.
+- `ai_recommendations` has composite FKs like `tasks` (project/milestone same user, milestone ∈ project) plus
+  `(task_id, user_id)` → the accepted task. The check `(status = 'pending') = (decided_at is null)` holds.
+- Only `accept_ai_recommendation(id, title?, estimate?, target_date?)` turns a recommendation into a task.
+  It raises `P0002` when the id is not found and `23514` when the recommendation was already decided.
+
+### Weekly metrics v1 (`computeWeeklyMetrics`)
+| Metric | Definition |
+|---|---|
+| planned / skipped / actual | as in the daily definitions, clipped to the local week |
+| planCompletionRatio | actual / planned (null if planned = 0) |
+| deepWorkMinutes | Σ finished sessions of ≥ 50 min |
+| averageFocus / Mood / Energy | mean over finished-session ratings **and** daily-reflection ratings in the week |
+| best/worstFocusWindow | 3-hour local windows, focus weighted by session minutes, window needs ≥ 60 min |
+| under/overestimatedTaskTypes | tasks completed in the week with a template: Σ actual / Σ base ≥ 1.2 or ≤ 0.8 |
+| reschedule / move / resize, minutesShifted, daysShifted | revisions created in the week (moved + resized) |
+
 ## Deferred to later phases (spec §71)
-- `weekly_reviews`, `ai_recommendations` → Phase 5
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.
 | Metric | Definition (v1) |

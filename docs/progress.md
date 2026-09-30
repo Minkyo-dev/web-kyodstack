@@ -55,9 +55,20 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] Exit: E2E `tests/e2e/projects.spec.ts` + SQL `supabase/tests/rls/projects.sql` pass
 
 ## Phase 5 — AI
-- [ ] Step 14: provider abstraction, weekly review, recommendations, accept/reject
+- [x] Step 14: `weekly_reviews`, `ai_recommendations` (RLS, composite FKs, decided_at ⇔ status) + atomic
+      `accept_ai_recommendation` + SQL test; `AiProvider` interface, `AnthropicProvider` (claude-opus-5-5, structured output,
+      server-side fallback) and `FakeProvider`; versioned prompts (v1)
+- [x] Deterministic `computeWeeklyMetrics` v1 (planned/actual/ratio, completed/created, skipped, reschedules with minutes and days shifted,
+      focus/mood/energy, deep work, top/under/over task types, best/worst 3-hour focus windows) + `remainingCapacityMinutes`
+- [x] Recommendation guardrails (`sanitizeRecommendations`), no LLM call when there is no capacity or no active project, expire-then-insert idempotency
+- [x] UI: `/scheduler/review` (metrics + AI interpretation + regenerate), "AI 추천" in the Today panel and on the project detail page
+      (rationale / edit then accept / reject)
+- [x] Exit: E2E `tests/e2e/ai-recommendations.spec.ts` (no task before accept; edit + accept → linked task; reject → no task);
+      invalid AI output is rejected by the schema and guardrail unit tests
+- [ ] Real generation smoke run: blocked by the Anthropic account's credit balance (API 400 "credit balance is too low").
+      The failure path was verified: 502 + a friendly toast, nothing persisted.
 
-## Phase 6 — Automation
+## Phase 6 — Automation (next)
 - [ ] Cron jobs (daily-planner, weekly-review, duration-profile-refresh), idempotent
 
 ## Open questions

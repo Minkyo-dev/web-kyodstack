@@ -26,3 +26,4 @@ Template:
 | 0006 | Clamp auto-sized blocks to the focus-block limits | accepted |
 | 0007 | Tasks with logged work cannot be hard-deleted | accepted |
 | 0008 | Recommended durations round up to 5 minutes | accepted |
+| 0009 | AI provider, contracts and guardrails | accepted |

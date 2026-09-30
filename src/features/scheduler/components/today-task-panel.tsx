@@ -10,6 +10,8 @@ import type { SchedulerSettings, Task, TaskTemplate } from "../domain/task.types
 import type { SessionWithTask } from "../domain/work-session.types";
 import { estimateDuration, type StoredProfile } from "../utils/estimator";
 import { TaskListItem } from "./task-list-item";
+import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
+import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 
 export function TodayTaskPanel({
   tasks,
@@ -18,6 +20,7 @@ export function TodayTaskPanel({
   today,
   activeSession,
   durationProfiles,
+  recommendations,
   onOpenTask,
 }: {
   tasks: Task[];
@@ -26,6 +29,7 @@ export function TodayTaskPanel({
   today: string;
   activeSession: SessionWithTask | null;
   durationProfiles: StoredProfile[];
+  recommendations: PendingRecommendation[];
   onOpenTask: (taskId: string) => void;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
@@ -107,6 +111,13 @@ export function TodayTaskPanel({
           />
         ))}
       </ul>
+
+      <div className="border-t border-border px-4 py-3">
+        <AiRecommendationList
+          items={recommendations}
+          emptyText="진행 중인 프로젝트와 오늘 남은 시간을 보고 할 일을 제안합니다."
+        />
+      </div>
     </aside>
   );
 }

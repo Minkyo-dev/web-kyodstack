@@ -11,6 +11,7 @@ import type {
 } from "../domain/work-session.types";
 import type { StoredProfile } from "../utils/estimator";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
+import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 import { WorkSessionTimer } from "./work-session-timer";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
@@ -44,11 +45,13 @@ export type SchedulerWorkspaceProps = {
   planActual: Record<string, TaskPlanActual>;
   durationProfiles: StoredProfile[];
   projectOptions: ProjectOption[];
+  recommendations: PendingRecommendation[];
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual, durationProfiles, projectOptions } = props;
+  const { sessions, activeSession, reflection, planActual, durationProfiles, projectOptions, recommendations } =
+    props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Any task visible anywhere on screen can be opened in the drawer.
@@ -79,6 +82,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           today={today}
           activeSession={activeSession}
           durationProfiles={durationProfiles}
+          recommendations={recommendations}
           onOpenTask={setSelectedTaskId}
         />
         <section aria-label="주간 캘린더" className="min-h-[480px] min-w-0 flex-1 md:min-h-0">

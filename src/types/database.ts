@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_recommendations: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          description: string | null
+          estimated_minutes: number | null
+          id: string
+          input_snapshot: Json | null
+          milestone_id: string | null
+          model: string | null
+          output_snapshot: Json | null
+          priority: number | null
+          project_id: string | null
+          prompt_version: string | null
+          provider: string | null
+          rationale: string | null
+          recommendation_date: string
+          recommendation_type: string
+          status: string
+          task_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          input_snapshot?: Json | null
+          milestone_id?: string | null
+          model?: string | null
+          output_snapshot?: Json | null
+          priority?: number | null
+          project_id?: string | null
+          prompt_version?: string | null
+          provider?: string | null
+          rationale?: string | null
+          recommendation_date: string
+          recommendation_type: string
+          status?: string
+          task_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          input_snapshot?: Json | null
+          milestone_id?: string | null
+          model?: string | null
+          output_snapshot?: Json | null
+          priority?: number | null
+          project_id?: string | null
+          prompt_version?: string | null
+          provider?: string | null
+          rationale?: string | null
+          recommendation_date?: string
+          recommendation_type?: string
+          status?: string
+          task_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_milestone_id_project_id_fkey"
+            columns: ["milestone_id", "project_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "project_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_milestone_id_user_id_fkey"
+            columns: ["milestone_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_project_id_user_id_fkey"
+            columns: ["project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "ai_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       access_grants: {
         Row: {
           created_at: string
@@ -934,6 +1039,62 @@ export type Database = {
           },
         ]
       }
+      weekly_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          issues: Json
+          metrics: Json
+          model: string | null
+          positives: Json
+          prompt_version: string | null
+          provider: string | null
+          recommendations: Json
+          summary: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issues?: Json
+          metrics: Json
+          model?: string | null
+          positives?: Json
+          prompt_version?: string | null
+          provider?: string | null
+          recommendations?: Json
+          summary: string
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issues?: Json
+          metrics?: Json
+          model?: string | null
+          positives?: Json
+          prompt_version?: string | null
+          provider?: string | null
+          recommendations?: Json
+          summary?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       task_plan_actual: {
@@ -958,6 +1119,40 @@ export type Database = {
       }
     }
     Functions: {
+      accept_ai_recommendation: {
+        Args: {
+          p_estimated_minutes?: number
+          p_recommendation_id: string
+          p_target_date?: string
+          p_title?: string
+        }
+        Returns: {
+          completed_at: string | null
+          complexity: number
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          milestone_id: string | null
+          priority: number
+          project_id: string | null
+          recommended_minutes: number | null
+          sort_order: number
+          status: string
+          target_date: string | null
+          template_id: string | null
+          title: string
+          updated_at: string
+          user_estimated_minutes: number | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tasks"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_schedule_block: {
         Args: {
           p_ends_at: string

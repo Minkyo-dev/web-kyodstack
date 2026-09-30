@@ -91,7 +91,10 @@ export function WeeklyCalendar({
         id: `session-${x.id}`,
         title: x.task.title,
         start: x.started_at,
-        end: x.ended_at ?? now.toISOString(),
+        // A just-started timer must not be zero-length: FullCalendar would draw it as 1 hour.
+        end:
+          x.ended_at ??
+          new Date(Math.max(now.getTime(), new Date(x.started_at).getTime() + 60_000)).toISOString(),
         editable: false,
         classNames: x.ended_at ? ["sched-session"] : ["sched-session", "sched-session--running"],
         extendedProps: { session: x },

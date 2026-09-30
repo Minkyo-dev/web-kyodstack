@@ -25,7 +25,9 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/dashboard` | (private) | links to utilities |
 | `/scheduler?week=yyyy-MM-dd` | (private) | Today list + week calendar + task drawer |
 | `/scheduler/projects` | (private) | project list with progress |
-| `/scheduler/projects/[id]` | (private) | milestones, tasks, progress, settings |
+| `/scheduler/projects/[id]` | (private) | milestones, tasks, progress, settings, AI suggestions |
+| `/scheduler/review?week=` | (private) | deterministic weekly metrics + AI interpretation |
+| `POST /api/ai/weekly-review`, `POST /api/ai/daily-recommendations` | route handlers | generation (auth via cookie, `runRoute`) |
 
 Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`, `/finance`, `/english`.
 
@@ -49,6 +51,8 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/features/scheduler/utils/estimator.ts` | pure duration estimator, shared by the server block sizing, the drag preview and the explanation |
 | `src/features/scheduler/services/duration-profile.service.ts` | load profiles; refresh a template's profile (quietly after history changes) |
 | `src/features/projects` | domain, pure `utils/progress.ts`, schemas, `project.service` (incl. `resolveTaskLink`), queries (overview, options), components |
+| `src/features/ai` | `services/provider.ts` (AiProvider), `providers/{anthropic,fake}.ts`, prompts (versioned), schemas, `utils/{capacity,sanitize}.ts`, services (weekly review, recommendations, accept/reject), components |
+| `src/lib/route.ts` | `runRoute()`: the Route Handler version of `runAction` (JSON + HTTP status mapping) |
 | `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 

@@ -21,7 +21,8 @@ test.describe("actual work tracking", () => {
     await page.getByRole("button", { name: `${title} 타이머 시작` }).click();
     const timer = page.getByRole("status", { name: "실행 중인 타이머" });
     await expect(timer).toContainText(title);
-    await expect(page.locator(".fc-event.sched-session--running", { hasText: title })).toBeVisible();
+    // A session can legitimately cross local midnight and render as two segments.
+    await expect(page.locator(".fc-event.sched-session--running", { hasText: title }).first()).toBeVisible();
 
     await timer.getByRole("button", { name: "정지" }).click();
     const stopDialog = page.getByRole("dialog", { name: "작업 종료" });
