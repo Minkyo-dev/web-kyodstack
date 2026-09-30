@@ -5,13 +5,21 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { updateSchedulerSettingsAction } from "../actions/schedule.actions";
 
 /** User defaults for the scheduler view (calendar-planning design §2). */
-export function SchedulerSettingsMenu({ showActualDefault }: { showActualDefault: boolean }) {
+export function SchedulerSettingsMenu({
+  showActualDefault,
+  onManageClassification,
+}: {
+  showActualDefault: boolean;
+  onManageClassification: () => void;
+}) {
   const { run } = useActionRunner();
   return (
     <DropdownMenu>
@@ -32,6 +40,8 @@ export function SchedulerSettingsMenu({ showActualDefault }: { showActualDefault
         >
           실제 작업을 기본으로 표시
         </DropdownMenuCheckboxItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onManageClassification}>분류 관리</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

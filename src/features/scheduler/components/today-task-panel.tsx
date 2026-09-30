@@ -16,6 +16,8 @@ import type { DomainRef, TagRef } from "@/features/classification/domain/classif
 import { parseQuickAdd } from "@/features/classification/utils/quick-add";
 import { TypeSelect } from "@/features/classification/components/classification-fields";
 import { TokenInput } from "@/features/classification/components/token-input";
+import { TagFilter } from "@/features/classification/components/tag-filter";
+import { TemplateTypeBanner } from "@/features/classification/components/template-type-banner";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 
@@ -30,6 +32,9 @@ export function TodayTaskPanel({
   recommendations,
   tags,
   domains,
+  tagFilter,
+  untypedTemplateCount,
+  onManageClassification,
   planActual,
   upcomingTaskIds,
   onStartTask,
@@ -45,6 +50,10 @@ export function TodayTaskPanel({
   recommendations: PendingRecommendation[];
   tags: TagRef[];
   domains: DomainRef[];
+  /** Selected tag ids (?tags=); "any of". */
+  tagFilter: string[];
+  untypedTemplateCount: number;
+  onManageClassification: () => void;
   planActual: Record<string, TaskPlanActual>;
   /** Tasks with a planned block that hasn't ended yet. */
   upcomingTaskIds: Set<string>;
@@ -87,8 +96,11 @@ export function TodayTaskPanel({
     };
   }, []);
 
-  const open = tasks.filter((t) => t.status !== "completed");
-  const completed = tasks.filter((t) => t.status === "completed");
+  const visible = tagFilter.length ? tasks.filter((t) => t.tags.some((g) => tagFilter.includes(g.id))) : tasks;
+  const open = visible.filter((t) => t.status !== "completed");
+  const completed = visible.filter((t) => t.status === "completed");
+  // Only tags that appear on today's tasks (plus any still selected) are offered as filters.
+  const usedTags = tags.filter((g) => tagFilter.includes(g.id) || tasks.some((t) => t.tags.some((x) => x.id === g.id)));
 
   return (
     <aside
@@ -105,6 +117,8 @@ export function TodayTaskPanel({
       </div>
 
       <TaskQuickCreate templates={templates} today={today} tags={tags} domains={domains} />
+      <TemplateTypeBanner count={untypedTemplateCount} onManage={onManageClassification} />
+      <TagFilter tags={usedTags} selected={tagFilter} />
 
       <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="오늘 할 일 목록">
         {open.length === 0 && completed.length === 0 && (

@@ -15,7 +15,12 @@ import {
 } from "@/features/scheduler/queries/session.queries";
 import { listTaskPlanActual } from "@/features/scheduler/queries/analytics.queries";
 import { loadDurationGroups } from "@/features/scheduler/services/duration-groups.service";
-import { listDomainRefs, listTags } from "@/features/classification/queries/classification.queries";
+import {
+  listDomainRefs,
+  listTags,
+  listTemplatesWithClassification,
+} from "@/features/classification/queries/classification.queries";
+import { z } from "zod";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
@@ -32,11 +37,12 @@ export const metadata: Metadata = { title: "스케줄러", robots: { index: fals
 export default async function SchedulerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; tags?: string }>;
 }) {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
-  const { week } = await searchParams;
+  const { week, tags: tagsParam } = await searchParams;
+  const tagFilter = (tagsParam ?? "").split(",").filter((id) => z.uuid().safeParse(id).success);
 
   const context = await getSchedulerContext(supabase, user.id);
   const { timezone, settings } = context;
@@ -69,6 +75,7 @@ export default async function SchedulerPage({
     durationGroups,
     domains,
     tags,
+    classifiedTemplates,
     projectOptions,
     recommendations,
   ] = await Promise.all([
@@ -81,6 +88,7 @@ export default async function SchedulerPage({
     loadDurationGroups(supabase, user.id),
     listDomainRefs(supabase, user.id),
     listTags(supabase, user.id),
+    listTemplatesWithClassification(supabase, user.id),
     listProjectOptions(supabase),
     listPendingRecommendations(supabase, { date: today }),
   ]);
@@ -105,6 +113,8 @@ export default async function SchedulerPage({
       durationGroups={durationGroups}
       domains={domains}
       tags={tags}
+      tagFilter={tagFilter}
+      classifiedTemplates={classifiedTemplates}
       projectOptions={projectOptions}
       recommendations={recommendations}
     />

@@ -21,6 +21,8 @@ import { estimateDuration } from "../utils/estimator";
 import { sessionPlanMinutes } from "../utils/focus";
 import { FocusBar } from "./focus-bar";
 import { SchedulerSettingsMenu } from "./scheduler-settings-menu";
+import { ClassificationDialog } from "@/features/classification/components/classification-dialog";
+import type { TemplateWithClassification } from "@/features/classification/queries/classification.queries";
 import { SwitchTaskDialog } from "./switch-task-dialog";
 import { WorkSummaryDialog } from "./work-summary-dialog";
 import { TodayTaskPanel } from "./today-task-panel";
@@ -56,6 +58,8 @@ export type SchedulerWorkspaceProps = {
   durationGroups: DurationGroup[];
   domains: DomainRef[];
   tags: TagRef[];
+  tagFilter: string[];
+  classifiedTemplates: TemplateWithClassification[];
   projectOptions: ProjectOption[];
   recommendations: PendingRecommendation[];
 };
@@ -66,6 +70,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
     props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const labels = useMemo(() => groupLabels(domains), [domains]);
+  const { tagFilter, classifiedTemplates } = props;
+  const [classifyOpen, setClassifyOpen] = useState(false);
 
   // Any task visible anywhere on screen can be opened in the drawer.
   const tasksById = useMemo(() => {
@@ -136,7 +142,10 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             />
             실제 작업 보기
           </label>
-          <SchedulerSettingsMenu showActualDefault={context.settings.show_actual_default} />
+          <SchedulerSettingsMenu
+            showActualDefault={context.settings.show_actual_default}
+            onManageClassification={() => setClassifyOpen(true)}
+          />
           <WeekNavigation week={week} today={today} timezone={context.timezone} />
         </div>
       </header>
@@ -153,6 +162,9 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           recommendations={recommendations}
           tags={tags}
           domains={domains}
+          tagFilter={tagFilter}
+          untypedTemplateCount={classifiedTemplates.filter((t) => !t.task_type).length}
+          onManageClassification={() => setClassifyOpen(true)}
           planActual={planActual}
           upcomingTaskIds={upcomingTaskIds}
           onStartTask={startTask}
@@ -193,6 +205,13 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           setSummary(null);
           if (next) run(() => startWorkSessionAction(next.blockId ? { blockId: next.blockId } : { taskId: next.task.id }));
         }}
+      />
+      <ClassificationDialog
+        open={classifyOpen}
+        onOpenChange={setClassifyOpen}
+        tags={tags}
+        domains={domains}
+        templates={classifiedTemplates}
       />
       <SwitchTaskDialog
         current={activeSession}

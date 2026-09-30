@@ -39,6 +39,10 @@ export async function cleanup(db: SupabaseClient) {
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
   // Projects cascade into milestones (their tasks were deleted above).
   await db.from("projects").delete().like("name", `${E2E_PREFIX}%`);
+  // Classification rows: tags/domains made by E2E ("[e2e] …" template tags, "e2e-…" inline tags, "E2E…" domains).
+  await db.from("tags").delete().like("name", `${E2E_PREFIX}%`);
+  await db.from("tags").delete().like("name", "e2e-%");
+  await db.from("practice_domains").delete().like("name", "E2E%");
 }
 
 /** Center of the time-grid cell for a local date + time (HH:mm). */
