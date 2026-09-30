@@ -1794,7 +1794,6 @@ git commit -m "E2-7: quest terminology across the private UI"
   7. Terminology: settings → check "퀘스트 용어" → save → nav link "메인 퀘스트" visible; `/scheduler` placeholder
      `퀘스트 추가 (#태그 @영역)`; turn it off again.
   8. `finally`: restore the profile (`before` or `{ gamification_enabled: false, quest_terminology: false, equipped_title: null, backfilled_at: null }`) first, then delete rows this test created: `quests` created at/after the test start (objectives cascade) and their `quest` XP events (`xp_events` where `source_type = 'quest'` and `source_id` in those ids), `user_titles` and `user_achievements` unlocked at/after the test start.
-- [ ] **Step 1b: helpers cleanup** — `cleanup(db)` also deletes `xp_events` with `source_type = 'quest'` whose quest no longer exists is not needed; keep cleanup generic (tasks/sources only) and do the quest-specific removal in the spec's `finally`.
 - [ ] **Step 2: Run the spec** — Expected: PASS.
 - [ ] **Step 3: Docs** — ADR 0017 (spec §8 deviations + E2E residue note), README row `| 0017 | Quests, achievements, titles and quest terminology | accepted |`, `progress.md` E2 checklist, `schema.md` rows, `architecture.md` gamification line update.
 - [ ] **Step 4: Full verification** — tsc, eslint, vitest, build (then delete `.next/dev/types/*` only if tsc reports a corrupted generated file, and restart the dev server with separate commands — never `pkill -f` a pattern that matches the running shell), all E2E (14 specs), DB check (no `[e2e]` tasks, profile restored).
