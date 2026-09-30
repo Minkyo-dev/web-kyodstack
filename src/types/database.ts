@@ -751,6 +751,7 @@ export type Database = {
           default_break_minutes: number
           max_focus_block_minutes: number
           min_block_minutes: number
+          show_actual_default: boolean
           slot_minutes: number
           updated_at: string
           user_id: string
@@ -765,6 +766,7 @@ export type Database = {
           default_break_minutes?: number
           max_focus_block_minutes?: number
           min_block_minutes?: number
+          show_actual_default?: boolean
           slot_minutes?: number
           updated_at?: string
           user_id: string
@@ -779,6 +781,7 @@ export type Database = {
           default_break_minutes?: number
           max_focus_block_minutes?: number
           min_block_minutes?: number
+          show_actual_default?: boolean
           slot_minutes?: number
           updated_at?: string
           user_id?: string
@@ -1386,6 +1389,7 @@ export type Database = {
         }
       }
       is_admin: { Args: never; Returns: boolean }
+      mark_missed_blocks: { Args: { p_user_id: string }; Returns: number }
       move_schedule_block: {
         Args: { p_block_id: string; p_ends_at: string; p_starts_at: string }
         Returns: {
@@ -1528,6 +1532,27 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "work_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      unschedule_block: {
+        Args: { p_block_id: string }
+        Returns: {
+          created_at: string
+          ends_at: string
+          id: string
+          is_locked: boolean
+          source: string
+          starts_at: string
+          status: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "schedule_blocks"
           isOneToOne: true
           isSetofReturn: false
         }
