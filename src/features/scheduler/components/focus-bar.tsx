@@ -59,7 +59,7 @@ export function FocusBar({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className="flex w-full min-w-0 items-center gap-2 text-left md:w-auto md:flex-1"
           aria-label="집중 상세 열기"
         >
           {stats.paused ? (
@@ -68,8 +68,8 @@ export function FocusBar({
             <Timer className="size-4 shrink-0 text-planned" aria-hidden />
           )}
           <span className="truncate font-medium">{session.task.title}</span>
-          <span className="font-mono tabular-nums">{formatElapsed(stats.focusedMs)}</span>
-          {stats.paused && <span className="text-xs text-muted-foreground">일시정지됨</span>}
+          <span className="shrink-0 font-mono tabular-nums">{formatElapsed(stats.focusedMs)}</span>
+          {stats.paused && <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">일시정지됨</span>}
         </button>
 
         {reasonFor && stats.paused && (
@@ -91,7 +91,7 @@ export function FocusBar({
           </div>
         )}
 
-        <div className="flex gap-1.5">
+        <div className="ml-auto flex gap-1.5">
           {stats.paused ? (
             <Button size="sm" variant="outline" disabled={pending} onClick={resume}>
               <Play aria-hidden />
