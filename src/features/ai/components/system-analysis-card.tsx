@@ -63,6 +63,12 @@ export function SystemAnalysisCard({
               </dl>
             </div>
           )}
+          {analysis.directionNote && (
+            <div className="space-y-1 border-t border-border pt-3">
+              <h4 className="font-mono text-xs tracking-widest text-muted-foreground">DIRECTION</h4>
+              <p className="text-sm">{analysis.directionNote}</p>
+            </div>
+          )}
         </>
       ) : (
         <p className="text-sm text-muted-foreground">아직 분석이 없습니다. 통계가 바뀐 이유를 숫자 근거와 함께 설명해 드려요.</p>

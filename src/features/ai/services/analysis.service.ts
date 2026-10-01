@@ -10,7 +10,8 @@ import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queri
 import { addLocalDays, localDayRange, toLocalDate } from "@/features/scheduler/utils/timezone";
 import { ANALYSIS_PROMPT_VERSION, ANALYSIS_SYSTEM, analysisPrompt } from "../prompts/analysis.prompt";
 import { AnalysisOutputSchema } from "../schemas/analysis.schema";
-import { analysisDue, analysisInput, analysisSlot, checkEvidence, type AnalysisContent } from "../utils/analysis";
+import { analysisDue, analysisInput, analysisSlot, checkEvidence, directionInput, type AnalysisContent } from "../utils/analysis";
+import { loadDirectionStatus } from "@/features/direction/queries/status.queries";
 import { callAi } from "./budget.service";
 
 export type AnalysisRow = { id: string; content: AnalysisContent; created_at: string; period_start: string; period_end: string };
@@ -35,7 +36,11 @@ export async function generateAnalysis(ctx: ActionContext, now: Date): Promise<A
   const tz = statInput.timezone;
   const today = toLocalDate(now, tz);
   const snapshots = await listSnapshots(ctx.supabase, ctx.user.id, addLocalDays(today, -35, tz));
-  const input = analysisInput({ stats, snapshots, today, tz });
+  // G4: the deterministic direction diagnosis (numbers only); a failure just leaves it out.
+  const direction = await loadDirectionStatus(ctx.supabase, ctx.user.id, now, { recovery: stats.recovery.value })
+    .then((s) => directionInput(s.missions))
+    .catch(() => []);
+  const input = { ...analysisInput({ stats, snapshots, today, tz }), direction };
   const result = await callAi(ctx, "weekly_analysis", {
     task: "weekly_analysis",
     system: ANALYSIS_SYSTEM,

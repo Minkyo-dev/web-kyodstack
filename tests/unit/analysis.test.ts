@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analysisDue, analysisSlot, checkEvidence } from "@/features/ai/utils/analysis";
+import { analysisDue, analysisSlot, checkEvidence, directionInput } from "@/features/ai/utils/analysis";
 
 const TZ = "America/Toronto";
 
@@ -46,5 +46,32 @@ describe("checkEvidence", () => {
   });
   it("returns null when nothing survives", () => {
     expect(checkEvidence({ explanations: [{ stat: "calibration", headline: "99점", detail: "", evidence: [] }], assessment: { planningTendency: "1", workStyle: "2", currentRisk: "3", strongPattern: "4" } }, input)).toBeNull();
+  });
+});
+
+describe("direction note (G4)", () => {
+  const input = {
+    stats: {},
+    patterns: {},
+    direction: directionInput([
+      { diagnosis: { collecting: null, suspected: "tactic", signals: [{ layer: "tactic", evidence: { medianMinutes: 22, intendedMinutes: 60 } }] } },
+      { diagnosis: { collecting: { n: 2, need: 5 }, suspected: null, signals: [] } },
+    ]),
+  };
+  const empty = { planningTendency: null, workStyle: null, currentRisk: null, strongPattern: null };
+  it("builds a numbers-only block of diagnosed missions", () => {
+    expect(input.direction).toEqual([{ suspected: "tactic", signals: { tactic: { medianMinutes: 22, intendedMinutes: 60 } } }]);
+  });
+  it("keeps a note whose numbers are in the input, even as the only content", () => {
+    const out = checkEvidence({ explanations: [], assessment: empty, directionNote: "실제 세션은 보통 22분, 계획은 60분입니다." }, input);
+    expect(out?.directionNote).toBe("실제 세션은 보통 22분, 계획은 60분입니다.");
+  });
+  it("drops a note citing an unknown number but keeps the rest", () => {
+    const out = checkEvidence(
+      { explanations: [], assessment: { ...empty, workStyle: "긴 집중 세션" }, directionNote: "세션이 보통 35분입니다." },
+      input,
+    );
+    expect(out?.directionNote).toBeNull();
+    expect(out?.assessment.workStyle).toBe("긴 집중 세션");
   });
 });

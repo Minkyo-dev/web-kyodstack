@@ -15,4 +15,5 @@ export const AnalysisOutputSchema = z.object({
     )
     .max(4),
   assessment: z.object({ planningTendency: line, workStyle: line, currentRisk: line, strongPattern: line }),
+  directionNote: z.string().trim().max(200).nullable().default(null),
 });

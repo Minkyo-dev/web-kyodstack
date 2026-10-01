@@ -2,6 +2,7 @@
 import type { SnapshotRow } from "@/features/analytics/queries/snapshots.queries";
 import { STAT_TYPES, type Stats, type StatType } from "@/features/analytics/domain/stats.types";
 import { addLocalDays, localDateTimeToIso, toLocalDate } from "@/features/scheduler/utils/timezone";
+import type { Diagnosis } from "@/features/direction/domain/diagnosis";
 
 export type AnalysisExplanation = { stat: StatType; headline: string; detail: string; evidence: string[] };
 export type AnalysisAssessment = {
@@ -10,7 +11,12 @@ export type AnalysisAssessment = {
   currentRisk: string | null;
   strongPattern: string | null;
 };
-export type AnalysisContent = { explanations: AnalysisExplanation[]; assessment: AnalysisAssessment };
+export type AnalysisContent = {
+  explanations: AnalysisExplanation[];
+  assessment: AnalysisAssessment;
+  /** G4: one neutral sentence about the suspected direction layer (analysis-v2). */
+  directionNote?: string | null;
+};
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -61,6 +67,16 @@ export function analysisInput(input: { stats: Stats; snapshots: SnapshotRow[]; t
   };
 }
 
+/** G4: diagnosed missions as numbers only (no titles): suspected layer and each signal's evidence. */
+export function directionInput(missions: { diagnosis: Diagnosis }[]) {
+  return missions
+    .filter((m) => m.diagnosis.suspected !== null)
+    .map((m) => ({
+      suspected: m.diagnosis.suspected,
+      signals: Object.fromEntries(m.diagnosis.signals.map((s) => [s.layer, s.evidence])),
+    }));
+}
+
 const norm = (s: string) => String(Number(s));
 
 function numbersIn(text: string): string[] {
@@ -101,6 +117,8 @@ export function checkEvidence(content: AnalysisContent, input: unknown): Analysi
     currentRisk: clean(a.currentRisk),
     strongPattern: clean(a.strongPattern),
   };
-  if (explanations.length === 0 && Object.values(assessment).every((v) => v === null)) return null;
-  return { explanations, assessment };
+  const note = content.directionNote ?? null;
+  const directionNote = note && numbersIn(note).every((n) => known.has(n)) ? note : null;
+  if (explanations.length === 0 && Object.values(assessment).every((v) => v === null) && !directionNote) return null;
+  return { explanations, assessment, directionNote };
 }
