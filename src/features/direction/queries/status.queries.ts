@@ -5,11 +5,13 @@ import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queri
 import { focusStats } from "@/features/scheduler/utils/focus";
 import { addLocalDays, localDayRange, toLocalDate } from "@/features/scheduler/utils/timezone";
 import { isoWeekday } from "../domain/habits";
+import { diagnose, median, type Diagnosis } from "../domain/diagnosis";
 import {
   alignment,
   habitConsistency,
   identityEvidence,
   missionProgress,
+  missionProgressBefore,
   paceGap,
   type CriterionInput,
   type HabitInput,
@@ -29,9 +31,11 @@ export type MissionStatusView = {
   progress: MissionProgress;
   pace: number | null;
   path: { title: string; approach: string } | null;
+  diagnosis: Diagnosis;
 };
 export type DirectionStatus = {
   today: string;
+  weekStart: string;
   missions: MissionStatusView[];
   week: {
     activeMinutes: number;
@@ -46,7 +50,12 @@ export type DirectionStatus = {
 };
 
 /** Everything the progress page's direction section shows, computed by the pure G3 functions. */
-export async function loadDirectionStatus(supabase: SupabaseServerClient, userId: string, now: Date): Promise<DirectionStatus> {
+export async function loadDirectionStatus(
+  supabase: SupabaseServerClient,
+  userId: string,
+  now: Date,
+  opts: { recovery?: number | null } = {},
+): Promise<DirectionStatus> {
   const { timezone } = await getSchedulerContext(supabase, userId);
   const today = toLocalDate(now, timezone);
   const weekStart = addLocalDays(today, 1 - isoWeekday(today), timezone);
@@ -54,7 +63,7 @@ export async function loadDirectionStatus(supabase: SupabaseServerClient, userId
   const since = localDayRange(windowStart, timezone).start;
   const weekRange = { start: localDayRange(weekStart, timezone).start, end: localDayRange(addLocalDays(weekStart, 6, timezone), timezone).end };
 
-  const [missions, criteria, paths, links, identities, sessions, blocks, habits, checks] = await Promise.all([
+  const [missions, criteria, paths, links, identities, sessions, blocks, habits, checks, recentBlocks, logs, protocols] = await Promise.all([
     supabase.from("missions").select("id, title, deadline, created_at").eq("user_id", userId).eq("status", "active"),
     supabase.from("mission_criteria").select("mission_id, kind, met_at, current_value, target_value").eq("user_id", userId),
     supabase.from("paths").select("mission_id, title, approach").eq("user_id", userId).eq("status", "active"),
@@ -77,14 +86,35 @@ export async function loadDirectionStatus(supabase: SupabaseServerClient, userId
       .limit(2000),
     supabase.from("habits").select("id, weekdays, created_at, mission_id").eq("user_id", userId).eq("status", "active"),
     supabase.from("habit_checks").select("habit_id, local_date").eq("user_id", userId).gte("local_date", windowStart).lte("local_date", today),
+    supabase
+      .from("schedule_blocks")
+      .select("status, task:tasks!schedule_blocks_task_id_user_id_fkey(mission_id, project:projects!tasks_project_id_user_id_fkey(mission_id))")
+      .eq("user_id", userId)
+      .neq("status", "cancelled")
+      .gte("starts_at", since)
+      .lte("ends_at", now.toISOString())
+      .limit(2000),
+    supabase
+      .from("work_logs")
+      .select("confirmed_blocker, task:tasks!work_logs_task_id_user_id_fkey(mission_id, project:projects!tasks_project_id_user_id_fkey(mission_id))")
+      .eq("user_id", userId)
+      .gte("created_at", since)
+      .limit(2000),
+    supabase
+      .from("protocols")
+      .select("id, mission_id, intended_minutes, path:paths!protocols_path_id_mission_id_fkey(status)")
+      .eq("user_id", userId)
+      .eq("status", "active"),
   ]);
-  for (const r of [missions, criteria, paths, links, identities, sessions, blocks, habits, checks]) if (r.error) throw fromDbError(r.error);
+  for (const r of [missions, criteria, paths, links, identities, sessions, blocks, habits, checks, recentBlocks, logs, protocols]) {
+    if (r.error) throw fromDbError(r.error);
+  }
 
   const missionIds = missions.data!.map((m) => m.id);
   const projectTasks = missionIds.length
     ? await supabase
         .from("tasks")
-        .select("status, project:projects!tasks_project_id_user_id_fkey!inner(mission_id)")
+        .select("status, completed_at, project:projects!tasks_project_id_user_id_fkey!inner(mission_id)")
         .eq("user_id", userId)
         .in("project.mission_id", missionIds)
         .limit(5000)
@@ -117,23 +147,55 @@ export async function loadDirectionStatus(supabase: SupabaseServerClient, userId
   const checkInputs = checks.data!.map((c) => ({ habitId: c.habit_id, date: c.local_date }));
   const hw = habitConsistency(habitInputs, checkInputs, weekStart, today);
 
+  const missionOf = (t: { mission_id: string | null; project: { mission_id: string | null } | null } | null) =>
+    t?.mission_id ?? t?.project?.mission_id ?? null;
+
+  /** diagnosis-v1 inputs for one mission over the 28-day window. */
+  const diagnosisFor = (m: { id: string }, progress: MissionProgress, pace: number | null, criteriaRows: CriterionInput[], tasksOf: { status: string; completed_at: string | null }[]) => {
+    const mine = ended.filter((s) => s.missionId === m.id);
+    const onPath = protocols.data!.filter((p) => p.mission_id === m.id && p.intended_minutes && p.path?.status === "active");
+    const byProtocol = onPath
+      .map((p) => ({ p, minutes: mine.filter((s) => s.protocolId === p.id).map((s) => s.focusedMinutes) }))
+      .sort((a, b) => b.minutes.length - a.minutes.length)[0];
+    const habit = habitConsistency(habitInputs.filter((h) => h.missionId === m.id), checkInputs, windowStart, today);
+    const mBlocks = recentBlocks.data!.filter((b) => missionOf(b.task) === m.id);
+    const mLogs = logs.data!.filter((l) => missionOf(l.task) === m.id);
+    return diagnose({
+      missionSessions: mine.length,
+      pace,
+      ratioNow: progress.ratio,
+      ratioBefore: progress.ratio === null ? null : missionProgressBefore({ criteria: criteriaRows, projectTasks: tasksOf, since }),
+      habit,
+      protocolSessions: byProtocol?.minutes.length
+        ? { medianMinutes: median(byProtocol.minutes)!, intendedMinutes: byProtocol.p.intended_minutes!, count: byProtocol.minutes.length }
+        : null,
+      blocks: { total: mBlocks.length, missedOrSkipped: mBlocks.filter((b) => b.status === "missed" || b.status === "skipped").length },
+      logs: { total: mLogs.length, blockers: mLogs.filter((l) => l.confirmed_blocker === true).length },
+      recovery: opts.recovery ?? null,
+    });
+  };
+
   const sorted = [...missions.data!].sort(
     (x, y) => (x.deadline ?? "9999").localeCompare(y.deadline ?? "9999") || x.created_at.localeCompare(y.created_at),
   );
   const missionViews = sorted.slice(0, MAX_MISSIONS).map((m): MissionStatusView => {
+    const criteriaRows = criteria.data!.filter((c) => c.mission_id === m.id) as CriterionInput[];
+    const tasksOf = projectTasks.data!.filter((t) => t.project?.mission_id === m.id);
     const progress = missionProgress({
-      criteria: criteria.data!.filter((c) => c.mission_id === m.id) as CriterionInput[],
-      projectTasks: projectTasks.data!.filter((t) => t.project?.mission_id === m.id),
+      criteria: criteriaRows,
+      projectTasks: tasksOf,
       focusMinutes: Math.round(ended.filter((s) => s.missionId === m.id).reduce((x, s) => x + s.focusedMinutes, 0)),
     });
+    const pace = paceGap({ createdDate: toLocalDate(m.created_at, timezone), deadline: m.deadline, today, ratio: progress.ratio });
     const path = paths.data!.find((p) => p.mission_id === m.id);
     return {
       id: m.id,
       title: m.title,
       deadline: m.deadline,
       progress,
-      pace: paceGap({ createdDate: toLocalDate(m.created_at, timezone), deadline: m.deadline, today, ratio: progress.ratio }),
+      pace,
       path: path ? { title: path.title, approach: path.approach } : null,
+      diagnosis: diagnosisFor(m, progress, pace, criteriaRows, tasksOf),
     };
   });
 
@@ -156,6 +218,7 @@ export async function loadDirectionStatus(supabase: SupabaseServerClient, userId
 
   return {
     today,
+    weekStart,
     missions: missionViews,
     week: {
       activeMinutes: Math.round(a.activeMinutes),

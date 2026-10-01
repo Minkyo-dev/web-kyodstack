@@ -3,6 +3,7 @@ import type { Terms } from "@/lib/terms";
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { DueBadge } from "@/features/projects/components/due-badge";
 import { STATUS_TEXT } from "../domain/status-text";
+import { DiagnosisQuestion } from "./diagnosis-question";
 import type { DirectionStatus as Status, MissionStatusView } from "../queries/status.queries";
 
 const MIN_ACTIVE_MINUTES = 180;
@@ -24,7 +25,7 @@ function Bar({ ratio, label }: { ratio: number; label: string }) {
   );
 }
 
-function MissionCard({ m, today }: { m: MissionStatusView; today: string }) {
+function MissionCard({ m, today, weekStart }: { m: MissionStatusView; today: string; weekStart: string }) {
   const { progress: p } = m;
   const pct = p.ratio === null ? null : Math.round(p.ratio * 100);
   const basis =
@@ -43,7 +44,10 @@ function MissionCard({ m, today }: { m: MissionStatusView; today: string }) {
         {basis && <span>{basis}</span>}
         <span>최근 28일 집중 {formatMinutes(p.focusMinutes)}</span>
       </p>
-      {m.pace !== null && m.pace >= PACE_NOTE_GAP && <p className="text-xs text-muted-foreground">{STATUS_TEXT.paceBehind}</p>}
+      {m.pace !== null && m.pace >= PACE_NOTE_GAP && m.diagnosis.suspected !== "goal" && (
+        <p className="text-xs text-muted-foreground">{STATUS_TEXT.paceBehind}</p>
+      )}
+      <DiagnosisQuestion missionId={m.id} diagnosis={m.diagnosis} weekStart={weekStart} />
     </article>
   );
 }
@@ -67,7 +71,7 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
         ) : (
           <div className="grid gap-2 md:grid-cols-3">
             {status.missions.map((m) => (
-              <MissionCard key={m.id} m={m} today={status.today} />
+              <MissionCard key={m.id} m={m} today={status.today} weekStart={status.weekStart} />
             ))}
           </div>
         )}

@@ -4,6 +4,7 @@ import {
   habitConsistency,
   identityEvidence,
   missionProgress,
+  missionProgressBefore,
   paceGap,
   scheduledDays,
 } from "@/features/direction/domain/status";
@@ -106,5 +107,37 @@ describe("status sentences", () => {
       STATUS_TEXT.offPath("1h 10m"),
     ];
     for (const s of samples) for (const w of DENY_LIST) expect(s.toLowerCase()).not.toContain(w);
+  });
+});
+
+describe("missionProgressBefore", () => {
+  const since = "2026-09-03T04:00:00Z";
+  it("counts criteria met before the window; numeric partial values are unknown so 0", () => {
+    const r = missionProgressBefore({
+      criteria: [
+        crit({ met_at: "2026-09-01T00:00:00Z" }),
+        crit({ met_at: "2026-09-20T00:00:00Z" }),
+        crit({ kind: "numeric", current_value: 2, target_value: 4 }),
+      ],
+      projectTasks: [],
+      since,
+    });
+    expect(r).toBeCloseTo(1 / 3);
+  });
+  it("uses project tasks completed before the window over today's live tasks", () => {
+    const r = missionProgressBefore({
+      criteria: [],
+      projectTasks: [
+        { status: "completed", completed_at: "2026-09-01T00:00:00Z" },
+        { status: "completed", completed_at: "2026-09-25T00:00:00Z" },
+        { status: "todo", completed_at: null },
+        { status: "cancelled", completed_at: null },
+      ],
+      since,
+    });
+    expect(r).toBeCloseTo(1 / 3);
+  });
+  it("is null without criteria or live tasks", () => {
+    expect(missionProgressBefore({ criteria: [], projectTasks: [], since })).toBeNull();
   });
 });

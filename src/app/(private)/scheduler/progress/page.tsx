@@ -59,7 +59,7 @@ export default async function ProgressPage() {
   // Direction status (G3): a failure only hides the section.
   let direction: Status | null = null;
   try {
-    direction = await loadDirectionStatus(supabase, user.id, now);
+    direction = await loadDirectionStatus(supabase, user.id, now, { recovery: stats.recovery.value });
   } catch (error) {
     log({ action: "direction.status", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
   }

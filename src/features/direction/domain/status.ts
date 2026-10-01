@@ -41,6 +41,23 @@ export function missionProgress(i: {
   return { kind: "time", ratio: null, basis: null, focusMinutes: i.focusMinutes };
 }
 
+/**
+ * The same ratio as of the window start (diagnosis strategy signal): criteria met before `since` count 1 (a numeric
+ * criterion's past partial value is unknown, so 0); projects use tasks completed before `since` over today's live tasks.
+ */
+export function missionProgressBefore(i: {
+  criteria: CriterionInput[];
+  projectTasks: { status: string; completed_at: string | null }[];
+  since: string;
+}): number | null {
+  const since = Date.parse(i.since);
+  const before = (at: string | null) => at !== null && Date.parse(at) < since;
+  if (i.criteria.length > 0) return i.criteria.filter((c) => before(c.met_at)).length / i.criteria.length;
+  const live = i.projectTasks.filter((t) => t.status !== "cancelled");
+  if (!live.length) return null;
+  return live.filter((t) => t.status === "completed" && before(t.completed_at)).length / live.length;
+}
+
 const dayNumber = (d: string) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86_400_000;
 
 export function nextDate(d: string): string {
