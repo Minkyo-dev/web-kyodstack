@@ -16,7 +16,7 @@ export function EnableCard() {
       <Button
         size="sm"
         disabled={pending}
-        onClick={() => run(() => enableGamificationAction(), { onSuccess: (r) => toast.success(`지금까지 기록으로 Lv.${r.level}에서 시작`) })}
+        onClick={() => run(() => enableGamificationAction(), { onSuccess: (r) => toast.success(`지금까지 기록으로 Lv.${r.level}에서 시작${r.achievements ? ` · 업적 ${r.achievements}개 달성` : ""}`) })}
       >
         {pending ? "계산 중…" : "게임 요소 켜기"}
       </Button>

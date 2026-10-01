@@ -2,4 +2,6 @@
 export type ProgressDelta = {
   xp: { rule: string; xp: number }[];
   levelUp: { from: number; to: number } | null;
+  questsCleared?: { type: string; title: string; xp: number }[];
+  achievements?: { key: string; name: string }[];
 };

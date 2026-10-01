@@ -7,7 +7,7 @@ const FOCUS_SESSION_CAP = 30;
 const COMPLETION_XP = 20;
 const COMMITMENT_XP = 10;
 const COMMITMENT_MIN_SCORE = 0.75;
-const DAY_CAP: Record<XpRule, number | null> = { focus: 120, completion: 5 * COMPLETION_XP, commitment: null };
+const DAY_CAP: Record<XpRule, number | null> = { focus: 120, completion: 5 * COMPLETION_XP, commitment: null, quest: null };
 
 export function focusXp(minutes: number): number {
   if (minutes < FOCUS_MIN_MINUTES) return 0;
@@ -21,7 +21,7 @@ type Candidate = Omit<NewXpEvent, "localDate"> & { at: string };
 /** New events for one local day. Skips sources already in the ledger; daily caps count what is already there. */
 export function evaluateDay(facts: DayFacts, existing: ExistingXp[]): NewXpEvent[] {
   const have = new Set(existing.map((e) => `${e.rule}:${e.sourceId}`));
-  const used: Record<XpRule, number> = { focus: 0, completion: 0, commitment: 0 };
+  const used: Record<XpRule, number> = { focus: 0, completion: 0, commitment: 0, quest: 0 };
   for (const e of existing) used[e.rule] += e.xp;
 
   const candidates: Candidate[] = [

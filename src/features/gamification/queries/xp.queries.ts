@@ -19,12 +19,13 @@ export type PlayerProfile = {
   animations_enabled: boolean;
   achievement_toasts: boolean;
   backfilled_at: string | null;
+  equipped_title: string | null;
 };
 
 export async function getPlayerProfile(supabase: SupabaseServerClient, userId: string): Promise<PlayerProfile | null> {
   const { data, error } = await supabase
     .from("player_profiles")
-    .select("level, total_xp, gamification_enabled, quest_terminology, animations_enabled, achievement_toasts, backfilled_at")
+    .select("level, total_xp, gamification_enabled, quest_terminology, animations_enabled, achievement_toasts, backfilled_at, equipped_title")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw fromDbError(error);

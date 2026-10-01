@@ -7,6 +7,9 @@ import type { Json } from "@/types/database";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
 import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
 import type { NewXpEvent } from "../domain/xp.types";
+import { evaluateAchievements } from "./achievement.service";
+import { ensureQuests, evaluateQuests } from "./quest.service";
+import { ACHIEVEMENTS } from "../utils/achievements";
 import { firstActivityDate, getPlayerProfile, loadLedger, loadXpRaw } from "../queries/xp.queries";
 import type { GamificationSettingsInput } from "../schemas/gamification.schema";
 import { deltaFrom, type AwardResult } from "../utils/delta";
@@ -51,30 +54,45 @@ async function recentRange(ctx: ActionContext, now: Date) {
 }
 
 /** After a core action. Never throws: failures are logged and the nightly job repairs them. */
-export async function evaluateProgress(ctx: ActionContext, now = new Date()): Promise<ProgressDelta | null> {
+export async function evaluateProgress(ctx: ActionContext, now = new Date(), admin = false): Promise<ProgressDelta | null> {
   try {
     const profile = await getPlayerProfile(ctx.supabase, ctx.user.id);
     if (!profile?.gamification_enabled) return null;
-    const { from, to } = await recentRange(ctx, now);
-    const { events, result } = await evaluateRange(ctx, from, to, now, false);
-    return deltaFrom(events, result);
+    return await evaluateAll(ctx, now, admin);
   } catch (error) {
     log({ action: "gamification.evaluate", userId: ctx.user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
     return null;
   }
 }
 
-/** Nightly: re-evaluate yesterday and today (settles commitment XP). Admin client → explicit user id. */
+async function evaluateAll(ctx: ActionContext, now: Date, admin: boolean): Promise<ProgressDelta | null> {
+  const { from, to } = await recentRange(ctx, now);
+  const xp = await evaluateRange(ctx, from, to, now, admin);
+  const { cleared } = await evaluateQuests(ctx, now);
+  const questEvents: NewXpEvent[] = cleared.map((q) => ({ rule: "quest", sourceType: "quest", sourceId: q.id, localDate: to, xp: q.xp, metadata: {} }));
+  const questAward = questEvents.length ? await award(ctx, questEvents, admin) : null;
+  const keys = await evaluateAchievements(ctx, now);
+  const awards = [xp.result, questAward].filter((a): a is AwardResult => !!a);
+  return deltaFrom([...xp.events, ...questEvents], awards, {
+    questsCleared: cleared.map((q) => ({ type: q.type, title: q.title, xp: q.xp })),
+    achievements: keys.map((k) => ({ key: k, name: ACHIEVEMENTS.find((a) => a.key === k)!.name })),
+  });
+}
+
+/** Nightly: create/expire quests, then re-evaluate yesterday and today. Admin client → explicit user id. */
 export async function reconcileProgress(ctx: ActionContext, now: Date): Promise<number> {
   const profile = await getPlayerProfile(ctx.supabase, ctx.user.id);
   if (!profile?.gamification_enabled) return 0;
-  const { from, to } = await recentRange(ctx, now);
-  const { events } = await evaluateRange(ctx, from, to, now, true);
-  return events.length;
+  await ensureQuests(ctx, now, true);
+  const d = await evaluateAll(ctx, now, true);
+  return d ? d.xp.length : 0;
 }
 
 /** Opt in: full idempotent evaluation from first activity through today, then flip the flag. */
-export async function enableGamification(ctx: ActionContext, now = new Date()): Promise<{ level: number; total: number }> {
+export async function enableGamification(
+  ctx: ActionContext,
+  now = new Date(),
+): Promise<{ level: number; total: number; achievements: number }> {
   // Plain insert (not upsert): users cannot update user_id. An existing row is fine.
   const ins = await ctx.supabase.from("player_profiles").insert({ user_id: ctx.user.id });
   if (ins.error && ins.error.code !== "23505") throw fromDbError(ins.error);
@@ -92,8 +110,11 @@ export async function enableGamification(ctx: ActionContext, now = new Date()): 
     .update({ gamification_enabled: true, backfilled_at: now.toISOString() })
     .eq("user_id", ctx.user.id);
   if (upd.error) throw fromDbError(upd.error);
+  // Achievements from history are summarized in one toast; quests start today (none backfilled).
+  const keys = await evaluateAchievements(ctx, now);
+  await ensureQuests(ctx, now);
   const profile = await getPlayerProfile(ctx.supabase, ctx.user.id);
-  return { level: profile?.level ?? 1, total: profile?.total_xp ?? 0 };
+  return { level: profile?.level ?? 1, total: profile?.total_xp ?? 0, achievements: keys.length };
 }
 
 export async function updateGamificationSettings(ctx: ActionContext, input: GamificationSettingsInput): Promise<void> {

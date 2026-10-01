@@ -1,8 +1,8 @@
 import type { PauseLike, StatInput } from "@/features/analytics/domain/stats.types";
 
-export const XP_RULES = ["focus", "completion", "commitment"] as const;
+export const XP_RULES = ["focus", "completion", "commitment", "quest"] as const;
 export type XpRule = (typeof XP_RULES)[number];
-export const XP_RULE_LABEL: Record<XpRule, string> = { focus: "집중", completion: "완료", commitment: "약속 지킴" };
+export const XP_RULE_LABEL: Record<XpRule, string> = { focus: "집중", completion: "완료", commitment: "약속 지킴", quest: "퀘스트" };
 
 export type DayFacts = {
   date: string;
@@ -13,7 +13,7 @@ export type DayFacts = {
 export type ExistingXp = { rule: XpRule; sourceId: string; xp: number };
 export type NewXpEvent = {
   rule: XpRule;
-  sourceType: "work_session" | "task" | "schedule_block";
+  sourceType: "work_session" | "task" | "schedule_block" | "quest";
   sourceId: string;
   localDate: string;
   xp: number;
