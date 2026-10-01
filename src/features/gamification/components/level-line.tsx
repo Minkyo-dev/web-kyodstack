@@ -16,7 +16,7 @@ export function LevelLine() {
       >
         <span className="font-mono font-medium">Lv.{player.level}</span>
         <span className="hidden h-1 w-16 overflow-hidden rounded-full bg-muted sm:block" aria-hidden>
-          <span className="block h-full bg-foreground/70" style={{ width: `${(player.into / player.need) * 100}%` }} />
+          <span className="block h-full bg-sidebar-primary" style={{ width: `${(player.into / player.need) * 100}%` }} />
         </span>
         <span className="hidden text-muted-foreground tabular-nums md:inline">
           {player.into} / {player.need}

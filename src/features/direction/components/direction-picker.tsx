@@ -4,8 +4,9 @@ import { Label } from "@/components/ui/label";
 import { useTerms } from "@/hooks/use-terms";
 import type { BreadcrumbInput } from "../domain/breadcrumb";
 import type { MissionOption } from "../domain/direction.types";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = `${nativeSelectClass} w-full`;
 
 export function parseDirection(value: string): { missionId: string | null; protocolId: string | null } {
   if (value.startsWith("p:")) return { missionId: null, protocolId: value.slice(2) };

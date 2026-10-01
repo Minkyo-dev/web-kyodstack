@@ -18,6 +18,7 @@ import { TAG_COLORS, type DomainRef, type TagColor, type TagRef } from "../domai
 import type { TemplateWithClassification } from "../queries/classification.queries";
 import { DomainSelect, TypeSelect } from "./classification-fields";
 import { useTerms } from "@/hooks/use-terms";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
 const COLOR_LABEL: Record<TagColor, string> = {
   gray: "회색",
@@ -29,7 +30,7 @@ const COLOR_LABEL: Record<TagColor, string> = {
   purple: "보라",
   pink: "분홍",
 };
-const selectClass = "h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = nativeSelectClass;
 
 /** Tags, practice domains and templates in one place (D1 spec §3). */
 export function ClassificationDialog({

@@ -13,9 +13,9 @@ import { createTransactionAction, updateTransactionAction } from "../actions/fin
 import { categoryOptions } from "../domain/category-tree";
 import { ENTRY_TYPES, TRANSACTION_TYPE_LABEL, type EntryType, type Transaction } from "../domain/finance.types";
 import { useFinance } from "./finance-provider";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-export const selectClass =
-  "h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm dark:bg-input/30 aria-invalid:border-destructive";
+export const selectClass = `${nativeSelectClass} w-full`;
 
 export function Field({
   label,

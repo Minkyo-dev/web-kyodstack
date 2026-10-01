@@ -28,9 +28,9 @@ import {
 import { useTerms } from "@/hooks/use-terms";
 import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
 import { josa } from "@/lib/terms";
+import { nativeSelectClass, nativeSelectSmClass } from "@/components/ui/native-select";
 
-const selectClass =
-  "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = `${nativeSelectClass} w-full`;
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const orNull = (v: string) => (v === "" ? null : v);
@@ -246,7 +246,7 @@ export function MilestoneEditor({ milestone }: { milestone: Milestone }) {
           defaultValue={milestone.status}
           disabled={pending}
           onChange={(e) => save({ status: e.target.value })}
-          className="h-7 rounded-md border border-input bg-transparent px-1.5 text-xs dark:bg-input/30"
+          className={nativeSelectSmClass}
         >
           {MILESTONE_STATUSES.map((s) => (
             <option key={s} value={s}>

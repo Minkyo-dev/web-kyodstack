@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { deleteCriterionAction, setCriterionProgressAction, upsertCriterionAction } from "../actions/direction.actions";
 import type { MissionCriterion } from "../domain/direction.types";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-const selectClass = "h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = nativeSelectClass;
 
 export function CriteriaList({ missionId, criteria, closed }: { missionId: string; criteria: MissionCriterion[]; closed: boolean }) {
   const { run, pending } = useActionRunner();

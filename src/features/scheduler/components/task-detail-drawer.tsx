@@ -52,6 +52,7 @@ import { settleEditedProposalsAction } from "@/features/ai/actions/classificatio
 import type { Proposal, ProposalView } from "@/features/ai/utils/classify";
 import { WorklogInterpretation } from "@/features/ai/components/worklog-interpretation";
 import { useTerms } from "@/hooks/use-terms";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
 type SessionProps = {
   sessions: SessionWithTask[];
@@ -538,7 +539,7 @@ function ScoreSelect({ id, name, defaultValue }: { id: string; name: string; def
       id={id}
       name={name}
       defaultValue={defaultValue}
-      className="h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+      className={`${nativeSelectClass} w-full`}
     >
       {[1, 2, 3, 4, 5].map((n) => (
         <option key={n} value={n}>
@@ -667,7 +668,7 @@ function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[]
   if (task.milestone && task.project_id === projectId && !milestones.some((m) => m.id === task.milestone!.id)) {
     milestones.push(task.milestone);
   }
-  const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+  const selectClass = `${nativeSelectClass} w-full`;
   return (
     <div className="grid grid-cols-2 gap-3">
       <Field label={terms.project} htmlFor="task-project">

@@ -10,8 +10,9 @@ import { createHabitAction, updateHabitAction } from "../actions/direction.actio
 import { formatWeekdays, WEEKDAY_LABEL } from "../domain/habits";
 import type { HabitRule, MissionOption } from "../domain/direction.types";
 import type { HabitListItem } from "../queries/habit.queries";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-const selectClass = "h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = nativeSelectClass;
 const DAYS = [1, 2, 3, 4, 5, 6, 7];
 
 const ruleText = (h: HabitListItem) => (h.rule === "focus" ? `집중 ${h.target_minutes}분` : "체크");

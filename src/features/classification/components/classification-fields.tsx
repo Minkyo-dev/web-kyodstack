@@ -14,8 +14,9 @@ import {
   type TagRef,
 } from "../domain/classification.types";
 import { sameName } from "../utils/quick-add";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = `${nativeSelectClass} w-full`;
 
 const DOT: Record<TagColor, string> = {
   gray: "bg-zinc-400",

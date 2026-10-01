@@ -43,3 +43,4 @@ Template:
 | 0023 | Strategy review: layer diagnosis and SYSTEM QUESTION | accepted |
 | 0024 | Project archive folder and the scheduler month view | accepted |
 | 0025 | Household finance service | accepted |
+| 0026 | Visual refresh: tinted neutrals, indigo accent, native select styling | accepted |

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { updateAnalysisScheduleAction } from "../actions/analysis.actions";
+import { nativeSelectSmClass } from "@/components/ui/native-select";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const selectClass = "h-7 rounded-md border border-input bg-transparent px-1.5 text-xs dark:bg-input/30";
+const selectClass = nativeSelectSmClass;
 
 /** Weekly analysis time (local), or off (F2 spec §1). */
 export function AnalysisSchedule({ weekday, hour }: { weekday: number | null; hour: number }) {

@@ -11,8 +11,9 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { useTerms } from "@/hooks/use-terms";
 import { createMissionAction, updateMissionAction } from "../actions/direction.actions";
 import { MISSION_STATUSES, MISSION_STATUS_LABEL, type Identity, type MissionDetail } from "../domain/direction.types";
+import { nativeSelectClass } from "@/components/ui/native-select";
 
-const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
+const selectClass = `${nativeSelectClass} w-full`;
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
 export function MissionCreateForm() {
