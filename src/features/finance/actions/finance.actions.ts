@@ -8,6 +8,7 @@ import * as categories from "../services/category.service";
 import * as transactions from "../services/transaction.service";
 import * as subscriptions from "../services/subscription.service";
 import * as balances from "../services/balance.service";
+import * as budgets from "../services/budget.service";
 import {
   createAccountSchema,
   createCategorySchema,
@@ -20,6 +21,9 @@ import {
   deleteTransactionSchema,
   reconcileSchema,
   balanceOnSchema,
+  setDefaultBudgetSchema,
+  setMonthBudgetSchema,
+  clearMonthBudgetSchema,
   emptySchema,
   joinHouseholdSchema,
   renameHouseholdSchema,
@@ -200,5 +204,25 @@ export async function getAccountBalanceAction(input: unknown) {
 export async function reconcileAccountAction(input: unknown) {
   return runAction("finance.balance.reconcile", reconcileSchema, input, async (data, ctx) =>
     done(await balances.reconcileAccount(ctx, data)),
+  );
+}
+
+// ------------------------------------------------------------------ budgets (ADR 0033)
+
+export async function setDefaultBudgetAction(input: unknown) {
+  return runAction("finance.budget.set_default", setDefaultBudgetSchema, input, async (data, ctx) =>
+    done(await budgets.setDefaultBudget(ctx, data)),
+  );
+}
+
+export async function setMonthBudgetAction(input: unknown) {
+  return runAction("finance.budget.set_month", setMonthBudgetSchema, input, async (data, ctx) =>
+    done(await budgets.setMonthBudget(ctx, data)),
+  );
+}
+
+export async function clearMonthBudgetAction(input: unknown) {
+  return runAction("finance.budget.clear_month", clearMonthBudgetSchema, input, async (data, ctx) =>
+    done(await budgets.clearMonthBudget(ctx, data)),
   );
 }

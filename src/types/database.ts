@@ -399,6 +399,57 @@ export type Database = {
           },
         ]
       }
+      finance_budgets: {
+        Row: {
+          amount: number | null
+          category_id: string
+          created_at: string
+          created_by_user_id: string
+          household_id: string
+          id: string
+          kind: string
+          month: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          category_id: string
+          created_at?: string
+          created_by_user_id?: string
+          household_id: string
+          id?: string
+          kind: string
+          month: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          category_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          household_id?: string
+          id?: string
+          kind?: string
+          month?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_budgets_category_id_household_id_fkey"
+            columns: ["category_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "household_id"]
+          },
+          {
+            foreignKeyName: "finance_budgets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_categories: {
         Row: {
           created_at: string
@@ -3026,6 +3077,15 @@ export type Database = {
       finance_join_household: {
         Args: { p_code: string; p_display_name: string }
         Returns: string
+      }
+      finance_month_budgets: {
+        Args: { p_household: string; p_month: string }
+        Returns: {
+          amount: number
+          category_id: string
+          default_amount: number
+          is_override: boolean
+        }[]
       }
       finance_monthly_totals: {
         Args: { p_household: string; p_year: number }

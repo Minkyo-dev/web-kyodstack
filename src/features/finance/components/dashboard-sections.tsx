@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
@@ -5,7 +6,8 @@ import { cn } from "@/lib/utils";
 import type { Account, Category } from "../domain/finance.types";
 import { formatMoney, formatPercent, formatSigned, sumAmounts } from "../domain/money";
 import { monthRange, shiftMonth, type MonthKey } from "../domain/period";
-import { getAccountBalances, listRecentTransactions, listSubscriptions } from "../queries/finance.queries";
+import { getAccountBalances, getPeriodBudgets, listRecentTransactions, listSubscriptions } from "../queries/finance.queries";
+import { BUDGET_STATUS_LABEL, budgetMonths, budgetTotals, mergeBudgets, type BudgetedShare } from "../domain/budgets";
 import { position, upcomingCharges } from "../domain/balances";
 import {
   getCategoryBreakdown,
@@ -102,19 +104,51 @@ export async function CategorySection({
   period,
   currency,
   categories,
+  today,
 }: {
   householdId: string;
   period: DashboardPeriod;
   currency: string;
   categories: Category[];
+  today: string;
 }) {
-  const rows = await getCategoryBreakdown(await createClient(), householdId, period, categories);
+  const supabase = await createClient();
+  const [shares, budgets] = await Promise.all([
+    getCategoryBreakdown(supabase, householdId, period, categories),
+    // ADR 0033: budgets are optional here; without them the section is the plain breakdown.
+    getPeriodBudgets(supabase, householdId, period, today).catch(() => null),
+  ]);
+  const rows = mergeBudgets(shares, budgets ?? new Map(), categories);
+  const totals = budgetTotals(rows);
   const against = previousLabel(period);
+  const label =
+    period.mode === "monthly"
+      ? `${period.key.month}월 예산`
+      : `${period.year}년 예산${budgetMonths(period.year, today).length < 12 ? `(1–${budgetMonths(period.year, today).length}월)` : ""}`;
   return (
     <section aria-labelledby="category-breakdown" className="space-y-2">
-      <h2 id="category-breakdown" className="text-sm font-medium">
-        카테고리별 지출
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 id="category-breakdown" className="text-sm font-medium">
+          카테고리별 지출
+        </h2>
+        <Link href="/finance/settings/budgets" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+          예산 설정
+        </Link>
+      </div>
+      {budgets === null ? (
+        <p role="alert" className="text-xs text-muted-foreground">예산을 불러오지 못했습니다.</p>
+      ) : totals.total > 0 ? (
+        <p className="text-xs text-muted-foreground tabular-nums" aria-label="예산 요약">
+          {label} <span className="text-foreground">{formatMoney(totals.total, currency)}</span> 중{" "}
+          <span className="text-foreground">{formatMoney(totals.spentBudgeted, currency)}</span> 사용 ({formatPercent(totals.ratio)}) ·{" "}
+          {totals.remaining >= 0 ? (
+            <>남은 <span className="text-foreground">{formatMoney(totals.remaining, currency)}</span></>
+          ) : (
+            <span className="font-medium text-destructive">초과 {formatMoney(-totals.remaining, currency)}</span>
+          )}
+          {totals.spentOutside > 0 && <> · 예산 외 지출 {formatMoney(totals.spentOutside, currency)}</>}
+        </p>
+      ) : null}
       {rows.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">이 기간에 지출이 없습니다.</p>
       ) : (
@@ -126,15 +160,34 @@ export async function CategorySection({
                   {r.icon && <span aria-hidden className="mr-1.5">{r.icon}</span>}
                   {r.name}
                 </span>
-                <span className="font-medium tabular-nums">{formatMoney(r.amount, currency)}</span>
-                <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">{formatPercent(r.percentage)}</span>
+                {r.status && r.status !== "ok" && (
+                  <span
+                    className={cn(
+                      "rounded border px-1 text-[10px] font-medium",
+                      r.status === "over" ? "border-destructive/50 text-destructive" : "border-border text-muted-foreground",
+                    )}
+                  >
+                    {BUDGET_STATUS_LABEL[r.status]}
+                  </span>
+                )}
+                <span className="font-medium tabular-nums">
+                  {formatMoney(r.amount, currency)}
+                  {r.budget !== null && <span className="font-normal text-muted-foreground"> / {formatMoney(r.budget, currency)}</span>}
+                </span>
+                {r.budget === null && (
+                  <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">{formatPercent(r.percentage)}</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
-                  <div className="h-full rounded-full bg-expense" style={{ width: `${Math.max(0, r.percentage) * 100}%` }} />
-                </div>
-                <span className="w-36 text-right text-xs text-muted-foreground tabular-nums">
-                  {r.previous === 0 && r.amount !== 0 ? `${against} 없음` : `${formatSigned(r.delta, currency)} ${against} 대비`}
+                <BudgetBar row={r} />
+                <span className="w-36 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                  {r.remaining !== null
+                    ? r.remaining >= 0
+                      ? `남은 ${formatMoney(r.remaining, currency)}`
+                      : `초과 ${formatMoney(-r.remaining, currency)}`
+                    : r.previous === 0 && r.amount !== 0
+                      ? `${against} 없음 · 예산 없음`
+                      : `${formatSigned(r.delta, currency)} ${against} 대비`}
                 </span>
               </div>
             </li>
@@ -142,6 +195,33 @@ export async function CategorySection({
         </ul>
       )}
     </section>
+  );
+}
+
+/** Budgeted: spent against the budget, the part over it hatched. Unbudgeted: share of the period's spending. */
+function BudgetBar({ row }: { row: BudgetedShare }) {
+  if (row.budget === null) {
+    return (
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
+        <div className="h-full rounded-full bg-expense" style={{ width: `${Math.max(0, row.percentage) * 100}%` }} />
+      </div>
+    );
+  }
+  const ratio = Math.max(0, row.ratio ?? 0);
+  const within = ratio > 1 ? 1 / ratio : ratio;
+  return (
+    <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
+      <div className={cn("h-full", row.status === "ok" ? "bg-primary" : "bg-expense")} style={{ width: `${within * 100}%` }} />
+      {ratio > 1 && (
+        <div
+          className="h-full bg-destructive"
+          style={{
+            width: `${(1 - within) * 100}%`,
+            backgroundImage: "repeating-linear-gradient(45deg, transparent 0 3px, rgb(0 0 0 / 0.35) 3px 5px)",
+          }}
+        />
+      )}
+    </div>
   );
 }
 

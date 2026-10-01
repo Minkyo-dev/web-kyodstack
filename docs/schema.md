@@ -200,6 +200,10 @@ DailyReview = `daily_reflections`.
   negative while owed. `finance_account_balances`, `finance_daily_balances` and `finance_reconcile_account` (one
   ADJUSTMENT, `source = 'SYSTEM'`, for the difference; sets `finance_accounts.reconciled_on`). Net worth = Σ
   balances; liquid = CHECKING + SAVINGS + CASH; card debt = Σ owed on CREDIT_CARD. `initial_balance` is unused.
+- `finance_budgets` (ADR 0033): `(category, month = 1st, kind DEFAULT|MONTH, amount|null)`, unique per
+  (household, category, kind, month); top-level, non-deleted EXPENSE categories only (trigger). Budget of month M =
+  the MONTH row for M, else the latest DEFAULT with month ≤ M; null = none (`finance_month_budgets`). Budget status:
+  spent / budget < 0.8 ok, ≤ 1 warning, > 1 over; spent = expense − refund rolled up to the top-level category.
 - `finance_subscriptions` (ADR 0029): a recurring-payment plan (MONTHLY/YEARLY, billing day 1–31 clamped to month end,
   billing month for yearly only, start/end, expense category only, `charged_through`). `finance_charge_subscriptions`
   writes each due date as an EXPENSE with `source = 'SUBSCRIPTION'` and `subscription_id`; a unique index on

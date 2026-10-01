@@ -202,7 +202,11 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] ADR 0032 (finance upgrade A): balances by reconcile, dashboard "재정 현황" (net worth, liquid, card debt, still
       due), balances in account settings, calendar "자산 흐름" (daily net worth + forecast, per-account table). Tests
       `tests/unit/finance-balances.test.ts`, RLS assertions in `finance.sql`, E2E `finance-balances.spec.ts`
-- [ ] Finance upgrade B: budgets (next), then C: analytics
+- [x] ADR 0033 (finance upgrade B): monthly category budgets (default from this month + one-month amounts),
+      Settings → 예산 with 3-month averages, budget vs spent on the dashboard categories, calendar budget card with
+      pace. Tests `tests/unit/finance-budgets.test.ts`, RLS assertions in `finance.sql`, E2E `finance-budgets.spec.ts`
+- [x] ADR 0031 addendum: E2E signs in once per run (global setup storageState + one cached API client)
+- [ ] Finance upgrade C: analytics (next)
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is

@@ -344,6 +344,69 @@ do $$ begin
 end $$;
 
 -- The owner can delete the household; everything in it goes with it.
+-- ADR 0033: budgets. A DEFAULT applies from its month until a later DEFAULT; a MONTH row overrides one month; a null
+-- amount means no budget. Only top-level, non-deleted expense categories; another household is denied.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+insert into ids select 'other', id from public.finance_categories
+  where household_id = (select v from ids where k = 'h1') and type = 'EXPENSE' and parent_id is null
+    and id <> (select v from ids where k = 'food') and deleted_at is null
+  order by sort_order limit 1;
+insert into public.finance_budgets (household_id, category_id, month, kind, amount) values
+  ((select v from ids where k = 'h1'), (select v from ids where k = 'food'), '2026-01-01', 'DEFAULT', 800),
+  ((select v from ids where k = 'h1'), (select v from ids where k = 'food'), '2026-03-01', 'MONTH', 1000),
+  ((select v from ids where k = 'h1'), (select v from ids where k = 'food'), '2026-05-01', 'DEFAULT', 900),
+  ((select v from ids where k = 'h1'), (select v from ids where k = 'other'), '2026-02-01', 'DEFAULT', 100),
+  ((select v from ids where k = 'h1'), (select v from ids where k = 'other'), '2026-04-01', 'DEFAULT', null);
+do $$ declare r record; h uuid := (select v from ids where k = 'h1'); f uuid := (select v from ids where k = 'food');
+  o uuid := (select v from ids where k = 'other'); begin
+  assert (select amount from public.finance_month_budgets(h, '2026-01-15') where category_id = f) = 800, 'jan default';
+  assert (select count(*) from public.finance_month_budgets(h, '2026-01-01') where category_id = o) = 0, 'other not yet';
+  assert (select amount from public.finance_month_budgets(h, '2026-02-01') where category_id = o) = 100, 'feb other';
+  select * into r from public.finance_month_budgets(h, '2026-03-01') where category_id = f;
+  assert r.amount = 1000 and r.is_override and r.default_amount = 800, format('mar override %s', r);
+  select * into r from public.finance_month_budgets(h, '2026-04-01') where category_id = f;
+  assert r.amount = 800 and not r.is_override, format('apr back to default %s', r);
+  assert (select count(*) from public.finance_month_budgets(h, '2026-04-01') where category_id = o) = 0, 'other removed';
+  assert (select amount from public.finance_month_budgets(h, '2026-06-01') where category_id = f) = 900, 'new default';
+  assert (select amount from public.finance_month_budgets(h, '2026-01-01') where category_id = f) = 800, 'past keeps old';
+  begin
+    insert into public.finance_budgets (household_id, category_id, month, kind, amount)
+    values (h, (select v from ids where k = 'grocery'), '2026-01-01', 'DEFAULT', 1);
+    raise exception 'subcategory budget accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.finance_budgets (household_id, category_id, month, kind, amount)
+    values (h, (select v from ids where k = 'salary'), '2026-01-01', 'DEFAULT', 1);
+    raise exception 'income budget accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.finance_budgets (household_id, category_id, month, kind, amount) values (h, f, '2026-01-02', 'MONTH', 1);
+    raise exception 'mid-month budget accepted';
+  exception when check_violation then null;
+  end;
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000c","role":"authenticated"}', true);
+do $$ declare n int; begin
+  assert (select count(*) from public.finance_budgets) = 0, 'C cannot see H1 budgets';
+  begin
+    perform public.finance_month_budgets((select v from ids where k = 'h1'), '2026-01-01');
+    raise exception 'C read H1 budgets';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.finance_budgets (household_id, category_id, month, kind, amount)
+    values ((select v from ids where k = 'h1'), (select v from ids where k = 'food'), '2026-07-01', 'DEFAULT', 1);
+    raise exception 'C wrote an H1 budget';
+  -- The category trigger runs before RLS and cannot see H1's category, so either error is a rejection.
+  exception when insufficient_privilege or check_violation then null;
+  end;
+  update public.finance_budgets set amount = 1;
+  get diagnostics n = row_count;
+  assert n = 0, 'C updated H1 budgets';
+end $$;
+
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
 do $$ declare n int; begin
   delete from public.finance_households where id = (select v from ids where k = 'h1');

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isLocalDateString } from "@/features/scheduler/utils/timezone";
 import { ACCOUNT_TYPES, CATEGORY_TYPES, ENTRY_TYPES, OWNERSHIP_TYPES } from "../domain/finance.types";
 import { parseAmount } from "../domain/money";
+import { MONTH_RE } from "../domain/period";
 import { BILLING_CYCLES } from "../domain/subscription";
 
 const localDate = z.string().refine(isLocalDateString, "날짜 형식이 올바르지 않습니다.");
@@ -199,6 +200,33 @@ export const reconcileSchema = z.object({
 });
 export type ReconcileInput = z.infer<typeof reconcileSchema>;
 export const balanceOnSchema = z.object({ accountId: z.uuid(), date: localDate });
+
+// ------------------------------------------------------------------ budgets (ADR 0033)
+
+const budgetMonth = z.string().regex(MONTH_RE, "월 형식이 올바르지 않습니다.");
+const positiveAmount = z.union([z.string(), z.number()]).transform((v, ctx) => {
+  const text = String(v).trim().replace(/[,$\s]/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(text) || Number(text) <= 0) {
+    ctx.addIssue({ code: "custom", message: "예산은 0보다 큰 숫자(소수점 둘째 자리까지)여야 합니다." });
+    return z.NEVER;
+  }
+  return Number(text);
+});
+
+/** The default budget from the current month on; empty clears it ("no budget from this month"). */
+export const setDefaultBudgetSchema = z.object({
+  categoryId: z.uuid(),
+  amount: z.union([z.literal(""), z.null(), positiveAmount]).transform((v) => (v === "" || v === null ? null : v)),
+});
+export type SetDefaultBudgetInput = z.infer<typeof setDefaultBudgetSchema>;
+
+/** A one-month amount (this month or later). */
+export const setMonthBudgetSchema = z.object({ categoryId: z.uuid(), month: budgetMonth, amount: positiveAmount });
+export type SetMonthBudgetInput = z.infer<typeof setMonthBudgetSchema>;
+
+/** "되돌리기": drop the one-month amount so the default applies again. */
+export const clearMonthBudgetSchema = z.object({ categoryId: z.uuid(), month: budgetMonth });
+export type ClearMonthBudgetInput = z.infer<typeof clearMonthBudgetSchema>;
 
 /** Transactions page filters (spec §23). Every field is optional; bad values are dropped, never errors. */
 export const transactionFilterSchema = z.object({

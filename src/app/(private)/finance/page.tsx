@@ -128,7 +128,7 @@ export default async function FinanceDashboardPage({
           </Suspense>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[3fr_2fr]">
             <Suspense key={`k-${href(period)}`} fallback={<ListSkeleton label="카테고리 불러오는 중" />}>
-              <CategorySection householdId={householdId} period={period} currency={currency} categories={lookups.categories} />
+              <CategorySection householdId={householdId} period={period} currency={currency} categories={lookups.categories} today={ctx.today} />
             </Suspense>
             <Suspense fallback={<ListSkeleton label="최근 거래 불러오는 중" />}>
               <RecentSection householdId={householdId} />

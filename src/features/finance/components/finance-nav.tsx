@@ -40,6 +40,7 @@ export function FinanceNav() {
 const SETTINGS_NAV = [
   { href: "/finance/settings/accounts", label: "계좌" },
   { href: "/finance/settings/categories", label: "카테고리" },
+  { href: "/finance/settings/budgets", label: "예산" },
   { href: "/finance/settings/household", label: "가계 구성원" },
 ] as const;
 

@@ -33,7 +33,7 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/finance/transactions?from&to&type&category&account&paidBy&min&max&q` | (private) | search / filter list (GET form) |
 | `/finance/transactions/bulk` | (private) | bulk entry grid for expenses / income (ADR 0027) |
 | `/finance/recurring` | (private) | recurring payments: plans, next due date, monthly total (ADR 0029) |
-| `/finance/settings/{accounts,categories,household}` | (private) | finance settings |
+| `/finance/settings/{accounts,categories,budgets,household}` | (private) | finance settings; budgets per month `?month=yyyy-MM` (ADR 0033) |
 | `GET/POST /api/internal/jobs/{daily-planner,weekly-review,duration-profile-refresh,finance-subscriptions}` | route handlers | cron jobs (Bearer secret, service role; ADR 0010) |
 
 Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`, `/finance`, `/english`.
@@ -65,7 +65,7 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/lib/supabase/admin.ts`, `src/lib/job-route.ts` | service-role client (jobs only) and the secret-checked job endpoint wrapper |
 | `src/lib/route.ts` | `runRoute()`: the Route Handler version of `runAction` (JSON + HTTP status mapping) |
 | `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` / `MonthlyCalendar` (FullCalendar timeGrid / dayGrid, dynamic ssr:false; `?view=month`, ADR 0024), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
-| `src/features/finance` | household finance (ADR 0025): pure `domain/{money,period,aggregate,category-tree,bulk-entry,subscription,balances,account-groups}`, `schemas`, `queries/household.queries` (`getFinanceContext` (also records due subscription charges), `getFinanceLookups`, per-request cached) and `finance.queries` (SQL aggregates, day/recent/filtered rows), `services/{household,account,category,transaction,subscription,balance,dashboard}` (household id always from the membership), one `actions/finance.actions.ts`, components (`FinanceProvider` with the lookups from the finance layout, `TransactionForm`, `TransactionDetail`, `DayDrawer`, `FinanceCalendar`, `BulkEntryGrid`, `CashFlowChart`, dashboard sections, settings) |
+| `src/features/finance` | household finance (ADR 0025): pure `domain/{money,period,aggregate,category-tree,bulk-entry,subscription,balances,budgets,account-groups}`, `schemas`, `queries/household.queries` (`getFinanceContext` (also records due subscription charges), `getFinanceLookups`, per-request cached) and `finance.queries` (SQL aggregates, day/recent/filtered rows), `services/{household,account,category,transaction,subscription,balance,budget,dashboard}` (household id always from the membership), one `actions/finance.actions.ts`, components (`FinanceProvider` with the lookups from the finance layout, `TransactionForm`, `TransactionDetail`, `DayDrawer`, `FinanceCalendar`, `BulkEntryGrid`, `CashFlowChart`, dashboard sections, settings) |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 
 ## Calendar data flow

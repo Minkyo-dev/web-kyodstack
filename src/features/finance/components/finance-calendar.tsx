@@ -11,6 +11,7 @@ import type { DayTotals, Transaction } from "../domain/finance.types";
 import { formatCompact, formatSigned } from "../domain/money";
 import { formatMonth, formatShortDay, monthKey, shiftMonth, type MonthKey } from "../domain/period";
 import { AssetFlow } from "./asset-flow";
+import { BudgetCard, type CalendarBudget } from "./budget-card";
 import { DayPanel } from "./day-panel";
 import { useFinance } from "./finance-provider";
 import { DayDrawer } from "./day-drawer";
@@ -48,6 +49,7 @@ export function FinanceCalendar({
   initialDate,
   initialDayTransactions,
   assetFlow,
+  budget,
 }: {
   period: MonthKey;
   days: DayTotals[];
@@ -55,6 +57,8 @@ export function FinanceCalendar({
   initialDayTransactions: Transaction[] | null;
   /** ADR 0032: null when the balances could not be loaded (the rest of the calendar still works). */
   assetFlow: { rows: DailyBalanceRow[]; openingDay: string; monthStart: string; monthEnd: string; charges: Charge[] } | null;
+  /** ADR 0033: the month's budget card ("error" when it could not load). */
+  budget: CalendarBudget | "error";
 }) {
   const f = useFinance();
   const router = useRouter();
@@ -190,6 +194,8 @@ export function FinanceCalendar({
             </div>
           ))}
         </div>
+
+        <BudgetCard budget={budget} />
 
         {assetFlow ? (
           <AssetFlow {...assetFlow} selected={panelBeside ? panelDate : validSelected} onSelect={selectDate} />

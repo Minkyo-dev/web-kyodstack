@@ -4,6 +4,7 @@ import { fromDbError } from "@/lib/errors";
 import type { Category, Subscription, Transaction } from "../domain/finance.types";
 import type { CategoryRow, DailyRow, MonthlyRow } from "../domain/aggregate";
 import type { AccountBalance, DailyBalanceRow } from "../domain/balances";
+import { budgetMonths, sumBudgets, type BudgetLine } from "../domain/budgets";
 import type { TransactionFilter } from "../schemas/finance.schema";
 
 /**
@@ -127,4 +128,31 @@ export async function getDailyBalances(supabase: SupabaseServerClient, household
   const { data, error } = await supabase.rpc("finance_daily_balances", { p_household: householdId, p_from: from, p_to: to });
   if (error) throw fromDbError(error);
   return data.map((r) => ({ ...r, balance: Number(r.balance), inflow: Number(r.inflow), outflow: Number(r.outflow), adjustment: Number(r.adjustment) })) as DailyBalanceRow[];
+}
+
+/** The effective budget per category for a month (ADR 0033): the one-month amount, else the latest default. */
+export async function getMonthBudgets(supabase: SupabaseServerClient, householdId: string, month: string): Promise<BudgetLine[]> {
+  const { data, error } = await supabase.rpc("finance_month_budgets", { p_household: householdId, p_month: month });
+  if (error) throw fromDbError(error);
+  return data.map((r) => ({
+    categoryId: r.category_id,
+    amount: Number(r.amount),
+    isOverride: r.is_override,
+    defaultAmount: r.default_amount === null ? null : Number(r.default_amount),
+  }));
+}
+
+/** Budget per category for a dashboard period: one month, or the sum of the year's counted months. */
+export async function getPeriodBudgets(
+  supabase: SupabaseServerClient,
+  householdId: string,
+  period: { mode: "monthly"; key: { year: number; month: number } } | { mode: "yearly"; year: number },
+  today: string,
+): Promise<Map<string, number>> {
+  const months =
+    period.mode === "monthly"
+      ? [`${period.key.year}-${String(period.key.month).padStart(2, "0")}-01`]
+      : budgetMonths(period.year, today);
+  const lines = await Promise.all(months.map((m) => getMonthBudgets(supabase, householdId, m)));
+  return sumBudgets(lines);
 }
