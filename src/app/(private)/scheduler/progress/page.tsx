@@ -22,6 +22,9 @@ import { termsFor } from "@/lib/terms";
 import { ensureAnalysis, latestAnalysis } from "@/features/ai/services/analysis.service";
 import { SystemAnalysisCard } from "@/features/ai/components/system-analysis-card";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
+import { loadDirectionStatus, type DirectionStatus as Status } from "@/features/direction/queries/status.queries";
+import { DirectionStatus } from "@/features/direction/components/direction-status";
+import { log } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "진행", robots: { index: false } };
 
@@ -53,6 +56,13 @@ export default async function ProgressPage() {
         listQuests(supabase, user.id, { visibleOn: today }),
       ])
     : [null, null, []];
+  // Direction status (G3): a failure only hides the section.
+  let direction: Status | null = null;
+  try {
+    direction = await loadDirectionStatus(supabase, user.id, now);
+  } catch (error) {
+    log({ action: "direction.status", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+  }
   const series = (type: StatType) => snapshots.filter((r) => r.stat_type === type && r.scope === "overall");
 
   return (
@@ -67,6 +77,8 @@ export default async function ProgressPage() {
       ) : (
         <EnableCard />
       )}
+
+      {direction && <DirectionStatus status={direction} terms={terms} />}
 
       <section aria-labelledby="stats-heading" className="space-y-3">
         <h2 id="stats-heading" className="text-lg font-semibold">
