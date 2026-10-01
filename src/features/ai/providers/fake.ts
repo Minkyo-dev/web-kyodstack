@@ -18,6 +18,12 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  classify_tasks: (prompt) => {
+    const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { tasks: { id: string }[]; domains: { id: string }[] };
+    return {
+      items: input.tasks.map((t) => ({ taskId: t.id, taskType: "debugging", domainId: input.domains[0]?.id ?? null, complexity: 4, skills: ["airflow", "dbt"], confidence: 0.88 })),
+    };
+  },
   weekly_review: () => ({
     summary: "테스트용 주간 리뷰입니다.",
     positives: ["계획한 작업을 꾸준히 기록했습니다."],
