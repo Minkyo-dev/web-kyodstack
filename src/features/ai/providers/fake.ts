@@ -18,6 +18,18 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  weekly_analysis: (prompt) => {
+    const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { stats: { calibration: { now: number | null; weekAgo: number | null } } };
+    const c = input.stats.calibration;
+    return {
+      explanations: [
+        c.now !== null && c.weekAgo !== null
+          ? { stat: "calibration", headline: `예상 정확도 ${c.weekAgo} → ${c.now}`, detail: "지난주와 비교한 변화입니다.", evidence: [] }
+          : { stat: "calibration", headline: "예상 정확도 데이터를 모으는 중이에요", detail: "완료한 작업이 더 쌓이면 변화를 설명할게요.", evidence: [] },
+      ],
+      assessment: { planningTendency: "조금 낙관적", workStyle: "긴 집중 세션", currentRisk: null, strongPattern: "오전 실행이 안정적" },
+    };
+  },
   interpret_worklog: () => ({ delayReason: "environment_issue", scopeChanged: false, unexpectedBlocker: true, blockerType: "technical", confidence: 0.91 }),
   classify_tasks: (prompt) => {
     const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { tasks: { id: string }[]; domains: { id: string }[] };

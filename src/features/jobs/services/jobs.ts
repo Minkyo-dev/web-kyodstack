@@ -70,7 +70,7 @@ export function runDurationProfileRefresh(admin: SupabaseServerClient, now = new
       const groups = await rebuildDurationGroups(ctx);
       const snapshots = await writeDailySnapshot(ctx, now);
       const xp = await reconcileProgress(ctx, now);
-      const ai = await runAiNightly(ctx).catch(() => ({ classified: 0, interpreted: 0 }));
+      const ai = await runAiNightly(ctx).catch(() => ({ classified: 0, interpreted: 0, analyzed: 0 }));
       return { status: "succeeded", detail: { groups, missed, snapshots, xp, ai } };
     },
   );

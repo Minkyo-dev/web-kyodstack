@@ -9,7 +9,7 @@ import { biasText, CalibrationByType, StatCard } from "@/features/analytics/comp
 import { PatternList } from "@/features/analytics/components/pattern-list";
 import { DomainBars } from "@/features/analytics/components/domain-bars";
 import { WorkStandardsDialog } from "@/features/analytics/components/work-standards-dialog";
-import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
+import { addLocalDays, localDayRange, toLocalDate, toLocalTime } from "@/features/scheduler/utils/timezone";
 import { getPlayerProfile, xpByRuleSince } from "@/features/gamification/queries/xp.queries";
 import { EnableCard } from "@/features/gamification/components/enable-card";
 import { PlayerSection } from "@/features/gamification/components/player-section";
@@ -19,6 +19,9 @@ import { listUnlocked, loadAchievementFacts } from "@/features/gamification/serv
 import { listQuests } from "@/features/gamification/queries/quest.queries";
 import { toQuestViews } from "@/features/gamification/utils/quest-view";
 import { termsFor } from "@/lib/terms";
+import { ensureAnalysis, latestAnalysis } from "@/features/ai/services/analysis.service";
+import { SystemAnalysisCard } from "@/features/ai/components/system-analysis-card";
+import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
 
 export const metadata: Metadata = { title: "진행", robots: { index: false } };
 
@@ -27,6 +30,12 @@ export default async function ProgressPage() {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
   const now = new Date();
+  // Weekly SYSTEM analysis: generated here once the user's chosen slot has passed (F2 spec §1).
+  await ensureAnalysis({ user, supabase }, now);
+  const [analysis, { settings: analysisSettings }] = await Promise.all([
+    latestAnalysis(supabase, user.id),
+    getSchedulerContext(supabase, user.id),
+  ]);
   const input = await loadStatInput(supabase, user.id, now);
   const stats = computeStats(input);
   const today = toLocalDate(now, input.timezone);
@@ -93,6 +102,12 @@ export default async function ProgressPage() {
           />
         </div>
         <CalibrationByType byType={stats.calibration.byType} />
+        <SystemAnalysisCard
+          analysis={analysis?.content ?? null}
+          createdLabel={analysis ? `${toLocalDate(analysis.created_at, input.timezone).slice(5)} ${toLocalTime(analysis.created_at, input.timezone)}` : null}
+          analyzedToday={!!analysis && analysis.created_at >= localDayRange(today, input.timezone).start}
+          schedule={{ weekday: analysisSettings.insight_weekday, hour: analysisSettings.insight_hour }}
+        />
       </section>
 
       <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} terms={terms} />

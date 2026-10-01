@@ -6,6 +6,7 @@ import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queri
 import { addLocalDays, localDayRange, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { classifyTasks } from "./classification.service";
 import { getAiProvider } from "./provider";
+import { ensureAnalysis } from "./analysis.service";
 import { interpretWorkLog } from "./worklog.service";
 
 const BATCH = 20;
@@ -15,12 +16,12 @@ const CATCH_UP = 5;
  * Nightly AI work (F1 spec §2, §3): one classification batch and an interpretation catch-up per user.
  * Every query filters user_id (service role). A missing provider or the daily cap stops quietly.
  */
-export async function runAiNightly(ctx: ActionContext): Promise<{ classified: number; interpreted: number }> {
+export async function runAiNightly(ctx: ActionContext): Promise<{ classified: number; interpreted: number; analyzed: number }> {
   const uid = ctx.user.id;
   try {
     await getAiProvider();
   } catch {
-    return { classified: 0, interpreted: 0 };
+    return { classified: 0, interpreted: 0, analyzed: 0 };
   }
 
   let classified = 0;
@@ -65,5 +66,6 @@ export async function runAiNightly(ctx: ActionContext): Promise<{ classified: nu
     })
     .slice(0, CATCH_UP);
   for (const l of due) if (await interpretWorkLog(ctx, l.session_id!)) interpreted++;
-  return { classified, interpreted };
+  const analyzed = (await ensureAnalysis(ctx)) ? 1 : 0;
+  return { classified, interpreted, analyzed };
 }
