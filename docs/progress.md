@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement F1 — AI classification + work-log interpretation (docs/superpowers/specs/2026-09-30-ai-classification-worklog-design.md)
+- [x] `task_features`, `ai_calls`, work-log interpretation columns (SQL tests, ADR 0018); 30/day AI budget for every AI call
+- [x] Classification prompt/validator/proposal rules; "SYSTEM 제안" in the task drawer (apply / edit / ignore)
+- [x] Work-log interpretation via `after()`; blocker confirmation; Calibration weight 0.3 (`stats-v2`)
+- [x] Nightly classification batch and interpretation catch-up
+- [x] E2E `ai-classification.spec.ts`
+
 ## Improvement E2 — quests, achievements, titles, terminology (docs/superpowers/specs/2026-09-30-quests-achievements-design.md)
 - [x] `quests`, `quest_objectives`, `user_achievements`, `user_titles`, `equipped_title`; `create_quest` / `swap_quest_objective`; quest XP ≤ 300 (SQL tests, ADR 0017)
 - [x] Pure quest rules `quest-v1` (daily/weekly/recovery, swap, 11 metrics) and achievement catalog `ach-v1`; terms + `josa`

@@ -35,3 +35,4 @@ Template:
 | 0015 | Today view, week summary, capacity notice | accepted |
 | 0016 | XP ledger, level and opt-in backfill | accepted |
 | 0017 | Quests, achievements, titles and quest terminology | accepted |
+| 0018 | AI feature proposals, work-log interpretation and the AI budget | accepted |

@@ -119,6 +119,14 @@ DailyReview = `daily_reflections`.
   previous_level)`. `xp_level(total)`: L → L+1 costs `100 + 50·L`.
 - Rules `xp-v1` live in `features/gamification/utils/xp-rules.ts` (ADR 0016).
 
+## AI features F1 (ADR 0018)
+- `task_features(user_id, task_id, feature_type task_type|domain|complexity|skills, feature_value jsonb, source
+  ai|user|system, status proposed|accepted|rejected, confidence, model, prompt_version, decided_at)`: composite FK to
+  `tasks(id, user_id)`; one open proposal per (task, feature type).
+- `ai_calls(user_id, kind, model, ok, created_at)`: the AI budget ledger (30 per local day); no prompt/response text.
+- `work_logs` + `ai_interpretation jsonb`, `interpretation_model`, `interpretation_version`, `confirmed_blocker`
+  (null = unanswered). Only `confirmed_blocker = true` affects stats (Calibration weight 0.3, `stats-v2`).
+
 ## Gamification E2 (ADR 0017)
 - `quests(user_id, type daily|weekly|recovery, status active|cleared|expired, title, period_start, period_end,
   reward_xp, swap_used, spare jsonb, rules_version, cleared_at)`: unique per (user, type, period_start); at most one
