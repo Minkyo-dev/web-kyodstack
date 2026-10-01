@@ -11,6 +11,10 @@ export type Terms = {
   protocol: string;
   growth: string;
   maintenance: string;
+  habit: string;
+  habits: string;
+  systemQuest: string;
+  systemQuests: string;
 };
 export const PLAIN_TERMS: Terms = {
   task: "할 일",
@@ -24,6 +28,10 @@ export const PLAIN_TERMS: Terms = {
   protocol: "실행 방식",
   growth: "성장",
   maintenance: "유지",
+  habit: "습관",
+  habits: "습관",
+  systemQuest: "오늘의 목표",
+  systemQuests: "오늘의 목표",
 };
 export const QUEST_TERMS: Terms = {
   task: "퀘스트",
@@ -37,6 +45,10 @@ export const QUEST_TERMS: Terms = {
   protocol: "PROTOCOL",
   growth: "GROWTH",
   maintenance: "MAINTENANCE",
+  habit: "DAILY QUEST",
+  habits: "DAILY QUESTS",
+  systemQuest: "SYSTEM QUEST",
+  systemQuests: "SYSTEM QUESTS",
 };
 
 export function termsFor(questTerminology: boolean): Terms {

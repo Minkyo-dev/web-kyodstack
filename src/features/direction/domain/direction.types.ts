@@ -40,3 +40,19 @@ export type MissionDetail = {
   protocols: Protocol[];
   projects: { id: string; name: string; status: string }[];
 };
+
+export const HABIT_RULES = ["check", "focus"] as const;
+export type HabitRule = (typeof HABIT_RULES)[number];
+export type Habit = Omit<Tables<"habits">, "rule" | "status"> & { rule: HabitRule; status: ArchivableStatus };
+export type HabitCheck = Omit<Tables<"habit_checks">, "source"> & { source: "manual" | "focus" };
+/** A habit due today, as the today screen sees it. */
+export type HabitToday = {
+  id: string;
+  title: string;
+  rule: HabitRule;
+  targetMinutes: number | null;
+  missionTitle: string | null;
+  done: boolean;
+  source: "manual" | "focus" | null;
+  focusMinutes: number | null;
+};
