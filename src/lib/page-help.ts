@@ -1,7 +1,7 @@
 import { josa, type Terms } from "@/lib/terms";
 
 /** Help shown behind the (?) icon next to each private page's title: what the page is and how to use it. */
-export const PAGE_HELP_KEYS = ["scheduler", "directive", "projects", "review", "progress"] as const;
+export const PAGE_HELP_KEYS = ["scheduler", "directive", "projects", "review", "progress", "finance"] as const;
 export type PageHelpKey = (typeof PAGE_HELP_KEYS)[number];
 export type PageHelp = { title: string; concept: string; howTo: string[] };
 
@@ -62,6 +62,19 @@ export function pageHelp(key: PageHelpKey, t: Terms): PageHelp {
           `${t.mission} 현황에서 진행률, 이번 주 ${t.mission} 연결 시간, ${t.habit} 달성, ${t.identity} 근거를 봅니다.`,
           `막힌 ${josa(t.mission, "이/가")} 있으면 SYSTEM QUESTION이 어느 단계를 먼저 볼지 묻습니다. 선택지는 해당 화면으로 이동만 합니다.`,
           "게임 요소(레벨·퀘스트)는 원할 때 켤 수 있고, 꺼도 기록은 유지됩니다.",
+        ],
+      };
+    case "finance":
+      return {
+        title: "가계부",
+        concept:
+          "부부가 함께 쓰는 가계부입니다. 대시보드는 '우리 집 돈의 흐름', 캘린더는 '언제 돈이 움직였는지', 날짜 패널은 '그날 무슨 거래가 있었는지'를 보여 줍니다. 모든 숫자는 거래 기록에서 계산됩니다.",
+        howTo: [
+          "설정 → 계좌에서 개인/공동 계좌를 먼저 추가합니다. 카테고리는 가계 전체가 함께 씁니다.",
+          "'거래 추가'로 지출·수입·이체를 기록합니다. 이체(예: 체크카드 → 신용카드 대금)는 지출에 포함되지 않습니다.",
+          "캘린더에서 날짜를 누르면 그날의 거래가 열리고, 거래를 눌러 수정하거나 삭제할 수 있습니다.",
+          "거래 화면에서 기간·카테고리·계좌·결제자·금액·검색어로 거래를 찾습니다.",
+          "배우자는 설정 → 가계 구성원의 초대 코드로 같은 가계에 참여합니다.",
         ],
       };
   }

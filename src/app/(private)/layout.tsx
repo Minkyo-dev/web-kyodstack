@@ -38,7 +38,7 @@ export default async function PrivateLayout({
               Kyod
             </Link>
             <LevelLine />
-            <div className="md:mt-4 md:flex-1">
+            <div className="min-w-0 flex-1 md:mt-4">
               <PrivateNav />
             </div>
             <form action={logout} className="md:border-t md:border-border md:pt-3">

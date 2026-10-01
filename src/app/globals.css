@@ -28,6 +28,8 @@
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
   --color-warning: var(--warning);
   --color-planned: var(--planned);
   --color-ai: var(--ai);
@@ -79,6 +81,9 @@
   --radius: 0.5rem;
   /* Scheduler state semantics (spec §14.4). Always paired with icon/text. */
   --success: oklch(0.52 0.12 150);
+  /* Finance cash-flow series (dataviz categorical slots 1–2); amounts always carry a sign too. */
+  --income: #2a78d6;
+  --expense: #eb6834;
   --warning: oklch(0.6 0.15 65);
   --planned: oklch(0.55 0.14 255);
   --ai: oklch(0.55 0.14 300);
@@ -125,6 +130,8 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --success: oklch(0.72 0.13 150);
+  --income: #3987e5;
+  --expense: #d95926;
   --warning: oklch(0.8 0.14 75);
   --planned: oklch(0.7 0.13 255);
   --ai: oklch(0.72 0.12 300);

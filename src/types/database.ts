@@ -333,6 +333,293 @@ export type Database = {
           },
         ]
       }
+      finance_accounts: {
+        Row: {
+          account_type: string
+          created_at: string
+          currency_code: string
+          household_id: string
+          id: string
+          initial_balance: number
+          institution_name: string | null
+          is_active: boolean
+          name: string
+          owner_user_id: string | null
+          ownership_type: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          account_type: string
+          created_at?: string
+          currency_code?: string
+          household_id: string
+          id?: string
+          initial_balance?: number
+          institution_name?: string | null
+          is_active?: boolean
+          name: string
+          owner_user_id?: string | null
+          ownership_type?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          created_at?: string
+          currency_code?: string
+          household_id?: string
+          id?: string
+          initial_balance?: number
+          institution_name?: string | null
+          is_active?: boolean
+          name?: string
+          owner_user_id?: string | null
+          ownership_type?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_accounts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_accounts_household_id_owner_user_id_fkey"
+            columns: ["household_id", "owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "finance_household_members"
+            referencedColumns: ["household_id", "user_id"]
+          },
+        ]
+      }
+      finance_categories: {
+        Row: {
+          created_at: string
+          household_id: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          sort_order: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          sort_order?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          sort_order?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_categories_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_categories_parent_id_household_id_fkey"
+            columns: ["parent_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "household_id"]
+          },
+        ]
+      }
+      finance_household_members: {
+        Row: {
+          display_name: string
+          household_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          household_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          household_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_households: {
+        Row: {
+          base_currency: string
+          created_at: string
+          id: string
+          invite_code: string
+          name: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          base_currency?: string
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by_user_id: string
+          currency_code: string
+          description: string | null
+          household_id: string
+          id: string
+          merchant_name: string | null
+          note: string | null
+          paid_by_user_id: string | null
+          source: string
+          transaction_date: string
+          transaction_time: string | null
+          transfer_account_id: string | null
+          transfer_group_id: string | null
+          type: string
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id: string
+          currency_code?: string
+          description?: string | null
+          household_id: string
+          id?: string
+          merchant_name?: string | null
+          note?: string | null
+          paid_by_user_id?: string | null
+          source?: string
+          transaction_date: string
+          transaction_time?: string | null
+          transfer_account_id?: string | null
+          transfer_group_id?: string | null
+          type: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          currency_code?: string
+          description?: string | null
+          household_id?: string
+          id?: string
+          merchant_name?: string | null
+          note?: string | null
+          paid_by_user_id?: string | null
+          source?: string
+          transaction_date?: string
+          transaction_time?: string | null
+          transfer_account_id?: string | null
+          transfer_group_id?: string | null
+          type?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_transactions_account_id_household_id_fkey"
+            columns: ["account_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id", "household_id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_category_id_household_id_fkey"
+            columns: ["category_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "household_id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_household_id_paid_by_user_id_fkey"
+            columns: ["household_id", "paid_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "finance_household_members"
+            referencedColumns: ["household_id", "user_id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_transfer_account_id_household_id_fkey"
+            columns: ["transfer_account_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id", "household_id"]
+          },
+        ]
+      }
       habit_checks: {
         Row: {
           created_at: string
@@ -2577,6 +2864,51 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      finance_cash_flow: {
+        Args: { p_from: string; p_household: string; p_to: string }
+        Returns: {
+          category_id: string
+          expense: number
+          income: number
+          transaction_date: string
+        }[]
+      }
+      finance_category_totals: {
+        Args: { p_from: string; p_household: string; p_to: string }
+        Returns: {
+          category_id: string
+          expense: number
+        }[]
+      }
+      finance_create_household: {
+        Args: { p_display_name: string; p_name: string }
+        Returns: string
+      }
+      finance_daily_totals: {
+        Args: { p_from: string; p_household: string; p_to: string }
+        Returns: {
+          day: string
+          expense: number
+          income: number
+        }[]
+      }
+      finance_join_household: {
+        Args: { p_code: string; p_display_name: string }
+        Returns: string
+      }
+      finance_monthly_totals: {
+        Args: { p_household: string; p_year: number }
+        Returns: {
+          expense: number
+          income: number
+          month: number
+        }[]
+      }
+      finance_reorder: {
+        Args: { p_ids: string[]; p_table: string }
+        Returns: undefined
+      }
+      finance_rotate_invite_code: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       mark_missed_blocks: { Args: { p_user_id: string }; Returns: number }
       move_schedule_block: {
@@ -2955,4 +3287,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

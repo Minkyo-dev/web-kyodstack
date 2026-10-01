@@ -174,6 +174,22 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       milestones and tasks on the right; `/scheduler/projects/[id]` redirects there
 - [x] Every date field uses the shared calendar `DatePicker` (`src/components/ui/date-picker.tsx`, no new dependency)
 
+## Household finance (docs/household-finance-design.md, ADR 0025)
+- [x] Household / members (invite code, one household per user), accounts, categories, transactions with membership
+      RLS, composite household FKs, category-tree and stamp triggers (SQL tests `supabase/tests/rls/finance.sql`)
+- [x] One cash-flow rule in SQL (`finance_cash_flow` → daily / monthly / category totals); transfers excluded,
+      refunds offset expense
+- [x] Transaction CRUD (expense / income / transfer) with service-side household checks
+- [x] Calendar (month grid, URL `?month=&date=`) and Day Drawer (right drawer / mobile bottom sheet: totals, list,
+      detail, edit, delete, add)
+- [x] Dashboard monthly / yearly: summary + previous-period change, cash-flow chart with table view, category
+      breakdown with previous-period delta, recent transactions, empty state, per-section skeletons
+- [x] Transactions page: date range, type, category (incl. children), account (either side of a transfer), payer,
+      amount range, search
+- [x] Settings: accounts (create, edit type/owner/institution, reorder, archive), categories (create, sub, rename,
+      icon, move, drag & drop / arrow reorder, archive), household (name, display name, invite code)
+- [x] Unit tests `tests/unit/finance.test.ts`; E2E `finance.spec.ts` (cleanup removes `[e2e]` finance rows)
+
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.

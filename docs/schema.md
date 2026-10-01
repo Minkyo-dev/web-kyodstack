@@ -184,6 +184,22 @@ DailyReview = `daily_reflections`.
   "실제 작업 보기" toggle. Running sessions are always shown.
 - Rescheduling moves the block while it hasn't ended; after it ends, a new block is created (same length).
 
+## Household finance (ADR 0025, docs/household-finance-design.md)
+- Tenant key is `household_id`. `finance_households` (name, base_currency, timezone, `invite_code`),
+  `finance_household_members` (role OWNER/MEMBER, `display_name`, `unique (user_id)`), `finance_accounts`,
+  `finance_categories` (two levels, trigger-checked), `finance_transactions` (source of truth).
+- RLS: membership via `private.finance_is_member` / `finance_is_owner`. Households and members are created only by
+  `finance_create_household` / `finance_join_household`; members may update only `display_name`, the owner only the
+  household `name`. Unused accounts/categories may be deleted (FKs protect referenced ones); the owner may delete the
+  household (cascade).
+- Composite FKs keep account, transfer account, category, payer and account owner inside the household.
+- Transaction checks: `amount > 0` (ADJUSTMENT may be negative and non-zero); TRANSFER has `transfer_account_id`
+  (≠ `account_id`), `transfer_group_id` and no category; INCOME/EXPENSE need a category of the matching type.
+  `created_by_user_id` must be the caller on insert and never changes; `updated_by_user_id` is stamped on update.
+- Cash-flow metric (`finance_cash_flow`): income = Σ INCOME; expense = Σ EXPENSE − Σ REFUND; TRANSFER and ADJUSTMENT
+  excluded. Net = income − expense; savings rate = net / income (none when income is 0); change = (cur − prev) / |prev|
+  (none when prev is 0). Category breakdown rolls subcategories into the top-level parent.
+
 ## Deferred to later phases (spec §71)
 
 ## Metric definitions (spec §36, §59, §60). Version them if they change.

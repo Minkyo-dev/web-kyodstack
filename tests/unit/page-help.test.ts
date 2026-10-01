@@ -4,7 +4,7 @@ import { PLAIN_TERMS, QUEST_TERMS } from "@/lib/terms";
 
 describe("pageHelp", () => {
   it("explains every private page: what it is and how to use it", () => {
-    expect(PAGE_HELP_KEYS).toEqual(["scheduler", "directive", "projects", "review", "progress"]);
+    expect(PAGE_HELP_KEYS).toEqual(["scheduler", "directive", "projects", "review", "progress", "finance"]);
     for (const key of PAGE_HELP_KEYS) {
       const h = pageHelp(key, PLAIN_TERMS);
       expect(h.title.length).toBeGreaterThan(0);

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarClock, Compass, FolderKanban, LayoutDashboard, NotebookText } from "lucide-react";
+import { BarChart3, CalendarClock, Compass, FolderKanban, LayoutDashboard, NotebookText, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTerms } from "@/hooks/use-terms";
 
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/scheduler/projects", label: "project", icon: FolderKanban, exact: false },
   { href: "/scheduler/review", label: "주간 리뷰", icon: NotebookText, exact: false },
   { href: "/scheduler/progress", label: "진행", icon: BarChart3, exact: false },
+  { href: "/finance", label: "가계부", icon: Wallet, exact: false },
 ] as const;
 
 export function PrivateNav() {
@@ -20,7 +21,7 @@ export function PrivateNav() {
   const terms = useTerms();
 
   return (
-    <nav aria-label="개인 도구" className="flex gap-1 md:flex-col">
+    <nav aria-label="개인 도구" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
       {NAV.map(({ href, label: rawLabel, icon: Icon, exact }) => {
         const label = rawLabel === "project" ? terms.project : rawLabel === "directive" ? terms.directiveNav : rawLabel;
         const active = exact
@@ -32,7 +33,7 @@ export function PrivateNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
               active
                 ? "bg-accent text-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",

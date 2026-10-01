@@ -89,6 +89,17 @@ export async function cleanup(db: SupabaseClient) {
   await db.from("tags").delete().like("name", `${E2E_PREFIX}%`);
   await db.from("tags").delete().like("name", "e2e-%");
   await db.from("practice_domains").delete().like("name", "E2E%");
+  await cleanupFinance(db);
+}
+
+/** Finance rows made by E2E: "[e2e]"-named transactions, then unused accounts/categories, then an E2E household. */
+export async function cleanupFinance(db: SupabaseClient) {
+  await db.from("finance_transactions").delete().like("merchant_name", `${E2E_PREFIX}%`);
+  await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`).not("parent_id", "is", null);
+  await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`);
+  await db.from("finance_accounts").delete().like("name", `${E2E_PREFIX}%`);
+  // Deleting the household cascades to everything in it; only an E2E-made one (the owner's real one is never named so).
+  await db.from("finance_households").delete().like("name", `${E2E_PREFIX}%`);
 }
 
 /** Center of the time-grid cell for a local date + time (HH:mm). */

@@ -19,6 +19,17 @@ export default function DashboardPage() {
             </p>
           </Link>
         </li>
+        <li>
+          <Link
+            href="/finance"
+            className="block rounded-lg border border-border p-4 hover:bg-muted"
+          >
+            <p className="font-medium">가계부</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              우리 집 돈의 흐름 → 날짜 → 거래
+            </p>
+          </Link>
+        </li>
       </ul>
     </div>
   );
