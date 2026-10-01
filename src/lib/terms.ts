@@ -1,7 +1,43 @@
-/** Quest terminology (E2 spec §4): a label layer only. Code and DB always say task/project. */
-export type Terms = { task: string; project: string };
-export const PLAIN_TERMS: Terms = { task: "할 일", project: "프로젝트" };
-export const QUEST_TERMS: Terms = { task: "퀘스트", project: "메인 퀘스트" };
+/** Quest terminology (E2 spec §4, G umbrella §2): a label layer only. Code and DB use domain names. */
+export type Terms = {
+  task: string;
+  project: string;
+  directive: string;
+  directiveNav: string;
+  identity: string;
+  className: string;
+  mission: string;
+  path: string;
+  protocol: string;
+  growth: string;
+  maintenance: string;
+};
+export const PLAIN_TERMS: Terms = {
+  task: "할 일",
+  project: "프로젝트",
+  directive: "목적",
+  directiveNav: "방향",
+  identity: "정체성",
+  className: "대표 정체성",
+  mission: "목표",
+  path: "전략",
+  protocol: "실행 방식",
+  growth: "성장",
+  maintenance: "유지",
+};
+export const QUEST_TERMS: Terms = {
+  task: "퀘스트",
+  project: "메인 퀘스트",
+  directive: "SYSTEM DIRECTIVE",
+  directiveNav: "DIRECTIVE",
+  identity: "IDENTITY",
+  className: "CLASS",
+  mission: "MISSION",
+  path: "PATH",
+  protocol: "PROTOCOL",
+  growth: "GROWTH",
+  maintenance: "MAINTENANCE",
+};
 
 export function termsFor(questTerminology: boolean): Terms {
   return questTerminology ? QUEST_TERMS : PLAIN_TERMS;
