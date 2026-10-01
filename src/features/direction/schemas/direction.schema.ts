@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isLocalDateString } from "@/features/scheduler/utils/timezone";
-import { ARCHIVABLE_STATUSES, CRITERION_KINDS, MISSION_STATUSES } from "../domain/direction.types";
+import { ARCHIVABLE_STATUSES, CRITERION_KINDS, HABIT_RULES, MISSION_STATUSES, type HabitRule } from "../domain/direction.types";
 
 const localDate = z.string().refine(isLocalDateString, "날짜 형식이 올바르지 않습니다.");
 const required = (max: number, message = "내용을 입력해 주세요.") => z.string().trim().min(1, message).max(max);
@@ -96,3 +96,26 @@ export const updateProtocolSchema = z.object({
   sortOrder,
 });
 export type UpdateProtocolInput = z.infer<typeof updateProtocolSchema>;
+
+const weekdays = z
+  .array(z.coerce.number().int().min(1).max(7))
+  .min(1, "요일을 하나 이상 고르세요.")
+  .transform((d) => [...new Set(d)].sort((a, b) => a - b));
+const habitFields = z.object({
+  title: required(80, "이름을 입력해 주세요."),
+  rule: z.enum(HABIT_RULES),
+  targetMinutes: z.coerce.number().int().min(5).max(600).nullable(),
+  weekdays,
+  protocolId: z.uuid().nullable(),
+});
+const habitRule = (v: { rule: HabitRule; targetMinutes: number | null; protocolId: string | null }) =>
+  v.rule === "check" ? v.targetMinutes === null : v.targetMinutes !== null && v.protocolId !== null;
+const habitRuleError = { message: "집중 시간 규칙에는 실행 방식과 목표 시간이 필요합니다.", path: ["rule"] };
+export const createHabitSchema = habitFields.refine(habitRule, habitRuleError);
+export type CreateHabitInput = z.infer<typeof createHabitSchema>;
+export const updateHabitSchema = habitFields
+  .extend({ habitId: z.uuid(), status: z.enum(ARCHIVABLE_STATUSES), sortOrder })
+  .refine(habitRule, habitRuleError);
+export type UpdateHabitInput = z.infer<typeof updateHabitSchema>;
+export const setHabitCheckSchema = z.object({ habitId: z.uuid(), done: z.boolean() });
+export type SetHabitCheckInput = z.infer<typeof setHabitCheckSchema>;

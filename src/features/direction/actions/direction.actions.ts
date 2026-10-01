@@ -2,15 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as direction from "../services/direction.service";
+import * as habits from "../services/habit.service";
 import {
+  createHabitSchema,
   createIdentitySchema,
   createMissionSchema,
   createProtocolSchema,
   criterionIdSchema,
   setCriterionProgressSchema,
+  setHabitCheckSchema,
   setPurposeSchema,
   switchPathSchema,
+  updateHabitSchema,
   updateIdentitySchema,
   updateMissionSchema,
   updatePathSchema,
@@ -63,4 +68,20 @@ export async function createProtocolAction(input: unknown) {
 }
 export async function updateProtocolAction(input: unknown) {
   return runAction("direction.protocol.update", updateProtocolSchema, input, async (d, ctx) => done(await direction.updateProtocol(ctx, d)));
+}
+export async function createHabitAction(input: unknown) {
+  return runAction("direction.habit.create", createHabitSchema, input, async (d, ctx) => done(await habits.createHabit(ctx, d)));
+}
+export async function updateHabitAction(input: unknown) {
+  return runAction("direction.habit.update", updateHabitSchema, input, async (d, ctx) => done(await habits.updateHabit(ctx, d)));
+}
+/** Today's tick on a `check` habit; earns habit XP when gamification is on (ADR 0021). */
+export async function setHabitCheckAction(input: unknown) {
+  return runAction(
+    "direction.habit.check",
+    setHabitCheckSchema,
+    input,
+    async (d, ctx) => done(await habits.setHabitCheck(ctx, d)),
+    { progress: (ctx) => evaluateProgress(ctx) },
+  );
 }

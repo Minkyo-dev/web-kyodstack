@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createHabitSchema,
   createProtocolSchema,
   setCriterionProgressSchema,
   setPurposeSchema,
@@ -34,5 +35,20 @@ describe("direction schemas", () => {
     expect(ok.steps).toEqual(["Listen", "Repeat"]);
     expect(createProtocolSchema.safeParse({ pathId: uuid, title: "x", steps: Array(13).fill("s"), intendedMinutes: null }).success).toBe(false);
     expect(createProtocolSchema.safeParse({ pathId: uuid, title: "x", steps: [], intendedMinutes: 4 }).success).toBe(false);
+  });
+});
+
+describe("habit schemas", () => {
+  it("needs a protocol and target for the focus rule", () => {
+    const base = { title: "Listen", weekdays: [1, 2, 3], protocolId: null };
+    expect(createHabitSchema.safeParse({ ...base, rule: "check", targetMinutes: null }).success).toBe(true);
+    expect(createHabitSchema.safeParse({ ...base, rule: "focus", targetMinutes: 20 }).success).toBe(false);
+    expect(createHabitSchema.safeParse({ ...base, rule: "focus", targetMinutes: 20, protocolId: uuid }).success).toBe(true);
+    expect(createHabitSchema.safeParse({ ...base, rule: "check", targetMinutes: 20 }).success).toBe(false);
+  });
+  it("dedupes weekdays and rejects empty or out-of-range days", () => {
+    expect(createHabitSchema.parse({ title: "W", rule: "check", targetMinutes: null, protocolId: null, weekdays: [3, 1, 3] }).weekdays).toEqual([1, 3]);
+    expect(createHabitSchema.safeParse({ title: "W", rule: "check", targetMinutes: null, protocolId: null, weekdays: [] }).success).toBe(false);
+    expect(createHabitSchema.safeParse({ title: "W", rule: "check", targetMinutes: null, protocolId: null, weekdays: [0] }).success).toBe(false);
   });
 });
