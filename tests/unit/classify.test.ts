@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { proposalRows, validateClassification } from "@/features/ai/utils/classify";
+import { proposalRows, proposalView, validateClassification } from "@/features/ai/utils/classify";
 
 const id = (n: number) => `00000000-0000-4000-a000-${String(n).padStart(12, "0")}`;
 
@@ -33,5 +33,19 @@ describe("proposalRows", () => {
   });
   it("skips filled fields, rejected types, same complexity and known skills", () => {
     expect(proposalRows(item, { task_type: "coding", practice_domain_id: null, complexity: 4, tagNames: ["airflow", "dbt"], rejected: new Set(["domain"]) })).toEqual([]);
+  });
+});
+
+describe("proposalView", () => {
+  it("merges open proposals into one chip row", () => {
+    const v = proposalView([
+      { id: "a", featureType: "task_type", value: "debugging", confidence: 0.88 },
+      { id: "b", featureType: "domain", value: id(9), confidence: 0.8 },
+      { id: "c", featureType: "skills", value: ["airflow"], confidence: 0.88 },
+    ], { [id(9)]: "데이터" });
+    expect(v).toEqual({ taskType: "debugging", domainId: id(9), domainName: "데이터", skills: ["airflow"], confidence: 0.88 });
+  });
+  it("is empty without proposals", () => {
+    expect(proposalView([], {})).toEqual({ skills: [], confidence: null });
   });
 });

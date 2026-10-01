@@ -32,6 +32,7 @@ import { TodayMetricsBar } from "./today-metrics-bar";
 import { WeekNavigation } from "./week-navigation";
 import { WeekSummary } from "./week-summary";
 import { CapacityNotice } from "./capacity-notice";
+import type { Proposal } from "@/features/ai/utils/classify";
 
 // FullCalendar touches the DOM on import; render it on the client only.
 const WeeklyCalendar = dynamic(
@@ -70,6 +71,8 @@ export type SchedulerWorkspaceProps = {
   nearBlocks: CalendarBlock[];
   projectOptions: ProjectOption[];
   recommendations: PendingRecommendation[];
+  /** Open AI proposals by task id (F1). */
+  proposals: Record<string, Proposal[]>;
   /** Quest panel slot composed by the page (E2). */
   questPanel?: React.ReactNode;
 };
@@ -278,6 +281,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         tags={tags}
         domains={domains}
         projectOptions={projectOptions}
+        proposals={selectedTask ? (props.proposals[selectedTask.id] ?? []) : []}
         onStartTask={startTask}
         templates={templates}
         context={context}

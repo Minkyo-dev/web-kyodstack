@@ -38,3 +38,29 @@ export function proposalRows(
   if (skills.length && !task.rejected.has("skills")) rows.push({ feature_type: "skills", feature_value: skills });
   return rows;
 }
+
+export type Proposal = { id: string; featureType: FeatureType; value: unknown; confidence: number | null };
+export type ProposalView = {
+  taskType?: TaskType;
+  domainId?: string;
+  domainName?: string;
+  complexity?: number;
+  skills: string[];
+  confidence: number | null;
+};
+
+/** Open proposals of one task folded into one chip row. */
+export function proposalView(proposals: Proposal[], domainNames: Record<string, string>): ProposalView {
+  const v: ProposalView = { skills: [], confidence: null };
+  for (const p of proposals) {
+    if (p.featureType === "task_type") v.taskType = p.value as TaskType;
+    if (p.featureType === "domain") {
+      v.domainId = p.value as string;
+      v.domainName = domainNames[v.domainId] ?? "영역";
+    }
+    if (p.featureType === "complexity") v.complexity = p.value as number;
+    if (p.featureType === "skills") v.skills = p.value as string[];
+    if (p.confidence !== null) v.confidence = Math.max(v.confidence ?? 0, p.confidence);
+  }
+  return v;
+}

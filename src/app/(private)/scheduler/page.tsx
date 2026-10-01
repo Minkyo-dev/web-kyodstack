@@ -25,6 +25,7 @@ import { z } from "zod";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
+import { listOpenProposals } from "@/features/ai/queries/proposal.queries";
 import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
 import { listQuests } from "@/features/gamification/queries/quest.queries";
 import { ensureQuests } from "@/features/gamification/services/quest.service";
@@ -114,7 +115,10 @@ export default async function SchedulerPage({
 
   // Plan vs actual only for tasks visible on this screen.
   const visibleTaskIds = [...new Set([...todayTasks.map((t) => t.id), ...blocks.map((b) => b.task_id)])];
-  const planActual = await listTaskPlanActual(supabase, visibleTaskIds);
+  const [planActual, proposals] = await Promise.all([
+    listTaskPlanActual(supabase, visibleTaskIds),
+    listOpenProposals(supabase, user.id, visibleTaskIds),
+  ]);
 
   // Quests (E2): generated lazily here; a failure only hides the panel.
   let quests: QuestView[] = [];
@@ -152,6 +156,7 @@ export default async function SchedulerPage({
       nearBlocks={nearBlocks}
       projectOptions={projectOptions}
       recommendations={recommendations}
+      proposals={proposals}
       questPanel={quests.length ? <QuestPanel quests={quests} /> : null}
     />
   );

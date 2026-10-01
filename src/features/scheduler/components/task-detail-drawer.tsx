@@ -44,6 +44,9 @@ import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone"
 import { Play } from "lucide-react";
 import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
 import { DomainSelect, TagEditor, TypeSelect } from "@/features/classification/components/classification-fields";
+import { ClassificationProposal } from "@/features/ai/components/classification-proposal";
+import { settleEditedProposalsAction } from "@/features/ai/actions/classification.actions";
+import type { Proposal, ProposalView } from "@/features/ai/utils/classify";
 import { useTerms } from "@/hooks/use-terms";
 
 type SessionProps = {
@@ -55,6 +58,8 @@ type SessionProps = {
   tags: TagRef[];
   domains: DomainRef[];
   projectOptions: ProjectOption[];
+  /** Open AI proposals of the task (F1). */
+  proposals: Proposal[];
   /** Start this task; with another timer running this opens the switch dialog. */
   onStartTask: (task: Task) => void;
 };
@@ -70,6 +75,7 @@ export function TaskDetailDrawer({
   tags,
   domains,
   projectOptions,
+  proposals,
   onStartTask,
   templates,
   context,
@@ -99,6 +105,7 @@ export function TaskDetailDrawer({
             tags={tags}
             domains={domains}
             projectOptions={projectOptions}
+            proposals={proposals}
             onStartTask={onStartTask}
             templates={templates}
             context={context}
@@ -122,6 +129,7 @@ function TaskDetail({
   tags,
   domains,
   projectOptions,
+  proposals,
   onStartTask,
   templates,
   context,
@@ -137,6 +145,9 @@ function TaskDetail({
 }) {
   const { run, pending } = useActionRunner();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // [수정] on an AI proposal pre-fills the form; saving settles the proposals (F1 spec §2).
+  const [draft, setDraft] = useState<ProposalView | null>(null);
+  const domainNames = Object.fromEntries(domains.map((d) => [d.id, d.name]));
   const { timezone, settings } = context;
   const isOpen = task.status !== "completed" && task.status !== "cancelled";
   const timerHere = activeSession?.task_id === task.id;
@@ -174,8 +185,13 @@ function TaskDetail({
           <PlanActualSummary planActual={planActual} estimate={task.user_estimated_minutes} />
         </section>
 
+        {isOpen && (
+          <ClassificationProposal taskId={task.id} proposals={proposals} domainNames={domainNames} onEdit={setDraft} />
+        )}
+
         {/* ── Edit ─────────────────────────────────────────── */}
         <form
+          key={draft ? "draft" : "task"}
           className="space-y-3"
           aria-label="작업 편집"
           onSubmit={(e) => {
@@ -201,7 +217,14 @@ function TaskDetail({
                   // Tags are edited live by the TagEditor below; keep the current set here.
                   tagIds: task.tags.map((t) => t.id),
                 }),
-              { success: "저장했습니다." },
+              {
+                success: "저장했습니다.",
+                onSuccess: () => {
+                  if (!draft) return;
+                  setDraft(null);
+                  run(() => settleEditedProposalsAction({ taskId: task.id }));
+                },
+              },
             );
           }}
         >
@@ -210,10 +233,10 @@ function TaskDetail({
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="유형" htmlFor="task-type">
-              <TypeSelect id="task-type" name="taskType" defaultValue={task.task_type} />
+              <TypeSelect id="task-type" name="taskType" defaultValue={draft?.taskType ?? task.task_type} />
             </Field>
             <Field label="영역" htmlFor="task-domain">
-              <DomainSelect id="task-domain" name="domainId" domains={domains} defaultValue={task.practice_domain_id} />
+              <DomainSelect id="task-domain" name="domainId" domains={domains} defaultValue={draft?.domainId ?? task.practice_domain_id} />
             </Field>
             <Field label="템플릿" htmlFor="task-template">
               <Input
@@ -256,7 +279,7 @@ function TaskDetail({
                 <ScoreSelect id="task-priority" name="priority" defaultValue={task.priority} />
               </Field>
               <Field label="난이도" htmlFor="task-complexity">
-                <ScoreSelect id="task-complexity" name="complexity" defaultValue={task.complexity} />
+                <ScoreSelect id="task-complexity" name="complexity" defaultValue={draft?.complexity ?? task.complexity} />
               </Field>
             </div>
           </div>
@@ -277,6 +300,9 @@ function TaskDetail({
 
         <section aria-label="태그" className="space-y-1.5">
           <h3 className="text-sm font-semibold">태그</h3>
+          {draft && draft.skills.length > 0 && (
+            <p className="text-xs text-muted-foreground">제안된 태그: {draft.skills.map((x) => `#${x}`).join(" ")} — 아래 태그에서 추가</p>
+          )}
           <TagEditor key={task.id} taskId={task.id} tags={task.tags} allTags={tags} />
         </section>
 
