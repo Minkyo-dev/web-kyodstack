@@ -119,6 +119,12 @@ DailyReview = `daily_reflections`.
   previous_level)`. `xp_level(total)`: L → L+1 costs `100 + 50·L`.
 - Rules `xp-v1` live in `features/gamification/utils/xp-rules.ts` (ADR 0016).
 
+## SYSTEM analysis F2 (ADR 0019)
+- `system_insights(user_id, kind 'weekly_analysis', period_start, period_end, input jsonb, content jsonb, model,
+  prompt_version, created_at)`: users select/insert/delete own (delete only for E2E cleanup).
+- `scheduler_settings.insight_weekday` (0–6, null = off) and `insight_hour` (0–23, default 8), local time.
+- `quests.generated_by` ∈ system|ai; `quests.reason` (≤ 80) for AI-picked daily quests.
+
 ## AI features F1 (ADR 0018)
 - `task_features(user_id, task_id, feature_type task_type|domain|complexity|skills, feature_value jsonb, source
   ai|user|system, status proposed|accepted|rejected, confidence, model, prompt_version, decided_at)`: composite FK to

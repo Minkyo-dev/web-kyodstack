@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement F2 — SYSTEM analysis + AI quest candidates (docs/superpowers/specs/2026-09-30-system-analysis-ai-quests-design.md)
+- [x] `system_insights`, analysis schedule settings (default off), `quests.generated_by = 'ai'` + `reason` (SQL tests, ADR 0019)
+- [x] Analysis slot / due check / input builder / evidence check (pure)
+- [x] Weekly SYSTEM ANALYSIS card on the progress page (lazy + nightly, re-analyze once a day, schedule setting)
+- [x] AI-picked daily quests from the rule pool in the nightly job, rule fallback, "SYSTEM 추천" line
+- [x] E2E `system-analysis.spec.ts`
+
 ## Improvement F1 — AI classification + work-log interpretation (docs/superpowers/specs/2026-09-30-ai-classification-worklog-design.md)
 - [x] `task_features`, `ai_calls`, work-log interpretation columns (SQL tests, ADR 0018); 30/day AI budget for every AI call
 - [x] Classification prompt/validator/proposal rules; "SYSTEM 제안" in the task drawer (apply / edit / ignore)

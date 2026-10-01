@@ -36,3 +36,4 @@ Template:
 | 0016 | XP ledger, level and opt-in backfill | accepted |
 | 0017 | Quests, achievements, titles and quest terminology | accepted |
 | 0018 | AI feature proposals, work-log interpretation and the AI budget | accepted |
+| 0019 | Weekly SYSTEM analysis and AI-picked daily quests | accepted |
