@@ -44,6 +44,7 @@ import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone"
 import { Play } from "lucide-react";
 import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
 import { DomainSelect, TagEditor, TypeSelect } from "@/features/classification/components/classification-fields";
+import { useTerms } from "@/hooks/use-terms";
 
 type SessionProps = {
   sessions: SessionWithTask[];
@@ -610,6 +611,7 @@ function ManualSessionForm({ taskId, timezone, today }: { taskId: string; timezo
 /** Project + milestone selects. Milestones are filtered to the chosen project (spec §44). */
 function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[] }) {
   const [projectId, setProjectId] = useState(task.project_id ?? "");
+  const terms = useTerms();
   // Keep the current link selectable even if that project/milestone is closed now.
   const all = [...options];
   if (task.project && !all.some((p) => p.id === task.project!.id)) {
@@ -623,7 +625,7 @@ function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[]
   const selectClass = "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Field label="프로젝트" htmlFor="task-project">
+      <Field label={terms.project} htmlFor="task-project">
         <select
           id="task-project"
           name="projectId"

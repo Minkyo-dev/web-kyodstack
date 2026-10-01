@@ -12,6 +12,8 @@ import { formatElapsed } from "../utils/metrics";
 import { toLocalTime } from "../utils/timezone";
 import type { TodaySections as Sections } from "../utils/today";
 import { BlockActions } from "./block-actions";
+import { useTerms } from "@/hooks/use-terms";
+import { josa } from "@/lib/terms";
 
 function Group({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -88,6 +90,7 @@ export function TodaySections({
   onOpenTask: (taskId: string) => void;
 }) {
   const tick = useNow(1000, sections.running !== null);
+  const terms = useTerms();
   const rowProps = { context, blocks, sessions, now, onStartBlock, onOpenTask };
   const hasNow = sections.running || sections.current.length > 0 || sections.missed.length > 0;
   return (
@@ -129,9 +132,9 @@ export function TodaySections({
       )}
       <Group id="today-unscheduled" title="미배정">
         {sections.unscheduled.length === 0 ? (
-          <p className="px-2 py-2 text-xs text-muted-foreground">미배정 할 일이 없습니다.</p>
+          <p className="px-2 py-2 text-xs text-muted-foreground">미배정 {josa(terms.task, "이/가")} 없습니다.</p>
         ) : (
-          <ul aria-label="미배정 할 일">{sections.unscheduled.map((t) => renderTask(t))}</ul>
+          <ul aria-label={`미배정 ${terms.task}`}>{sections.unscheduled.map((t) => renderTask(t))}</ul>
         )}
       </Group>
       {sections.completed.length > 0 && (

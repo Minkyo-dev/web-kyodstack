@@ -1,3 +1,4 @@
+import type { Terms } from "@/lib/terms";
 import { DueBadge } from "./due-badge";
 import { ProgressBar } from "./progress-bar";
 import { MilestoneCreateForm, MilestoneEditor, ProjectEditForm, TaskQuickAdd } from "./project-forms";
@@ -18,11 +19,13 @@ export function ProjectDetail({
   planActual,
   recommendations,
   ctx,
+  terms,
 }: {
   project: ProjectOverview;
   planActual: Record<string, TaskPlanActual>;
   recommendations: PendingRecommendation[];
   ctx: { today: string; settings: SchedulerSettings; groups: DurationGroup[]; domains: DomainRef[] };
+  terms: Terms;
 }) {
   const closed = project.status === "completed" || project.status === "cancelled";
   const labels = groupLabels(ctx.domains);
@@ -50,7 +53,7 @@ export function ProjectDetail({
           </span>
         </div>
         {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
-        <ProgressBar progress={project.progress} label="프로젝트 진행률" />
+        <ProgressBar progress={project.progress} label={`${terms.project} 진행률`} />
       </header>
 
       <section aria-labelledby="milestones-heading" className="space-y-3">
@@ -89,7 +92,7 @@ export function ProjectDetail({
 
       <section aria-labelledby="loose-heading" className="space-y-2">
         <h3 id="loose-heading" className="text-lg font-semibold">
-          마일스톤 없는 할 일
+          마일스톤 없는 {terms.task}
         </h3>
         <div className="rounded-lg border border-border">
           <ul className="divide-y divide-border">{rows(project.looseTasks)}</ul>
@@ -101,12 +104,12 @@ export function ProjectDetail({
       <div className="rounded-lg border border-border p-4">
         <AiRecommendationList
           items={recommendations}
-          emptyText="스케줄러의 'AI 추천'에서 추천을 받으면 이 프로젝트 관련 제안이 여기에 표시됩니다."
+          emptyText={`스케줄러의 'AI 추천'에서 추천을 받으면 이 ${terms.project} 관련 제안이 여기에 표시됩니다.`}
         />
       </div>
 
       <details className="rounded-lg border border-border p-4">
-        <summary className="cursor-pointer text-sm font-medium">프로젝트 설정</summary>
+        <summary className="cursor-pointer text-sm font-medium">{terms.project} 설정</summary>
         <div className="mt-4">
           {/* Remount per project so the uncontrolled fields show this project's values. */}
           <ProjectEditForm key={project.id} project={project} />

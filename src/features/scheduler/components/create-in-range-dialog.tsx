@@ -16,6 +16,7 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTaskInRangeAction } from "../actions/schedule.actions";
 import { formatMinutes, minutesBetween } from "../utils/duration";
 import { toLocalDate, toLocalTime } from "../utils/timezone";
+import { useTerms } from "@/hooks/use-terms";
 
 /** Click-drag on an empty range → name it → task + block (spec §12). */
 export function CreateInRangeDialog({
@@ -28,6 +29,7 @@ export function CreateInRangeDialog({
   onClose: () => void;
 }) {
   const { run, pending } = useActionRunner();
+  const terms = useTerms();
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -52,7 +54,7 @@ export function CreateInRangeDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="my-4 space-y-1.5">
-              <Label htmlFor="range-task-title">할 일</Label>
+              <Label htmlFor="range-task-title">{terms.task}</Label>
               <Input id="range-task-title" name="title" ref={inputRef} required maxLength={200} autoComplete="off" />
             </div>
             <DialogFooter>

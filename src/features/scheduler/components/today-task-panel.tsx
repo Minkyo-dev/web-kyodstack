@@ -26,6 +26,8 @@ import { TagFilter } from "@/features/classification/components/tag-filter";
 import { TemplateTypeBanner } from "@/features/classification/components/template-type-banner";
 import { AiRecommendationList } from "@/features/ai/components/ai-recommendation-list";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
+import { useTerms } from "@/hooks/use-terms";
+import { josa } from "@/lib/terms";
 
 export function TodayTaskPanel({
   tasks,
@@ -79,6 +81,7 @@ export function TodayTaskPanel({
   onStartTask: (task: Task) => void;
   onOpenTask: (taskId: string) => void;
 }) {
+  const terms = useTerms();
   const listRef = useRef<HTMLDivElement>(null);
 
   // Make open tasks draggable onto FullCalendar (external drop → eventReceive).
@@ -199,7 +202,7 @@ export function TodayTaskPanel({
       <div className="border-t border-border px-4 py-3">
         <AiRecommendationList
           items={recommendations}
-          emptyText="진행 중인 프로젝트와 오늘 남은 시간을 보고 할 일을 제안합니다."
+          emptyText={`진행 중인 ${josa(terms.project, "과/와")} 오늘 남은 시간을 보고 ${josa(terms.task, "을/를")} 제안합니다.`}
         />
       </div>
     </aside>
@@ -218,6 +221,7 @@ function TaskQuickCreate({
   domains: DomainRef[];
 }) {
   const { run, pending } = useActionRunner();
+  const terms = useTerms();
   const formRef = useRef<HTMLFormElement>(null);
   const [showMore, setShowMore] = useState(false);
   // Remount the token input after a create: it keeps its own text state.
@@ -267,13 +271,13 @@ function TaskQuickCreate({
     >
       <div className="flex items-start gap-1.5">
         <label htmlFor="quick-task-title" className="sr-only">
-          새 할 일
+          새 {terms.task}
         </label>
         <TokenInput
           key={resetKey}
           id="quick-task-title"
           name="title"
-          placeholder="할 일 추가 (#태그 @영역)"
+          placeholder={`${terms.task} 추가 (#태그 @영역)`}
           tags={tags}
           domains={domains}
           selectedTagIds={tagIds}
@@ -282,7 +286,7 @@ function TaskQuickCreate({
           onSelectedDomainIdChange={setDomainId}
           onFocus={() => setShowMore(true)}
         />
-        <Button type="submit" size="icon" disabled={pending} aria-label="할 일 추가">
+        <Button type="submit" size="icon" disabled={pending} aria-label={`${terms.task} 추가`}>
           <Plus aria-hidden />
         </Button>
       </div>

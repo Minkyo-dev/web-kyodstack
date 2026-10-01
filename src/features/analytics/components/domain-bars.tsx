@@ -1,9 +1,18 @@
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { practiceLevel } from "@/features/gamification/utils/level";
+import type { Terms } from "@/lib/terms";
 import type { Stats } from "../domain/stats.types";
 
 /** Practice time per domain; parents include their children (D2 spec §2). Practice levels when gamification is on (E1). */
-export function DomainBars({ domains, practice = false }: { domains: Stats["domains"]; practice?: boolean }) {
+export function DomainBars({
+  domains,
+  practice = false,
+  terms,
+}: {
+  domains: Stats["domains"];
+  practice?: boolean;
+  terms: Terms;
+}) {
   const top = domains.slice(0, 8);
   const max = Math.max(1, ...top.map((d) => d.recentMinutes));
   return (
@@ -12,7 +21,7 @@ export function DomainBars({ domains, practice = false }: { domains: Stats["doma
         연습 영역
       </h2>
       {top.length === 0 ? (
-        <p className="text-sm text-muted-foreground">할 일에 영역(@영역)을 붙이면 영역별 연습 시간이 쌓입니다.</p>
+        <p className="text-sm text-muted-foreground">{terms.task}에 영역(@영역)을 붙이면 영역별 연습 시간이 쌓입니다.</p>
       ) : (
         <ul className="max-w-lg space-y-2">
           {top.map((d) => (

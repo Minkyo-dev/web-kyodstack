@@ -13,6 +13,8 @@ import { PROJECT_STATUS_LABEL } from "@/features/projects/domain/project.types";
 import { loadProjectContext } from "@/features/projects/queries/context";
 import { getProjectOverview, listProjectOverviews } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
+import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
+import { josa, termsFor } from "@/lib/terms";
 
 export const metadata: Metadata = { title: "프로젝트", robots: { index: false } };
 
@@ -24,6 +26,8 @@ export default async function ProjectsPage({
 }) {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
+  const profile = await getPlayerProfile(supabase, user.id);
+  const terms = termsFor(!!profile?.gamification_enabled && !!profile.quest_terminology);
   const { project: projectParam } = await searchParams;
   const ctx = await loadProjectContext(supabase, user.id);
   const projects = await listProjectOverviews(supabase, ctx);
@@ -49,16 +53,16 @@ export default async function ProjectsPage({
       >
         <div className="space-y-3 border-b border-border p-4">
           <h1 id="projects-heading" className="text-lg font-semibold">
-            프로젝트
+            {terms.project}
           </h1>
           <ProjectCreateForm />
         </div>
         {projects.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            아직 프로젝트가 없습니다. 목표가 있는 작업 묶음을 프로젝트로 만들어 보세요.
+            {`아직 ${josa(terms.project, "이/가")} 없습니다. 목표가 있는 작업 묶음을 ${josa(terms.project, "으로/로")} 만들어 보세요.`}
           </p>
         ) : (
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto" aria-label="프로젝트 목록">
+          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto" aria-label={`${terms.project} 목록`}>
             {projects.map((p) => {
               const closed = p.status === "completed" || p.status === "cancelled";
               const active = p.id === selected?.overview.id;
@@ -93,18 +97,19 @@ export default async function ProjectsPage({
         )}
       </aside>
 
-      <section id="project-detail" aria-label="프로젝트 상세" className="min-w-0 flex-1 overflow-y-auto p-6">
+      <section id="project-detail" aria-label={`${terms.project} 상세`} className="min-w-0 flex-1 overflow-y-auto p-6">
         {selected ? (
           <ProjectDetail
             project={selected.overview}
             planActual={selected.planActual}
             recommendations={recommendations}
             ctx={ctx}
+            terms={terms}
           />
         ) : (
           <p className="py-16 text-center text-sm text-muted-foreground">
-            {selectedId ? "프로젝트를 찾을 수 없습니다. " : ""}
-            왼쪽에서 프로젝트를 선택하거나 새로 만드세요.
+            {selectedId ? `${josa(terms.project, "을/를")} 찾을 수 없습니다. ` : ""}
+            {`왼쪽에서 ${josa(terms.project, "을/를")} 선택하거나 새로 만드세요.`}
           </p>
         )}
       </section>

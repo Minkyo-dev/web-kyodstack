@@ -4,21 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, CalendarClock, FolderKanban, LayoutDashboard, NotebookText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTerms } from "@/hooks/use-terms";
 
 const NAV = [
   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard, exact: true },
   { href: "/scheduler", label: "스케줄러", icon: CalendarClock, exact: true },
-  { href: "/scheduler/projects", label: "프로젝트", icon: FolderKanban, exact: false },
+  { href: "/scheduler/projects", label: "project", icon: FolderKanban, exact: false },
   { href: "/scheduler/review", label: "주간 리뷰", icon: NotebookText, exact: false },
   { href: "/scheduler/progress", label: "진행", icon: BarChart3, exact: false },
 ] as const;
 
 export function PrivateNav() {
   const pathname = usePathname();
+  const terms = useTerms();
 
   return (
     <nav aria-label="개인 도구" className="flex gap-1 md:flex-col">
-      {NAV.map(({ href, label, icon: Icon, exact }) => {
+      {NAV.map(({ href, label: rawLabel, icon: Icon, exact }) => {
+        const label = rawLabel === "project" ? terms.project : rawLabel;
         const active = exact
           ? pathname === href
           : pathname === href || pathname.startsWith(`${href}/`);

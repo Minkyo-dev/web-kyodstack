@@ -18,6 +18,7 @@ import { TitleList } from "@/features/gamification/components/title-list";
 import { listUnlocked, loadAchievementFacts } from "@/features/gamification/services/achievement.service";
 import { listQuests } from "@/features/gamification/queries/quest.queries";
 import { toQuestViews } from "@/features/gamification/utils/quest-view";
+import { termsFor } from "@/lib/terms";
 
 export const metadata: Metadata = { title: "진행", robots: { index: false } };
 
@@ -35,6 +36,7 @@ export default async function ProgressPage() {
     ? await xpByRuleSince(supabase, user.id, addLocalDays(today, -6, input.timezone))
     : null;
   const on = !!profile?.gamification_enabled;
+  const terms = termsFor(on && !!profile?.quest_terminology);
   const [unlocked, achievementFacts, questRows] = on
     ? await Promise.all([
         listUnlocked(supabase, user.id),
@@ -90,8 +92,8 @@ export default async function ProgressPage() {
         <CalibrationByType byType={stats.calibration.byType} />
       </section>
 
-      <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} />
-      <DomainBars domains={stats.domains} practice={on} />
+      <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} terms={terms} />
+      <DomainBars domains={stats.domains} practice={on} terms={terms} />
       {on && unlocked && achievementFacts && (
         <>
           <AchievementsSection facts={achievementFacts} unlocked={unlocked.achievements} timezone={input.timezone} />

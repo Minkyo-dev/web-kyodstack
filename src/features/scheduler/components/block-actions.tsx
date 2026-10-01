@@ -33,6 +33,7 @@ import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext } from "../domain/task.types";
 import { nextFreeSlot, sameTimeTomorrow, type BlockVisualState } from "../utils/block-state";
 import { localDateTimeToIso, toLocalDate, toLocalTime } from "../utils/timezone";
+import { useTerms } from "@/hooks/use-terms";
 
 /** Stop FullCalendar from starting a drag or firing eventClick for our controls (Review Focus 5). */
 const stop = { onPointerDown: (e: React.PointerEvent) => e.stopPropagation(), onClick: (e: React.MouseEvent) => e.stopPropagation() };
@@ -57,6 +58,7 @@ export function BlockActions({
 }) {
   const { run, pending } = useActionRunner();
   const [picking, setPicking] = useState(false);
+  const terms = useTerms();
   const { timezone, settings } = context;
   const taskOpen = block.task.status !== "completed" && block.task.status !== "cancelled";
   const actionable = state === "planned" || state === "not_started" || state === "missed";
@@ -102,7 +104,7 @@ export function BlockActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-40">
           <DropdownMenuItem onClick={() => run(() => completeTaskAction({ taskId: block.task_id }))}>
-            할 일 완료
+            {terms.task} 완료
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

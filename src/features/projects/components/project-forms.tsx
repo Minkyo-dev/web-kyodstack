@@ -24,6 +24,8 @@ import {
   type Milestone,
   type Project,
 } from "../domain/project.types";
+import { useTerms } from "@/hooks/use-terms";
+import { josa } from "@/lib/terms";
 
 const selectClass =
   "h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30";
@@ -43,6 +45,7 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 }
 
 export function ProjectCreateForm() {
+  const terms = useTerms();
   const router = useRouter();
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
@@ -51,13 +54,13 @@ export function ProjectCreateForm() {
   return (
     <form
       ref={ref}
-      aria-label="새 프로젝트"
+      aria-label={`새 ${terms.project}`}
       className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         run(() => createProjectAction({ name: str(fd, "name"), targetDate: orNull(str(fd, "targetDate")) }), {
-          success: "프로젝트를 만들었습니다.",
+          success: `${josa(terms.project, "을/를")} 만들었습니다.`,
           onSuccess: (project) => {
             ref.current?.reset();
             setResetKey((k) => k + 1);
@@ -67,7 +70,7 @@ export function ProjectCreateForm() {
         });
       }}
     >
-      <Field label="프로젝트 이름" htmlFor="new-project-name">
+      <Field label={`${terms.project} 이름`} htmlFor="new-project-name">
         <Input id="new-project-name" name="name" required maxLength={120} autoComplete="off" />
       </Field>
       {/* Name gets its own row: the form lives in a narrow side pane. */}
@@ -85,10 +88,11 @@ export function ProjectCreateForm() {
 }
 
 export function ProjectEditForm({ project }: { project: Project }) {
+  const terms = useTerms();
   const { run, pending } = useActionRunner();
   return (
     <form
-      aria-label="프로젝트 편집"
+      aria-label={`${terms.project} 편집`}
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
@@ -279,13 +283,14 @@ export function TaskQuickAdd({
   milestoneId: string | null;
   label: string;
 }) {
+  const terms = useTerms();
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
   const id = milestoneId ?? `project-${projectId}`;
   return (
     <form
       ref={ref}
-      aria-label={`${label}에 할 일 추가`}
+      aria-label={`${label}에 ${terms.task} 추가`}
       className="flex gap-1.5 px-3 py-2"
       onSubmit={(e) => {
         e.preventDefault();
@@ -304,9 +309,9 @@ export function TaskQuickAdd({
       }}
     >
       <label htmlFor={`qa-title-${id}`} className="sr-only">
-        {label} 할 일
+        {label} {terms.task}
       </label>
-      <Input id={`qa-title-${id}`} name="title" placeholder="할 일 추가" required maxLength={200} autoComplete="off" />
+      <Input id={`qa-title-${id}`} name="title" placeholder={`${terms.task} 추가`} required maxLength={200} autoComplete="off" />
       <label htmlFor={`qa-est-${id}`} className="sr-only">
         예상 시간(분)
       </label>
@@ -320,7 +325,7 @@ export function TaskQuickAdd({
         placeholder="분"
         className="w-20"
       />
-      <Button type="submit" size="icon" variant="outline" disabled={pending} aria-label={`${label}에 할 일 추가`}>
+      <Button type="submit" size="icon" variant="outline" disabled={pending} aria-label={`${label}에 ${terms.task} 추가`}>
         <Plus aria-hidden />
       </Button>
     </form>
