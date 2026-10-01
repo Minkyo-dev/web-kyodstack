@@ -407,6 +407,58 @@ do $$ declare n int; begin
   assert n = 0, 'C updated H1 budgets';
 end $$;
 
+-- ADR 0034: card payment day. Setting it up starts from today; paying moves the whole amount owed from the payment
+-- account to the card as one CARD_PAYMENT transfer, once; only cards; C cannot pay or reconfigure H1 cards.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+do $$ declare h uuid := (select v from ids where k = 'h1'); card uuid := (select v from ids where k = 'a_acct');
+  joint uuid := (select v from ids where k = 'joint'); today date := (now() at time zone 'America/Toronto')::date;
+  owed numeric; n int; begin
+  insert into public.finance_transactions (household_id, type, amount, account_id, category_id, transaction_date, created_by_user_id)
+  values (h, 'EXPENSE', 250, card, (select v from ids where k = 'food'), today, '00000000-0000-4000-a000-00000000000a');
+  owed := -(select balance from public.finance_account_balances(h, today) where account_id = card);
+  assert owed > 0, format('card owes %s', owed);
+  update public.finance_accounts set payment_day = extract(day from today)::int, payment_account_id = joint where id = card;
+  assert (select paid_through from public.finance_accounts where id = card) = today - 1, 'payments start today';
+  n := public.finance_pay_cards(h);
+  assert n = 1, format('paid %s', n);
+  assert (select balance from public.finance_account_balances(h, today) where account_id = card) = 0, 'card is 0';
+  assert (select count(*) from public.finance_transactions where source = 'CARD_PAYMENT' and type = 'TRANSFER'
+          and account_id = joint and transfer_account_id = card and amount = owed and transaction_date = today) = 1,
+    'one transfer from the payment account';
+  assert public.finance_pay_cards(h) = 0, 'paying again records nothing';
+  begin
+    update public.finance_accounts set payment_day = 1, payment_account_id = card where id = joint;
+    raise exception 'payment day on a savings account';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.finance_accounts set payment_account_id = card where id = card;
+    raise exception 'card pays itself';
+  exception when check_violation then null;
+  end;
+  update public.finance_accounts set payment_day = null where id = card;
+  assert (select paid_through is null from public.finance_accounts where id = card), 'clearing stops payments';
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000c","role":"authenticated"}', true);
+do $$ declare n int; begin
+  begin
+    perform public.finance_pay_cards((select v from ids where k = 'h1'));
+    raise exception 'C paid H1 cards';
+  exception when insufficient_privilege then null;
+  end;
+  update public.finance_accounts set payment_day = 1, payment_account_id = (select v from ids where k = 'c_acct')
+    where id = (select v from ids where k = 'a_acct');
+  get diagnostics n = row_count;
+  assert n = 0, 'C reconfigured an H1 card';
+  begin
+    insert into public.finance_accounts (household_id, name, account_type, ownership_type, owner_user_id, payment_day, payment_account_id)
+    values ((select v from ids where k = 'h2'), 'C card', 'CREDIT_CARD', 'PERSONAL', '00000000-0000-4000-a000-00000000000c', 1,
+            (select v from ids where k = 'joint'));
+    raise exception 'C card paid from an H1 account';
+  exception when foreign_key_violation then null;
+  end;
+end $$;
+
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
 do $$ declare n int; begin
   delete from public.finance_households where id = (select v from ids where k = 'h1');

@@ -51,3 +51,4 @@ Template:
 | 0031 | A dedicated E2E user | accepted |
 | 0032 | Account balances by reconciling, net worth, asset flow | accepted |
 | 0033 | Monthly category budgets | accepted |
+| 0034 | Credit card payment day | accepted |

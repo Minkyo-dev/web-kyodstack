@@ -34,7 +34,7 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/finance/transactions/bulk` | (private) | bulk entry grid for expenses / income (ADR 0027) |
 | `/finance/recurring` | (private) | recurring payments: plans, next due date, monthly total (ADR 0029) |
 | `/finance/settings/{accounts,categories,budgets,household}` | (private) | finance settings; budgets per month `?month=yyyy-MM` (ADR 0033) |
-| `GET/POST /api/internal/jobs/{daily-planner,weekly-review,duration-profile-refresh,finance-subscriptions}` | route handlers | cron jobs (Bearer secret, service role; ADR 0010) |
+| `GET/POST /api/internal/jobs/{daily-planner,weekly-review,duration-profile-refresh,finance-subscriptions}` | route handlers | cron jobs (Bearer secret, service role; ADR 0010; finance-subscriptions also pays cards, ADR 0034) |
 
 Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`, `/finance`, `/english`.
 

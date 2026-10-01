@@ -346,6 +346,9 @@ export type Database = {
           name: string
           owner_user_id: string | null
           ownership_type: string
+          paid_through: string | null
+          payment_account_id: string | null
+          payment_day: number | null
           reconciled_on: string | null
           sort_order: number
           updated_at: string
@@ -362,6 +365,9 @@ export type Database = {
           name: string
           owner_user_id?: string | null
           ownership_type?: string
+          paid_through?: string | null
+          payment_account_id?: string | null
+          payment_day?: number | null
           reconciled_on?: string | null
           sort_order?: number
           updated_at?: string
@@ -378,6 +384,9 @@ export type Database = {
           name?: string
           owner_user_id?: string | null
           ownership_type?: string
+          paid_through?: string | null
+          payment_account_id?: string | null
+          payment_day?: number | null
           reconciled_on?: string | null
           sort_order?: number
           updated_at?: string
@@ -396,6 +405,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "finance_household_members"
             referencedColumns: ["household_id", "user_id"]
+          },
+          {
+            foreignKeyName: "finance_accounts_payment_account_fkey"
+            columns: ["payment_account_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id", "household_id"]
           },
         ]
       }
@@ -3095,6 +3111,7 @@ export type Database = {
           month: number
         }[]
       }
+      finance_pay_cards: { Args: { p_household: string }; Returns: number }
       finance_reconcile_account: {
         Args: { p_account: string; p_actual: number; p_date: string }
         Returns: number

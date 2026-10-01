@@ -41,15 +41,38 @@ const accountFields = {
   institutionName: optionalText(100),
   ownershipType: z.enum(OWNERSHIP_TYPES),
   ownerUserId: z.uuid().nullable(),
+  // ADR 0034: a card's payment day (1–31, 31 = month end) and the account that pays it. Both or neither.
+  paymentDay: z.number().int().min(1).max(31).nullable().default(null),
+  paymentAccountId: z.uuid().nullable().default(null),
 };
-const ownerRule = <T extends { ownershipType: string; ownerUserId: string | null }>(v: T) =>
-  v.ownershipType === "JOINT" ? v.ownerUserId === null : v.ownerUserId !== null;
-const ownerMessage = { message: "개인 계좌는 소유자를 선택하고, 공동 계좌는 소유자를 비워 두세요.", path: ["ownerUserId"] };
+type AccountShape = {
+  accountType: string;
+  ownershipType: string;
+  ownerUserId: string | null;
+  paymentDay: number | null;
+  paymentAccountId: string | null;
+};
+const accountRules = <T extends AccountShape>(v: T, ctx: z.RefinementCtx) => {
+  if (v.ownershipType === "JOINT" ? v.ownerUserId !== null : v.ownerUserId === null)
+    ctx.addIssue({ code: "custom", message: "개인 계좌는 소유자를 선택하고, 공동 계좌는 소유자를 비워 두세요.", path: ["ownerUserId"] });
+  if (v.accountType === "CREDIT_CARD" && (v.paymentDay === null) !== (v.paymentAccountId === null))
+    ctx.addIssue({
+      code: "custom",
+      message: "결제일과 출금 계좌를 함께 입력하거나 둘 다 비워 두세요.",
+      path: [v.paymentDay === null ? "paymentDay" : "paymentAccountId"],
+    });
+};
+// Only cards have a payment day; switching a card to another type drops it.
+const cardOnly = <T extends AccountShape>(v: T): T =>
+  v.accountType === "CREDIT_CARD" ? v : { ...v, paymentDay: null, paymentAccountId: null };
 
-export const createAccountSchema = z.object(accountFields).refine(ownerRule, ownerMessage);
+export const createAccountSchema = z.object(accountFields).superRefine(accountRules).transform(cardOnly);
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;
 
-export const updateAccountSchema = z.object({ accountId: z.uuid(), ...accountFields }).refine(ownerRule, ownerMessage);
+export const updateAccountSchema = z
+  .object({ accountId: z.uuid(), ...accountFields })
+  .superRefine(accountRules)
+  .transform(cardOnly);
 export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
 
 export const setActiveSchema = z.object({ id: z.uuid(), active: z.boolean() });

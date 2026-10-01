@@ -209,6 +209,12 @@ DailyReview = `daily_reflections`.
   writes each due date as an EXPENSE with `source = 'SUBSCRIPTION'` and `subscription_id`; a unique index on
   `(subscription_id, transaction_date)` makes it idempotent. Deleting a plan keeps its charges (`subscription_id` →
   null).
+- Card payment day (ADR 0034): `finance_accounts.payment_day` (1–31, clamped to month end; CREDIT_CARD only),
+  `payment_account_id` (same household, ≠ itself; deleting it sets it null) and `paid_through` (trigger: yesterday
+  in the household timezone whenever the setting changes, null when unset — no back-fill). `finance_pay_cards`
+  writes, per payment day after `paid_through`, one TRANSFER payment account → card for the whole amount owed at the
+  end of that day (`source = 'CARD_PAYMENT'`, merchant "<card> 카드 대금"); nothing when the card owes nothing; a
+  unique index on `(transfer_account_id, transaction_date)` for CARD_PAYMENT makes it idempotent.
 - Transaction checks: `amount > 0` (ADJUSTMENT may be negative and non-zero); TRANSFER has `transfer_account_id`
   (≠ `account_id`), `transfer_group_id` and no category; INCOME/EXPENSE need a category of the matching type.
   `created_by_user_id` must be the caller on insert and never changes; `updated_by_user_id` is stamped on update.

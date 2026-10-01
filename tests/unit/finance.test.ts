@@ -12,7 +12,12 @@ import { daysInMonth, monthRange, parseMonthKey, shiftMonth } from "@/features/f
 import { categoryBreakdown, categoryPath, compare, fillDays, fillMonths, summarize } from "@/features/finance/domain/aggregate";
 import { buildCategoryTree, categoryOptions, dropInOrder, moveInOrder } from "@/features/finance/domain/category-tree";
 import type { Category } from "@/features/finance/domain/finance.types";
-import { createTransactionSchema, transactionFilterSchema } from "@/features/finance/schemas/finance.schema";
+import {
+  createAccountSchema,
+  createTransactionSchema,
+  transactionFilterSchema,
+  updateAccountSchema,
+} from "@/features/finance/schemas/finance.schema";
 
 const cat = (id: string, name: string, extra: Partial<Category> = {}): Category => ({
   id,
@@ -204,6 +209,49 @@ describe("transaction schema", () => {
       type: undefined,
       q: "Starbucks",
     });
+  });
+});
+
+describe("account schema: card payment day (ADR 0034)", () => {
+  const card = {
+    name: "Visa",
+    accountType: "CREDIT_CARD",
+    institutionName: "",
+    ownershipType: "JOINT",
+    ownerUserId: null,
+  };
+  const from = "00000000-0000-4000-8000-000000000009";
+
+  it("is optional and defaults to none", () => {
+    expect(createAccountSchema.parse(card)).toMatchObject({ paymentDay: null, paymentAccountId: null });
+  });
+
+  it("takes a day 1–31 together with a payment account", () => {
+    expect(createAccountSchema.parse({ ...card, paymentDay: 31, paymentAccountId: from })).toMatchObject({
+      paymentDay: 31,
+      paymentAccountId: from,
+    });
+    expect(createAccountSchema.safeParse({ ...card, paymentDay: 0, paymentAccountId: from }).success).toBe(false);
+    expect(createAccountSchema.safeParse({ ...card, paymentDay: 32, paymentAccountId: from }).success).toBe(false);
+    const half = createAccountSchema.safeParse({ ...card, paymentDay: 15 });
+    expect(half.success).toBe(false);
+    expect(half.error?.issues[0].path).toEqual(["paymentAccountId"]);
+    expect(createAccountSchema.safeParse({ ...card, paymentAccountId: from }).success).toBe(false);
+  });
+
+  it("is dropped for any other account type", () => {
+    const parsed = updateAccountSchema.parse({
+      ...card,
+      accountId: "00000000-0000-4000-8000-000000000001",
+      accountType: "CHECKING",
+      paymentDay: 15,
+      paymentAccountId: from,
+    });
+    expect(parsed).toMatchObject({ paymentDay: null, paymentAccountId: null });
+  });
+
+  it("still checks the owner rule", () => {
+    expect(createAccountSchema.safeParse({ ...card, ownershipType: "PERSONAL" }).success).toBe(false);
   });
 });
 

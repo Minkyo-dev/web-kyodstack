@@ -5,6 +5,7 @@ import { fromDbError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { chargeDueSubscriptions } from "../services/subscription.service";
+import { payDueCards } from "../services/account.service";
 import type { FinanceContext, FinanceLookups, MemberRef, MemberRole } from "../domain/finance.types";
 
 /** The caller's household, their membership and the member list; null before they create or join one. */
@@ -44,7 +45,8 @@ export async function loadFinanceContext(supabase: SupabaseServerClient, userId:
 
 /**
  * Per-request cache for pages: the layout and the page share one lookup. It also records any subscription charges
- * that fell due (ADR 0029) before a page reads totals; that write is idempotent and never blocks the page.
+ * (ADR 0029) and card payments (ADR 0034) that fell due before a page reads totals; those writes are idempotent and
+ * never block the page.
  */
 export const getFinanceContext = cache(async (userId: string) => {
   const supabase = await createClient();
@@ -54,6 +56,12 @@ export const getFinanceContext = cache(async (userId: string) => {
       await chargeDueSubscriptions(supabase, ctx.household.id);
     } catch (error) {
       log({ action: "finance.subscription.charge", userId, success: false, detail: String(error) });
+    }
+    // After the charges, so a subscription billed to a card on its payment day is paid off too (ADR 0034).
+    try {
+      await payDueCards(supabase, ctx.household.id);
+    } catch (error) {
+      log({ action: "finance.card.pay", userId, success: false, detail: String(error) });
     }
   }
   return ctx;

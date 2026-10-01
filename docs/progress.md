@@ -206,6 +206,10 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       Settings → 예산 with 3-month averages, budget vs spent on the dashboard categories, calendar budget card with
       pace. Tests `tests/unit/finance-budgets.test.ts`, RLS assertions in `finance.sql`, E2E `finance-budgets.spec.ts`
 - [x] ADR 0031 addendum: E2E signs in once per run (global setup storageState + one cached API client)
+- [x] ADR 0034: credit card payment day + payment account (Settings → 계좌). On the payment day the whole amount
+      owed moves from the payment account to the card as one CARD_PAYMENT transfer (page load, after a save, daily
+      job). Tests: schema in `tests/unit/finance.test.ts`, RLS assertions in `finance.sql`, E2E
+      `finance-card-payment.spec.ts`
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions
