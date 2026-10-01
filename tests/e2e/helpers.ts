@@ -14,8 +14,19 @@ export function credentials() {
   return { email, password };
 }
 
+/**
+ * The browser session comes from global-setup (one sign-in per run, saved as storageState). This only signs in through
+ * the form when that session is missing or no longer accepted.
+ */
 export async function login(page: Page) {
+  // Wait for the page to settle: tests click right after login, and an early click can race hydration.
+  await page.goto("/scheduler", { waitUntil: "networkidle" });
+  if (!/\/login/.test(page.url())) return;
   const { email, password } = credentials();
+  await signInThroughForm(page, email, password);
+}
+
+export async function signInThroughForm(page: Page, email: string, password: string) {
   await page.goto("/login?next=/scheduler");
   await page.getByLabel("이메일").fill(email);
   await page.getByLabel("비밀번호").fill(password);
@@ -27,14 +38,30 @@ export async function login(page: Page) {
     .toBe(true);
 }
 
-/** Direct DB access as the same user (RLS applies) for assertions and cleanup. */
-export async function dbAsUser(): Promise<SupabaseClient> {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  const client = createClient(url, key, { auth: { persistSession: false } });
-  const { error } = await client.auth.signInWithPassword(credentials());
-  if (error) throw error;
-  return client;
+/** Fails fast with a clear message when Supabase Auth stops answering, instead of a 90 s hook timeout. */
+const SIGN_IN_TIMEOUT_MS = 30_000;
+let userClient: Promise<SupabaseClient> | null = null;
+
+/**
+ * Direct DB access as the same user (RLS applies) for assertions and cleanup. One signed-in client per worker:
+ * signing in for every call made a run do ~100 password sign-ins, which Supabase Auth throttled (ADR 0031).
+ */
+export function dbAsUser(): Promise<SupabaseClient> {
+  userClient ??= (async () => {
+    const client = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+      auth: { persistSession: false },
+    });
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Supabase sign-in did not respond within ${SIGN_IN_TIMEOUT_MS / 1000}s`)), SIGN_IN_TIMEOUT_MS),
+    );
+    const { error } = await Promise.race([client.auth.signInWithPassword(credentials()), timeout]);
+    if (error) throw error;
+    return client;
+  })().catch((error) => {
+    userClient = null;
+    throw error;
+  });
+  return userClient;
 }
 
 export async function cleanup(db: SupabaseClient) {

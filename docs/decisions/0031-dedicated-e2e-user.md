@@ -24,6 +24,16 @@ against real data:
 4. The `[e2e]` prefix and cleanup stay. Runs still need to be repeatable, and the prefix still marks test data.
 5. The test user has no household of its own. The finance specs create `[e2e] 가계`, and `cleanupFinance` deletes it.
 
+6. **One sign-in per run.**
+   - `tests/e2e/global-setup.ts` signs in through the login form once and saves the browser session
+     (`tests/e2e/.auth/state.json`, git-ignored) as every test's `storageState`. `login(page)` falls back to the
+     form only when that session is missing.
+   - `dbAsUser()` caches one signed-in client per worker and fails after 30 s with a clear message when Auth does not
+     answer.
+   - Before this change a run made about 100 password sign-ins. On 2026-10-01 a run that also loaded the scheduler
+     pages about 1,300 times in 2 minutes was then cut off by Supabase's edge: every keyed request from the machine
+     hung.
+
 ## Consequences
 - The owner's scheduler, direction and finance data are no longer touched by E2E.
 - Specs must not depend on data they did not create. `finance-bulk.spec.ts` now creates its own categories.

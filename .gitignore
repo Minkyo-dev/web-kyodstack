@@ -19,6 +19,7 @@ supabase/.branches/
 /coverage
 /playwright-report/
 /test-results/
+/tests/e2e/.auth/
 
 # misc
 .DS_Store
