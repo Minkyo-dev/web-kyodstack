@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { interpretWorkLog } from "@/features/ai/services/worklog.service";
 import { runAction } from "@/lib/action";
 import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as sessions from "../services/work-session.service";
@@ -27,8 +29,12 @@ export async function startWorkSessionAction(input: unknown) {
 }
 
 export async function stopWorkSessionAction(input: unknown) {
-  return runAction("session.stop", stopWorkSessionSchema, input, async (data, ctx) =>
-    done(await sessions.stopWorkSession(ctx, data)),
+  return runAction("session.stop", stopWorkSessionSchema, input, async (data, ctx) => {
+    const stopped = done(await sessions.stopWorkSession(ctx, data));
+    // Interpret the note after the response (F1 spec §3); never affects the stop itself.
+    after(() => interpretWorkLog(ctx, data.sessionId));
+    return stopped;
+  },
     { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
@@ -64,9 +70,10 @@ export async function setPauseReasonAction(input: unknown) {
 }
 
 export async function saveWorkLogNoteAction(input: unknown) {
-  return runAction("session.note", saveWorkLogNoteSchema, input, async (data, ctx) =>
-    sessions.saveWorkLogNote(ctx, data),
-  );
+  return runAction("session.note", saveWorkLogNoteSchema, input, async (data, ctx) => {
+    await sessions.saveWorkLogNote(ctx, data);
+    after(() => interpretWorkLog(ctx, data.sessionId));
+  });
 }
 
 export async function switchWorkSessionAction(input: unknown) {

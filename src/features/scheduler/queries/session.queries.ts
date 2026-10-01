@@ -7,7 +7,7 @@ import type {
 } from "../domain/work-session.types";
 
 const SESSION_SELECT =
-  "*, task:tasks!work_sessions_task_id_user_id_fkey(id, title), pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(id, paused_at, resumed_at, reason), work_log:work_logs!work_logs_session_id_user_id_fkey(id, focus_score, mood_score, energy_score, note)";
+  "*, task:tasks!work_sessions_task_id_user_id_fkey(id, title), pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(id, paused_at, resumed_at, reason), work_log:work_logs!work_logs_session_id_user_id_fkey(id, focus_score, mood_score, energy_score, note, ai_interpretation, confirmed_blocker)";
 
 type SessionRow = Omit<SessionWithTask, "work_log" | "pauses"> & {
   pauses: SessionWithTask["pauses"] | null;

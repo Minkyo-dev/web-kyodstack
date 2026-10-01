@@ -1,5 +1,6 @@
 import type { Tables } from "@/types/database";
 import type { PAUSE_REASONS } from "./scheduler.constants";
+import type { WorklogOutput } from "@/features/ai/schemas/worklog.schema";
 
 export type WorkSession = Tables<"work_sessions"> & { source: "timer" | "manual" };
 
@@ -11,6 +12,9 @@ export type WorkLog = {
   mood_score: number | null;
   energy_score: number | null;
   note: string | null;
+  /** AI interpretation of the note (F1); a label until the user confirms a blocker. */
+  ai_interpretation: WorklogOutput | null;
+  confirmed_blocker: boolean | null;
 };
 
 /** Session with its task, pause intervals and work log (focus-flow design §1). */

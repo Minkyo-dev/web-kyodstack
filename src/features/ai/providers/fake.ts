@@ -18,6 +18,7 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  interpret_worklog: () => ({ delayReason: "environment_issue", scopeChanged: false, unexpectedBlocker: true, blockerType: "technical", confidence: 0.91 }),
   classify_tasks: (prompt) => {
     const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { tasks: { id: string }[]; domains: { id: string }[] };
     return {

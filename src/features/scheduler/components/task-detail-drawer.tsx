@@ -47,6 +47,7 @@ import { DomainSelect, TagEditor, TypeSelect } from "@/features/classification/c
 import { ClassificationProposal } from "@/features/ai/components/classification-proposal";
 import { settleEditedProposalsAction } from "@/features/ai/actions/classification.actions";
 import type { Proposal, ProposalView } from "@/features/ai/utils/classify";
+import { WorklogInterpretation } from "@/features/ai/components/worklog-interpretation";
 import { useTerms } from "@/hooks/use-terms";
 
 type SessionProps = {
@@ -410,8 +411,8 @@ function TaskDetail({
           {sessions.length > 0 && (
             <ul className="divide-y divide-border rounded-md border border-border">
               {sessions.map((x) => (
-                <li key={x.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                  <span className="tabular-nums">
+                <li key={x.id} className="flex items-start justify-between gap-2 px-3 py-2 text-sm">
+                  <span className="min-w-0 tabular-nums">
                     {toLocalDate(x.started_at, timezone).slice(5)} {toLocalTime(x.started_at, timezone)}–
                     {x.ended_at ? toLocalTime(x.ended_at, timezone) : "진행 중"}
                     <span className="ml-2 text-xs text-muted-foreground">
@@ -419,6 +420,14 @@ function TaskDetail({
                       {x.ended_at && ` · ${formatMinutes(Math.round(focusStats(x, x.pauses).focusedMs / 60_000))}`}
                       {x.work_log?.focus_score != null && ` · 집중 ${x.work_log.focus_score}`}
                     </span>
+                    {x.work_log?.note && (
+                      <WorklogInterpretation
+                        workLogId={x.work_log.id}
+                        note={x.work_log.note}
+                        interpretation={x.work_log.ai_interpretation}
+                        confirmed={x.work_log.confirmed_blocker}
+                      />
+                    )}
                   </span>
                   {x.ended_at && (
                     <Button
