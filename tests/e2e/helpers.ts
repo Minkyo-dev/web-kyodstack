@@ -51,6 +51,15 @@ export async function cleanup(db: SupabaseClient) {
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
   // Projects cascade into milestones (their tasks were deleted above).
   await db.from("projects").delete().like("name", `${E2E_PREFIX}%`);
+  // Habits (G2) before protocols; their checks cascade, but the checks' XP rows must go first.
+  const { data: e2eHabits } = await db.from("habits").select("id").like("title", `${E2E_PREFIX}%`);
+  const habitIds = (e2eHabits ?? []).map((h) => h.id);
+  if (habitIds.length > 0) {
+    const { data: checks } = await db.from("habit_checks").select("id").in("habit_id", habitIds);
+    const checkIds = (checks ?? []).map((c) => c.id);
+    if (checkIds.length > 0) await db.from("xp_events").delete().eq("rule", "habit").in("source_id", checkIds);
+    await db.from("habits").delete().in("id", habitIds);
+  }
   // Direction layer (G1). Tasks and projects are gone already, so children can go first.
   const { data: e2eMissions } = await db.from("missions").select("id").like("title", `${E2E_PREFIX}%`);
   const missionIds = (e2eMissions ?? []).map((m) => m.id);

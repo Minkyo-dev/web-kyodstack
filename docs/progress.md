@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement G2 — habits (docs/superpowers/specs/2026-10-01-habits-g2-design.md)
+- [x] `habits`, `habit_checks`, xp rule `habit` (SQL tests, ADR 0021)
+- [x] Pure habit rules (weekday, due, focus minutes); terms for habits / SYSTEM QUEST
+- [x] Habit XP (+10, 30/day); unticking removes its XP
+- [x] Habits on the directive page; DAILY QUESTS panel on the today screen; focus checks on page load + nightly
+- [x] E2E `habits.spec.ts`
+
 ## Improvement G1 — direction layer (docs/superpowers/specs/2026-09-30-direction-layer-g1-design.md)
 - [x] Purposes, identities, missions (+ identities, criteria), paths, protocols; task/project links; `switch_path`; retired guards (SQL tests, ADR 0020)
 - [x] Pure breadcrumb and link rules; terms for directive/mission/path/protocol

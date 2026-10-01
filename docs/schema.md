@@ -140,6 +140,13 @@ DailyReview = `daily_reflections`.
   `projects.mission_id`. `task_plan_actual` appends `mission_id, protocol_id, effective_mission_id`.
 - Growth = effective mission set; maintenance otherwise (derived, not stored).
 
+## Habits G2 (ADR 0021)
+- `habits(title, rule check|focus, target_minutes 5–600, weekdays smallint[] ⊆ 1..7, protocol_id, mission_id, status,
+  sort_order)`: `focus` needs a protocol and a target; protocol and mission are set together (FK
+  `(protocol_id, mission_id) → protocols`).
+- `habit_checks(habit_id, local_date, source manual|focus, minutes)`: one per habit per local day; cascades with the habit.
+- `xp_events.rule` adds `habit` (+10 per check, 30/day in code).
+
 ## AI features F1 (ADR 0018)
 - `task_features(user_id, task_id, feature_type task_type|domain|complexity|skills, feature_value jsonb, source
   ai|user|system, status proposed|accepted|rejected, confidence, model, prompt_version, decided_at)`: composite FK to

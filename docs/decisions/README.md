@@ -38,3 +38,4 @@ Template:
 | 0018 | AI feature proposals, work-log interpretation and the AI budget | accepted |
 | 0019 | Weekly SYSTEM analysis and AI-picked daily quests | accepted |
 | 0020 | Direction layer: purpose, identities, missions, paths, protocols | accepted |
+| 0021 | Habits and daily checks | accepted |
