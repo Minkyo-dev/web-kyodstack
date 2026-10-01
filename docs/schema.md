@@ -196,6 +196,16 @@ DailyReview = `daily_reflections`.
 
 Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, unit-tested).
 
+## Direction status metrics (G3, ADR 0022). Computed on page load, no tables.
+- `mission-progress-v1`: criteria mean (check met = 1, numeric = min(current/target, 1)); else completed /
+  non-cancelled tasks of the mission's projects; else no ratio (last 28 days' focus time only).
+- Pace gap = elapsed share of [created local day, deadline] − progress; sentence at ≥ 0.25.
+- `alignment-v1`: focused minutes of sessions ended this local week; aligned = effective mission set; off-path =
+  aligned on a protocol whose path is retired. Hidden below 180 active minutes.
+- Habit consistency = checks / scheduled habit-days (Mon..today, not before the habit's creation day).
+- `identity-evidence-v1`: 28 days; sessions on the identity's missions; its missions' habit checks / scheduled days;
+  sentence at ≥ 0.6 with ≥ 5 scheduled days.
+
 ## Views
 - `task_plan_actual` (`security_invoker = true`, anon revoked): per-task `planned_minutes` (non-cancelled blocks,
   skipped included), `skipped_minutes`, `actual_minutes` (finished sessions), `session_count`, `average_focus`,

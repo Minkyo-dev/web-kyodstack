@@ -39,3 +39,4 @@ Template:
 | 0019 | Weekly SYSTEM analysis and AI-picked daily quests | accepted |
 | 0020 | Direction layer: purpose, identities, missions, paths, protocols | accepted |
 | 0021 | Habits and daily checks | accepted |
+| 0022 | Direction status: mission progress, alignment, identity evidence | accepted |

@@ -90,6 +90,11 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement G3 — evidence & status (docs/superpowers/specs/2026-10-01-evidence-status-g3-design.md)
+- [x] Pure mission progress, pace, alignment, habit consistency, identity evidence; deny-listed sentences (ADR 0022)
+- [x] `loadDirectionStatus` and the ACTIVE MISSION / PATH / 이번 주 / identity evidence section on the progress page
+- [x] E2E `direction-status.spec.ts`
+
 ## Improvement G2 — habits (docs/superpowers/specs/2026-10-01-habits-g2-design.md)
 - [x] `habits`, `habit_checks`, xp rule `habit` (SQL tests, ADR 0021)
 - [x] Pure habit rules (weekday, due, focus minutes); terms for habits / SYSTEM QUEST
