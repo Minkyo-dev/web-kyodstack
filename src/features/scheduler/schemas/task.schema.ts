@@ -15,6 +15,9 @@ export const createTaskSchema = z.object({
   templateName: z.string().trim().max(100).optional(),
   projectId: z.uuid().nullable().optional(),
   milestoneId: z.uuid().nullable().optional(),
+  /** Direction link (G1). A protocol implies its mission. */
+  missionId: z.uuid().nullable().optional(),
+  protocolId: z.uuid().nullable().optional(),
   taskType: z.enum(TASK_TYPES).optional(),
   domainId: z.uuid().nullable().optional(),
   /** "@name" from quick add: found case-insensitively or created. */
@@ -38,6 +41,8 @@ export const updateTaskSchema = z.object({
   /** A milestone implies its project (spec §44). */
   projectId: z.uuid().nullable(),
   milestoneId: z.uuid().nullable(),
+  missionId: z.uuid().nullable(),
+  protocolId: z.uuid().nullable(),
   taskType: z.enum(TASK_TYPES).nullable(),
   domainId: z.uuid().nullable(),
   tagIds: z.array(z.uuid()).max(20),

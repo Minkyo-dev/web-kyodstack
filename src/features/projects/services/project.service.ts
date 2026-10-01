@@ -1,6 +1,8 @@
 import "server-only";
 import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
+import { countProjectConflicts } from "@/features/direction/domain/link-rules";
+import { resolveDirectionLink } from "@/features/direction/services/direction.service";
 import type { Milestone, Project } from "../domain/project.types";
 import type {
   CreateMilestoneInput,
@@ -24,7 +26,46 @@ export async function createProject(ctx: ActionContext, input: CreateProjectInpu
   return data as Project;
 }
 
+/** The mission a project lends its tasks (ADR 0020); null when unlinked or no project. */
+export async function getProjectMissionId(ctx: ActionContext, projectId: string | null): Promise<string | null> {
+  if (!projectId) return null;
+  const { data, error } = await ctx.supabase
+    .from("projects")
+    .select("mission_id")
+    .eq("id", projectId)
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (error) throw fromDbError(error);
+  return data?.mission_id ?? null;
+}
+
 export async function updateProject(ctx: ActionContext, input: UpdateProjectInput): Promise<Project> {
+  const before = await ctx.supabase
+    .from("projects")
+    .select("mission_id")
+    .eq("id", input.projectId)
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (before.error) throw fromDbError(before.error);
+  if (!before.data) throw new AppError("NOT_FOUND");
+  const { mission_id: missionId } = await resolveDirectionLink(
+    ctx,
+    { missionId: input.missionId },
+    { mission_id: before.data.mission_id, protocol_id: null },
+  );
+  if (missionId) {
+    const tasks = await ctx.supabase
+      .from("tasks")
+      .select("mission_id")
+      .eq("project_id", input.projectId)
+      .eq("user_id", ctx.user.id)
+      .not("mission_id", "is", null);
+    if (tasks.error) throw fromDbError(tasks.error);
+    const conflicts = countProjectConflicts(missionId, tasks.data.map((t) => t.mission_id));
+    if (conflicts > 0) {
+      throw new AppError("VALIDATION_ERROR", `작업 ${conflicts}개가 다른 목표에 연결되어 있습니다.`);
+    }
+  }
   const { data, error } = await ctx.supabase
     .from("projects")
     .update({
@@ -34,6 +75,7 @@ export async function updateProject(ctx: ActionContext, input: UpdateProjectInpu
       priority: input.priority,
       start_date: input.startDate,
       target_date: input.targetDate,
+      mission_id: missionId,
     })
     .eq("id", input.projectId)
     .eq("user_id", ctx.user.id)

@@ -22,6 +22,7 @@ export const updateProjectSchema = z
     priority: z.coerce.number().int().min(1).max(5),
     startDate: localDate.nullable(),
     targetDate: localDate.nullable(),
+    missionId: z.uuid().nullable(),
   })
   .refine((v) => !v.startDate || !v.targetDate || v.targetDate >= v.startDate, {
     message: "목표일은 시작일 이후여야 합니다.",

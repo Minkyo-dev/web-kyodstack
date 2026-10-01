@@ -213,6 +213,8 @@ function TaskDetail({
                   templateName: String(fd.get("template") ?? "").trim() || null,
                   projectId: String(fd.get("projectId") ?? "") || null,
                   milestoneId: String(fd.get("milestoneId") ?? "") || null,
+                  missionId: task.mission_id,
+                  protocolId: task.protocol_id,
                   taskType: String(fd.get("taskType") ?? "") || null,
                   domainId: String(fd.get("domainId") ?? "") || null,
                   // Tags are edited live by the TagEditor below; keep the current set here.

@@ -6,7 +6,9 @@ import { normalizeTask, TASK_SELECT } from "../queries/select";
 import { rebuildDurationGroupsQuietly } from "./duration-groups.service";
 import { ensureDomain, ensureTags, setTaskTags } from "@/features/classification/services/classification.service";
 import type { TaskType } from "@/features/classification/domain/classification.types";
-import { resolveTaskLink } from "@/features/projects/services/project.service";
+import { getProjectMissionId, resolveTaskLink } from "@/features/projects/services/project.service";
+import { resolveDirectionLink } from "@/features/direction/services/direction.service";
+import { missionConflict } from "@/features/direction/domain/link-rules";
 import type { CreateTaskInput, UpdateTaskInput } from "../schemas/task.schema";
 
 /**
@@ -69,9 +71,24 @@ async function templatePreset(ctx: ActionContext, templateId: string | null) {
 
 export type CreatedTask = { task: Task; domainCreated: string | null };
 
+/** Direction link + the task/project mission agreement rule (ADR 0020). */
+async function resolveDirection(
+  ctx: ActionContext,
+  input: { missionId?: string | null; protocolId?: string | null },
+  projectId: string | null,
+  current?: { mission_id: string | null; protocol_id: string | null },
+) {
+  const direction = await resolveDirectionLink(ctx, input, current);
+  if (missionConflict(direction.mission_id, await getProjectMissionId(ctx, projectId))) {
+    throw new AppError("VALIDATION_ERROR", "프로젝트가 다른 목표에 연결되어 있습니다.");
+  }
+  return direction;
+}
+
 export async function createTask(ctx: ActionContext, input: CreateTaskInput): Promise<CreatedTask> {
   const templateId = await resolveTemplateId(ctx, input.templateName);
   const link = await resolveTaskLink(ctx, input);
+  const direction = await resolveDirection(ctx, input, link.project_id);
   const preset = await templatePreset(ctx, templateId);
 
   let domainId = input.domainId ?? preset.domainId;
@@ -95,6 +112,7 @@ export async function createTask(ctx: ActionContext, input: CreateTaskInput): Pr
       task_type: input.taskType ?? preset.taskType,
       practice_domain_id: domainId,
       ...link,
+      ...direction,
     })
     .select("id")
     .single();
@@ -107,6 +125,7 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
   const before = await getTask(ctx, input.taskId);
   const templateId = await resolveTemplateId(ctx, input.templateName);
   const link = await resolveTaskLink(ctx, input);
+  const direction = await resolveDirection(ctx, input, link.project_id, before);
   const { data, error } = await ctx.supabase
     .from("tasks")
     .update({
@@ -120,6 +139,7 @@ export async function updateTask(ctx: ActionContext, input: UpdateTaskInput): Pr
       task_type: input.taskType,
       practice_domain_id: input.domainId,
       ...link,
+      ...direction,
     })
     .eq("id", input.taskId)
     .eq("user_id", ctx.user.id)

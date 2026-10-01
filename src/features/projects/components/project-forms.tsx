@@ -107,6 +107,7 @@ export function ProjectEditForm({ project }: { project: Project }) {
               priority: Number(fd.get("priority")),
               startDate: orNull(str(fd, "startDate")),
               targetDate: orNull(str(fd, "targetDate")),
+              missionId: project.mission_id,
             }),
           { success: "저장했습니다." },
         );

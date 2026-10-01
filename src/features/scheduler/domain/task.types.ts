@@ -1,6 +1,7 @@
 import type { Tables } from "@/types/database";
 import type { TaskStatus } from "./scheduler.constants";
 import type { TagRef, TaskType } from "@/features/classification/domain/classification.types";
+import type { DirectionRef } from "@/features/direction/domain/direction.types";
 
 export type TaskRow = Tables<"tasks">;
 export type TaskTemplate = Pick<
@@ -13,9 +14,12 @@ export type Task = Omit<TaskRow, "status" | "task_type"> & {
   status: TaskStatus;
   task_type: TaskType | null;
   template: Pick<TaskTemplate, "id" | "name" | "default_estimate_minutes"> | null;
-  project: { id: string; name: string } | null;
+  /** The project's mission makes a project-linked task Growth (ADR 0020). Optional for older fixtures. */
+  project: { id: string; name: string; mission?: DirectionRef | null } | null;
   milestone: { id: string; name: string } | null;
   domain: { id: string; name: string } | null;
+  mission?: DirectionRef | null;
+  protocol?: { id: string; title: string; path: DirectionRef | null } | null;
   tags: TagRef[];
 };
 
