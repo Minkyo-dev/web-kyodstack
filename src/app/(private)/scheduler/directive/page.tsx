@@ -98,7 +98,7 @@ export default async function DirectivePage({ searchParams }: { searchParams: Pr
                 {detail.mission.outcome && <p className="text-sm whitespace-pre-line">{detail.mission.outcome}</p>}
               </div>
               <CriteriaList missionId={detail.mission.id} criteria={detail.criteria} closed={closed} />
-              <PathPanel missionId={detail.mission.id} activePath={detail.activePath} retiredPaths={detail.retiredPaths} closed={closed} />
+              <PathPanel missionId={detail.mission.id} activePath={detail.activePath} retiredPaths={detail.retiredPaths} closed={closed} timezone={context.timezone} />
               {detail.activePath && <ProtocolList pathId={detail.activePath.id} protocols={detail.protocols} closed={closed} />}
               {detail.projects.length > 0 && (
                 <section aria-label={`연결된 ${terms.project}`} className="space-y-2 border-t border-border pt-4">

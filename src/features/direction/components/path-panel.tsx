@@ -9,9 +9,9 @@ import { useTerms } from "@/hooks/use-terms";
 import { josa } from "@/lib/terms";
 import { switchPathAction, updatePathAction } from "../actions/direction.actions";
 import type { Path } from "../domain/direction.types";
+import { pathDates } from "../domain/path-dates";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
-const day = (iso: string) => iso.slice(0, 10);
 
 function PathFields({ idPrefix, path }: { idPrefix: string; path?: Path }) {
   return (
@@ -37,11 +37,13 @@ export function PathPanel({
   activePath,
   retiredPaths,
   closed,
+  timezone,
 }: {
   missionId: string;
   activePath: Path | null;
   retiredPaths: Path[];
   closed: boolean;
+  timezone: string;
 }) {
   const terms = useTerms();
   const { run, pending } = useActionRunner();
@@ -59,7 +61,7 @@ export function PathPanel({
               {activePath.trade_offs}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">{day(activePath.started_at)}부터</p>
+          <p className="text-xs text-muted-foreground">{pathDates(activePath, timezone).started}부터</p>
           {!closed && (
             <details>
               <summary className="cursor-pointer text-xs">편집</summary>
@@ -116,14 +118,17 @@ export function PathPanel({
         <details role="group" aria-label={`이전 ${terms.path}`}>
           <summary className="cursor-pointer text-xs text-muted-foreground">{`이전 ${terms.path} (${retiredPaths.length})`}</summary>
           <ul className="mt-2 space-y-2">
-            {retiredPaths.map((p) => (
-              <li key={p.id} className="rounded-md border border-border px-3 py-2 text-sm">
-                <p className="font-medium">
-                  {p.title} <span className="text-xs font-normal text-muted-foreground">교체됨 · {day(p.started_at)}–{day(p.retired_at!)}</span>
-                </p>
-                <p className="text-xs text-muted-foreground whitespace-pre-line">{p.approach}</p>
-              </li>
-            ))}
+            {retiredPaths.map((p) => {
+              const d = pathDates(p, timezone);
+              return (
+                <li key={p.id} className="rounded-md border border-border px-3 py-2 text-sm">
+                  <p className="font-medium">
+                    {p.title} <span className="text-xs font-normal text-muted-foreground">교체됨 · {d.started}–{d.retired}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-line">{p.approach}</p>
+                </li>
+              );
+            })}
           </ul>
         </details>
       )}
