@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// Hangul (Geist has no Hangul glyphs). Self-hosted dynamic subset: ~92 unicode-range chunks, so a page downloads only
+// the chunks for the characters it renders. Declared before globals.css so the stack there can name it.
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 
 const geistSans = Geist({

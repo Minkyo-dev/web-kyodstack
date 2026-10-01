@@ -197,6 +197,7 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] ADR 0029: recurring payments `/finance/recurring` (`finance_subscriptions`, idempotent charging into ordinary
       EXPENSE transactions on page load, after a save and from the daily job). Tests
       `tests/unit/finance-subscription.test.ts`, RLS assertions in `finance.sql`, E2E `finance-recurring.spec.ts`
+- [x] ADR 0030: Pretendard (variable dynamic subset, self-hosted from npm) for Hangul; Geist stays for Latin
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
@@ -204,5 +205,4 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
   Don't just revoke `is_admin` from anon: the legacy `*_admin_write` policies apply to every role.
 - E2E can target a running dev server with `E2E_BASE_URL=http://localhost:3000` (Next allows one dev server per project).
 - E2E runs against the owner account with `[e2e]`-prefixed data that is cleaned up. Consider a dedicated test user.
-- Korean webfont: Geist has no Hangul glyphs, so the OS fallback font is used. Decide whether to add a Korean font (e.g. Pretendard).
 - AI provider/model (decide at Phase 5). Note: AI SDK 7 requires Node ≥ 22; local Node is 20.19.

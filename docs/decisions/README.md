@@ -47,3 +47,4 @@ Template:
 | 0027 | Logical category delete and the bulk entry grid | accepted |
 | 0028 | The finance calendar's day panel | accepted |
 | 0029 | Recurring payments (subscriptions) | accepted |
+| 0030 | Korean webfont (Pretendard) | accepted |
