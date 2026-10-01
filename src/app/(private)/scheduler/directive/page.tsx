@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHelp } from "@/components/layout/page-help";
 import Link from "next/link";
 import { z } from "zod";
 import { requireUserOrRedirect } from "@/lib/auth";
@@ -67,7 +68,10 @@ export default async function DirectivePage({ searchParams }: { searchParams: Pr
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh">
       <div className="space-y-3 border-b border-border p-4">
-        <h1 className="text-lg font-semibold">{terms.directiveNav}</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-lg font-semibold">{terms.directiveNav}</h1>
+          <PageHelp page="directive" />
+        </div>
         <DirectiveHeader purpose={view.purpose} identities={view.identities} />
         <HabitSection habits={habits} options={missionOptions} />
       </div>

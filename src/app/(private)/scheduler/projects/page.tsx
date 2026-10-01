@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHelp } from "@/components/layout/page-help";
 import { Archive } from "lucide-react";
 import { z } from "zod";
 import { requireUserOrRedirect } from "@/lib/auth";
@@ -91,9 +92,12 @@ export default async function ProjectsPage({
         className="flex shrink-0 flex-col border-b border-border md:w-80 md:border-r md:border-b-0"
       >
         <div className="space-y-3 border-b border-border p-4">
-          <h1 id="projects-heading" className="text-lg font-semibold">
-            {terms.project}
-          </h1>
+          <div className="flex items-center gap-1">
+            <h1 id="projects-heading" className="text-lg font-semibold">
+              {terms.project}
+            </h1>
+            <PageHelp page="projects" />
+          </div>
           <ProjectCreateForm />
         </div>
         {projects.length === 0 ? (

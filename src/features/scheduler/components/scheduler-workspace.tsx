@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PageHelp } from "@/components/layout/page-help";
 import dynamic from "next/dynamic";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
@@ -158,7 +159,10 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   return (
     <div className="flex h-[calc(100dvh-3.25rem)] flex-col md:h-dvh">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-        <h1 className="text-lg font-semibold">스케줄러</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-lg font-semibold">스케줄러</h1>
+          <PageHelp page="scheduler" />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className={cn("flex items-center gap-1.5 text-xs text-muted-foreground", monthView && "hidden")}>
             <input

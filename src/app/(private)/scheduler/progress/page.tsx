@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHelp } from "@/components/layout/page-help";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadStatInput } from "@/features/analytics/queries/stat-input.queries";
@@ -68,7 +69,10 @@ export default async function ProgressPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold">진행</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold">진행</h1>
+          <PageHelp page="progress" />
+        </div>
         <WorkStandardsDialog settings={input.settings} />
       </header>
 
