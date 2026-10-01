@@ -7,7 +7,7 @@ import { localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
 import { WEEKLY_REVIEW_PROMPT_VERSION, WEEKLY_REVIEW_SYSTEM, weeklyReviewPrompt } from "../prompts/weekly-review.prompt";
 import { WeeklyReviewOutputSchema } from "../schemas/weekly-review.schema";
-import { getAiProvider } from "./provider";
+import { callAi } from "./budget.service";
 
 /**
  * Weekly review (spec §32): deterministic metrics first, then the LLM interprets them.
@@ -18,8 +18,7 @@ export async function generateWeeklyReview(ctx: ActionContext, requestedWeek?: s
   const weekStart = localWeek(requestedWeek ?? todayLocalDate(timezone), timezone, settings.week_starts_on).startDate;
 
   const metrics = computeWeeklyMetrics(await loadWeekInput(ctx.supabase, ctx.user.id, weekStart, timezone));
-  const provider = await getAiProvider();
-  const result = await provider.generateStructured({
+  const result = await callAi(ctx, "weekly_review", {
     task: "weekly_review",
     system: WEEKLY_REVIEW_SYSTEM,
     prompt: weeklyReviewPrompt(metrics),

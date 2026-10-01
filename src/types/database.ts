@@ -38,6 +38,41 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_calls: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          model: string | null
+          ok: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          model?: string | null
+          ok: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          model?: string | null
+          ok?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_calls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_recommendations: {
         Row: {
           created_at: string
@@ -1146,6 +1181,73 @@ export type Database = {
           },
         ]
       }
+      task_features: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          decided_at: string | null
+          feature_type: string
+          feature_value: Json
+          id: string
+          model: string | null
+          prompt_version: string | null
+          source: string
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          decided_at?: string | null
+          feature_type: string
+          feature_value: Json
+          id?: string
+          model?: string | null
+          prompt_version?: string | null
+          source: string
+          status?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          decided_at?: string | null
+          feature_type?: string
+          feature_value?: Json
+          id?: string
+          model?: string | null
+          prompt_version?: string | null
+          source?: string
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_features_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "task_features_task_id_user_id_fkey"
+            columns: ["task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "task_features_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_tags: {
         Row: {
           tag_id: string
@@ -1530,10 +1632,14 @@ export type Database = {
       }
       work_logs: {
         Row: {
+          ai_interpretation: Json | null
+          confirmed_blocker: boolean | null
           created_at: string
           energy_score: number | null
           focus_score: number | null
           id: string
+          interpretation_model: string | null
+          interpretation_version: string | null
           mood_score: number | null
           note: string | null
           session_id: string | null
@@ -1542,10 +1648,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_interpretation?: Json | null
+          confirmed_blocker?: boolean | null
           created_at?: string
           energy_score?: number | null
           focus_score?: number | null
           id?: string
+          interpretation_model?: string | null
+          interpretation_version?: string | null
           mood_score?: number | null
           note?: string | null
           session_id?: string | null
@@ -1554,10 +1664,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_interpretation?: Json | null
+          confirmed_blocker?: boolean | null
           created_at?: string
           energy_score?: number | null
           focus_score?: number | null
           id?: string
+          interpretation_model?: string | null
+          interpretation_version?: string | null
           mood_score?: number | null
           note?: string | null
           session_id?: string | null

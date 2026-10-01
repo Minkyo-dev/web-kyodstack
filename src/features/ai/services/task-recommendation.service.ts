@@ -14,7 +14,7 @@ import {
 import { RecommendationListSchema } from "../schemas/recommendation.schema";
 import { remainingCapacityMinutes } from "../utils/capacity";
 import { sanitizeRecommendations, type AllowedProjects } from "../utils/sanitize";
-import { getAiProvider } from "./provider";
+import { callAi } from "./budget.service";
 
 const MIN_CAPACITY_MINUTES = 15;
 const RECENT_DAYS = 14;
@@ -120,8 +120,7 @@ export async function generateDailyRecommendations(ctx: ActionContext, now = new
     alreadyOpenTaskTitles: openTitles.slice(0, 100),
   };
 
-  const provider = await getAiProvider();
-  const result = await provider.generateStructured({
+  const result = await callAi(ctx, "task_recommendations", {
     task: "task_recommendations",
     system: PROJECT_PLANNER_SYSTEM,
     prompt: projectPlannerPrompt(input),

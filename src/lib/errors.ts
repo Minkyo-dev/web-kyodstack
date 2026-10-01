@@ -10,6 +10,7 @@ export const ERROR_CODES = [
   "DATABASE_ERROR",
   "AI_PROVIDER_ERROR",
   "AI_OUTPUT_INVALID",
+  "AI_BUDGET_EXCEEDED",
   "INTERNAL_ERROR",
 ] as const;
 
@@ -25,6 +26,7 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   DATABASE_ERROR: "저장 중 문제가 발생했습니다.",
   AI_PROVIDER_ERROR: "AI 응답을 받지 못했습니다. 잠시 후 다시 시도해 주세요.",
   AI_OUTPUT_INVALID: "AI 응답 형식이 올바르지 않습니다. 다시 시도해 주세요.",
+  AI_BUDGET_EXCEEDED: "오늘 AI 사용량을 다 썼어요. 내일 다시 시도해 주세요.",
   INTERNAL_ERROR: "알 수 없는 오류가 발생했습니다.",
 };
 
