@@ -33,6 +33,7 @@ import { ensureQuests } from "@/features/gamification/services/quest.service";
 import { toQuestViews, type QuestView } from "@/features/gamification/utils/quest-view";
 import { QuestPanel } from "@/features/gamification/components/quest-panel";
 import { log } from "@/lib/logger";
+import { isMonthKey, localMonth } from "@/features/scheduler/utils/month";
 import { HabitPanel } from "@/features/direction/components/habit-panel";
 import { listTodayHabits } from "@/features/direction/queries/habit.queries";
 import { syncFocusChecks } from "@/features/direction/services/habit.service";
@@ -50,11 +51,11 @@ export const metadata: Metadata = { title: "스케줄러", robots: { index: fals
 export default async function SchedulerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; tags?: string }>;
+  searchParams: Promise<{ week?: string; tags?: string; view?: string; month?: string }>;
 }) {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
-  const { week, tags: tagsParam } = await searchParams;
+  const { week, tags: tagsParam, view, month: monthParam } = await searchParams;
   const tagFilter = (tagsParam ?? "").split(",").filter((id) => z.uuid().safeParse(id).success);
 
   const context = await getSchedulerContext(supabase, user.id);
@@ -66,13 +67,16 @@ export default async function SchedulerPage({
   const anchor = week && isLocalDateString(week) ? week : today;
   const currentWeek = localWeek(anchor, timezone, settings.week_starts_on);
 
-  // Bounded calendar read: selected week ± buffer (spec §50, §51).
+  // Month view (?view=month&month=yyyy-MM): whole weeks around the month; otherwise the week view.
+  const monthView = view === "month" ? localMonth(monthParam && isMonthKey(monthParam) ? monthParam : today.slice(0, 7), settings.week_starts_on) : null;
+
+  // Bounded calendar read: selected week ± buffer, or the month grid (spec §50, §51).
   const rangeStart = localDayRange(
-    addLocalDays(currentWeek.startDate, -WEEK_FETCH_BUFFER_DAYS, timezone),
+    monthView ? monthView.startDate : addLocalDays(currentWeek.startDate, -WEEK_FETCH_BUFFER_DAYS, timezone),
     timezone,
   ).start;
   const rangeEnd = localDayRange(
-    addLocalDays(currentWeek.endDate, WEEK_FETCH_BUFFER_DAYS - 1, timezone),
+    monthView ? addLocalDays(monthView.endDate, -1, timezone) : addLocalDays(currentWeek.endDate, WEEK_FETCH_BUFFER_DAYS - 1, timezone),
     timezone,
   ).end;
   const todayRange = localDayRange(today, timezone);
@@ -158,6 +162,7 @@ export default async function SchedulerPage({
       today={today}
       todayRange={todayRange}
       week={currentWeek}
+      monthView={monthView}
       todayTasks={todayTasks}
       blocks={blocks}
       templates={templates}

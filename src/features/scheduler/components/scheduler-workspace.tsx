@@ -16,6 +16,7 @@ import type { ProjectOption } from "@/features/projects/domain/project.types";
 import type { MissionOption } from "@/features/direction/domain/direction.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 import { useActionRunner } from "@/hooks/use-action-runner";
+import { cn } from "@/lib/utils";
 import { useNow } from "@/hooks/use-now";
 import { startWorkSessionAction } from "../actions/work-session.actions";
 import { estimateDuration } from "../utils/estimator";
@@ -31,11 +32,17 @@ import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
 import { WeekNavigation } from "./week-navigation";
+import { CalendarViewToggle, MonthNavigation } from "./month-navigation";
+import type { LocalMonth } from "../utils/month";
 import { WeekSummary } from "./week-summary";
 import { CapacityNotice } from "./capacity-notice";
 import type { Proposal } from "@/features/ai/utils/classify";
 
 // FullCalendar touches the DOM on import; render it on the client only.
+const MonthlyCalendar = dynamic(() => import("./monthly-calendar").then((m) => m.MonthlyCalendar), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">캘린더 불러오는 중…</div>,
+});
 const WeeklyCalendar = dynamic(
   () => import("./weekly-calendar").then((m) => m.WeeklyCalendar),
   {
@@ -79,10 +86,12 @@ export type SchedulerWorkspaceProps = {
   questPanel?: React.ReactNode;
   /** Habit panel slot composed by the page (G2). */
   habitPanel?: React.ReactNode;
+  /** Month view (?view=month); null = week view. */
+  monthView?: LocalMonth | null;
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
-  const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
+  const { context, today, todayRange, week, todayTasks, blocks, templates, monthView = null } = props;
   const { sessions, activeSession, reflection, planActual, durationGroups, domains, tags, projectOptions, missionOptions, recommendations } =
     props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -151,7 +160,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <h1 className="text-lg font-semibold">스케줄러</h1>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <label className={cn("flex items-center gap-1.5 text-xs text-muted-foreground", monthView && "hidden")}>
             <input
               type="checkbox"
               checked={showActual}
@@ -165,7 +174,17 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             onManageClassification={() => setClassifyOpen(true)}
             onOpenWorkStandards={() => setStandardsOpen(true)}
           />
-          <WeekNavigation week={week} today={today} timezone={context.timezone} />
+          <CalendarViewToggle
+            view={monthView ? "month" : "week"}
+            // From a week, open the month of today when that week contains it, else the week's first day.
+            month={monthView ? monthView.month : (today >= week.startDate && today < week.endDate ? today : week.startDate).slice(0, 7)}
+            weekStart={monthView ? (today.startsWith(monthView.month) ? today : `${monthView.month}-01`) : week.startDate}
+          />
+          {monthView ? (
+            <MonthNavigation month={monthView} today={today} />
+          ) : (
+            <WeekNavigation week={week} today={today} timezone={context.timezone} />
+          )}
         </div>
       </header>
 
@@ -196,28 +215,43 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           habitPanel={props.habitPanel}
           onOpenTask={setSelectedTaskId}
         />
-        <section aria-label="주간 캘린더" className="flex min-h-[480px] min-w-0 flex-1 flex-col md:min-h-0">
-          <WeekSummary
-            week={week}
-            blocks={blocks}
-            sessions={sessions}
-            completed={props.weekCompleted}
-            today={today}
-            timezone={context.timezone}
-          />
+        <section
+          aria-label={monthView ? "월간 캘린더" : "주간 캘린더"}
+          className="flex min-h-[480px] min-w-0 flex-1 flex-col md:min-h-0"
+        >
+          {!monthView && (
+            <WeekSummary
+              week={week}
+              blocks={blocks}
+              sessions={sessions}
+              completed={props.weekCompleted}
+              today={today}
+              timezone={context.timezone}
+            />
+          )}
           <CapacityNotice capacity={props.capacity} nearBlocks={props.nearBlocks} today={today} timezone={context.timezone} />
           <div className="min-h-0 flex-1">
-          <WeeklyCalendar
-            blocks={blocks}
-            sessions={sessions}
-            tasksById={tasksById}
-            context={context}
-            week={week}
-            today={today}
-            showActual={showActual}
-            onStartBlock={startBlock}
-            onOpenTask={setSelectedTaskId}
-          />
+            {monthView ? (
+              <MonthlyCalendar
+                blocks={blocks}
+                sessions={sessions}
+                context={context}
+                month={monthView}
+                onOpenTask={setSelectedTaskId}
+              />
+            ) : (
+              <WeeklyCalendar
+                blocks={blocks}
+                sessions={sessions}
+                tasksById={tasksById}
+                context={context}
+                week={week}
+                today={today}
+                showActual={showActual}
+                onStartBlock={startBlock}
+                onOpenTask={setSelectedTaskId}
+              />
+            )}
           </div>
         </section>
       </div>

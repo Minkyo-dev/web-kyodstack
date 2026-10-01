@@ -215,6 +215,12 @@
   color: var(--foreground);
 }
 .fc .fc-v-event .fc-event-main { color: inherit; }
+/* Month view: the same block styles as the week view (status by line style and text, not color alone). */
+.fc .fc-daygrid-event.sched-block { border-radius: 4px; border-width: 0 0 0 3px; padding: 0 2px; }
+.fc .fc-daygrid-event.sched-block .fc-event-main,
+.fc .fc-daygrid-event.sched-block .fc-event-time,
+.fc .fc-daygrid-event.sched-block .fc-event-title { color: inherit; }
+.fc .fc-daygrid-day-number { color: var(--muted-foreground); font-size: 0.75rem; }
 
 @media (prefers-reduced-motion: reduce) {
   .fc * { transition: none !important; }
