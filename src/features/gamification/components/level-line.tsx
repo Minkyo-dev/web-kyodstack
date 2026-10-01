@@ -22,6 +22,9 @@ export function LevelLine() {
           {player.into} / {player.need}
         </span>
       </Link>
+      {player.title && (
+        <p className="hidden font-mono text-[10px] tracking-widest text-muted-foreground md:block">{player.title}</p>
+      )}
       {/* Takes no width: floats just under the line for ~1.5 s. */}
       <span
         aria-live="polite"

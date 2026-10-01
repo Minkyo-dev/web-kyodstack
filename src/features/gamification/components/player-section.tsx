@@ -1,9 +1,20 @@
 import { XP_RULE_LABEL, XP_RULES, type XpRule } from "../domain/xp.types";
+import { QUEST_META } from "../domain/quest.types";
+import { TITLES } from "../utils/achievements";
 import { levelFor } from "../utils/level";
+import type { QuestView } from "../utils/quest-view";
 import { GamificationSettingsDialog } from "./gamification-settings-dialog";
 import type { PlayerProfile } from "../queries/xp.queries";
 
-export function PlayerSection({ profile, week }: { profile: PlayerProfile; week: Record<XpRule, number> }) {
+export function PlayerSection({
+  profile,
+  week,
+  quests,
+}: {
+  profile: PlayerProfile;
+  week: Record<XpRule, number>;
+  quests: QuestView[];
+}) {
   const lv = levelFor(profile.total_xp);
   return (
     <section aria-labelledby="player-heading" className="space-y-3">
@@ -16,6 +27,9 @@ export function PlayerSection({ profile, week }: { profile: PlayerProfile; week:
           <span className="font-mono text-2xl font-semibold">Lv.{lv.level}</span>
           <span className="text-sm text-muted-foreground tabular-nums">{lv.into} / {lv.need} XP · 누적 {profile.total_xp} XP</span>
         </p>
+        {profile.equipped_title && (
+          <p className="font-mono text-xs tracking-widest text-muted-foreground">{TITLES[profile.equipped_title] ?? profile.equipped_title}</p>
+        )}
         <div className="h-1.5 rounded-full bg-muted" aria-hidden>
           <div className="h-full rounded-full bg-foreground/70" style={{ width: `${(lv.into / lv.need) * 100}%` }} />
         </div>
@@ -29,6 +43,19 @@ export function PlayerSection({ profile, week }: { profile: PlayerProfile; week:
           </div>
         ))}
       </dl>
+      {quests.length > 0 && (
+        <ul aria-label="진행 중인 퀘스트" className="space-y-0.5 text-xs">
+          {quests.map((q) => (
+            <li key={q.id} className="flex gap-1.5">
+              <span className="font-mono tracking-wider">{QUEST_META[q.type].label}</span>
+              <span className="text-muted-foreground">· {q.title}</span>
+              <span className="tabular-nums">
+                · {q.status === "cleared" ? "CLEARED" : `${q.objectives.filter((o) => o.done).length}/${q.objectives.length}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

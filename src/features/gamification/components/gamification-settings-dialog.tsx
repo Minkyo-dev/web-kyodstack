@@ -15,6 +15,7 @@ export function GamificationSettingsDialog({ profile }: { profile: PlayerProfile
     gamification_enabled: profile.gamification_enabled,
     animations_enabled: profile.animations_enabled,
     achievement_toasts: profile.achievement_toasts,
+    quest_terminology: profile.quest_terminology,
   });
   const row = (key: keyof typeof v, label: string, hint?: string) => (
     <label className="flex items-start gap-2 text-sm">
@@ -38,7 +39,8 @@ export function GamificationSettingsDialog({ profile }: { profile: PlayerProfile
           <div className="space-y-3">
             {row("gamification_enabled", "게임 요소", "끄면 레벨·XP 표시가 사라집니다. 기록은 유지됩니다.")}
             {row("animations_enabled", "시스템 애니메이션")}
-            {row("achievement_toasts", "업적 알림", "업적은 다음 단계(E2)에서 추가됩니다.")}
+            {row("achievement_toasts", "업적 알림")}
+            {row("quest_terminology", "퀘스트 용어", "할 일 → 퀘스트, 프로젝트 → 메인 퀘스트")}
           </div>
           <DialogFooter>
             <Button

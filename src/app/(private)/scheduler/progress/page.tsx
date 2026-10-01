@@ -13,6 +13,11 @@ import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
 import { getPlayerProfile, xpByRuleSince } from "@/features/gamification/queries/xp.queries";
 import { EnableCard } from "@/features/gamification/components/enable-card";
 import { PlayerSection } from "@/features/gamification/components/player-section";
+import { AchievementsSection } from "@/features/gamification/components/achievements-section";
+import { TitleList } from "@/features/gamification/components/title-list";
+import { listUnlocked, loadAchievementFacts } from "@/features/gamification/services/achievement.service";
+import { listQuests } from "@/features/gamification/queries/quest.queries";
+import { toQuestViews } from "@/features/gamification/utils/quest-view";
 
 export const metadata: Metadata = { title: "진행", robots: { index: false } };
 
@@ -29,6 +34,14 @@ export default async function ProgressPage() {
   const week = profile?.gamification_enabled
     ? await xpByRuleSince(supabase, user.id, addLocalDays(today, -6, input.timezone))
     : null;
+  const on = !!profile?.gamification_enabled;
+  const [unlocked, achievementFacts, questRows] = on
+    ? await Promise.all([
+        listUnlocked(supabase, user.id),
+        loadAchievementFacts(supabase, user.id, now),
+        listQuests(supabase, user.id, { visibleOn: today }),
+      ])
+    : [null, null, []];
   const series = (type: StatType) => snapshots.filter((r) => r.stat_type === type && r.scope === "overall");
 
   return (
@@ -38,7 +51,11 @@ export default async function ProgressPage() {
         <WorkStandardsDialog settings={input.settings} />
       </header>
 
-      {profile?.gamification_enabled && week ? <PlayerSection profile={profile} week={week} /> : <EnableCard />}
+      {on && profile && week ? (
+        <PlayerSection profile={profile} week={week} quests={toQuestViews(questRows, {})} />
+      ) : (
+        <EnableCard />
+      )}
 
       <section aria-labelledby="stats-heading" className="space-y-3">
         <h2 id="stats-heading" className="text-lg font-semibold">
@@ -74,7 +91,13 @@ export default async function ProgressPage() {
       </section>
 
       <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} />
-      <DomainBars domains={stats.domains} practice={!!profile?.gamification_enabled} />
+      <DomainBars domains={stats.domains} practice={on} />
+      {on && unlocked && achievementFacts && (
+        <>
+          <AchievementsSection facts={achievementFacts} unlocked={unlocked.achievements} timezone={input.timezone} />
+          <TitleList titles={unlocked.titles} equipped={profile?.equipped_title ?? null} />
+        </>
+      )}
     </div>
   );
 }
