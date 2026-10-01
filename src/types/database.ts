@@ -333,6 +333,47 @@ export type Database = {
           },
         ]
       }
+      identities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_tokens: {
         Row: {
           created_at: string
@@ -460,6 +501,220 @@ export type Database = {
           },
           {
             foreignKeyName: "milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_criteria: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          id: string
+          kind: string
+          label: string
+          met_at: string | null
+          mission_id: string
+          position: number
+          target_value: number | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          kind: string
+          label: string
+          met_at?: string | null
+          mission_id: string
+          position?: number
+          target_value?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          kind?: string
+          label?: string
+          met_at?: string | null
+          mission_id?: string
+          position?: number
+          target_value?: number | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_criteria_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "mission_criteria_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_identities: {
+        Row: {
+          created_at: string
+          identity_id: string
+          mission_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          identity_id: string
+          mission_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          identity_id?: string
+          mission_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_identities_identity_id_user_id_fkey"
+            columns: ["identity_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "identities"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "mission_identities_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "mission_identities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          outcome: string | null
+          purpose_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          outcome?: string | null
+          purpose_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          outcome?: string | null
+          purpose_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_purpose_id_user_id_fkey"
+            columns: ["purpose_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "purposes"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "missions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paths: {
+        Row: {
+          approach: string
+          created_at: string
+          id: string
+          mission_id: string
+          retired_at: string | null
+          started_at: string
+          status: string
+          title: string
+          trade_offs: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approach: string
+          created_at?: string
+          id?: string
+          mission_id: string
+          retired_at?: string | null
+          started_at?: string
+          status?: string
+          title: string
+          trade_offs?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approach?: string
+          created_at?: string
+          id?: string
+          mission_id?: string
+          retired_at?: string | null
+          started_at?: string
+          status?: string
+          title?: string
+          trade_offs?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paths_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "paths_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -675,6 +930,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          mission_id: string | null
           name: string
           priority: number
           start_date: string | null
@@ -687,6 +943,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mission_id?: string | null
           name: string
           priority?: number
           start_date?: string | null
@@ -699,6 +956,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mission_id?: string | null
           name?: string
           priority?: number
           start_date?: string | null
@@ -709,7 +967,113 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "projects_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      protocols: {
+        Row: {
+          created_at: string
+          id: string
+          intended_minutes: number | null
+          mission_id: string
+          path_id: string
+          sort_order: number
+          status: string
+          steps: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intended_minutes?: number | null
+          mission_id: string
+          path_id: string
+          sort_order?: number
+          status?: string
+          steps?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intended_minutes?: number | null
+          mission_id?: string
+          path_id?: string
+          sort_order?: number
+          status?: string
+          steps?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protocols_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "protocols_path_id_mission_id_fkey"
+            columns: ["path_id", "mission_id"]
+            isOneToOne: false
+            referencedRelation: "paths"
+            referencedColumns: ["id", "mission_id"]
+          },
+          {
+            foreignKeyName: "protocols_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purposes: {
+        Row: {
+          created_at: string
+          id: string
+          statement: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          statement: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          statement?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purposes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1414,9 +1778,11 @@ export type Database = {
           due_at: string | null
           id: string
           milestone_id: string | null
+          mission_id: string | null
           practice_domain_id: string | null
           priority: number
           project_id: string | null
+          protocol_id: string | null
           recommended_minutes: number | null
           sort_order: number
           status: string
@@ -1436,9 +1802,11 @@ export type Database = {
           due_at?: string | null
           id?: string
           milestone_id?: string | null
+          mission_id?: string | null
           practice_domain_id?: string | null
           priority?: number
           project_id?: string | null
+          protocol_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
@@ -1458,9 +1826,11 @@ export type Database = {
           due_at?: string | null
           id?: string
           milestone_id?: string | null
+          mission_id?: string | null
           practice_domain_id?: string | null
           priority?: number
           project_id?: string | null
+          protocol_id?: string | null
           recommended_minutes?: number | null
           sort_order?: number
           status?: string
@@ -1488,6 +1858,13 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
           {
+            foreignKeyName: "tasks_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "tasks_practice_domain_id_user_id_fkey"
             columns: ["practice_domain_id", "user_id"]
             isOneToOne: false
@@ -1500,6 +1877,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_protocol_id_mission_id_fkey"
+            columns: ["protocol_id", "mission_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id", "mission_id"]
           },
           {
             foreignKeyName: "tasks_template_id_user_id_fkey"
@@ -1928,10 +2312,13 @@ export type Database = {
           average_focus: number | null
           completed_at: string | null
           complexity: number | null
+          effective_mission_id: string | null
           milestone_id: string | null
+          mission_id: string | null
           paused_minutes: number | null
           planned_minutes: number | null
           project_id: string | null
+          protocol_id: string | null
           reschedule_count: number | null
           session_count: number | null
           skipped_minutes: number | null
@@ -1957,11 +2344,25 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
           {
+            foreignKeyName: "tasks_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
             foreignKeyName: "tasks_project_id_user_id_fkey"
             columns: ["project_id", "user_id"]
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "tasks_protocol_id_mission_id_fkey"
+            columns: ["protocol_id", "mission_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id", "mission_id"]
           },
           {
             foreignKeyName: "tasks_template_id_user_id_fkey"
@@ -1996,9 +2397,11 @@ export type Database = {
           due_at: string | null
           id: string
           milestone_id: string | null
+          mission_id: string | null
           practice_domain_id: string | null
           priority: number
           project_id: string | null
+          protocol_id: string | null
           recommended_minutes: number | null
           sort_order: number
           status: string
@@ -2191,6 +2594,33 @@ export type Database = {
         Args: { p_objective: Json; p_objective_id: string; p_spare: Json }
         Returns: undefined
       }
+      switch_path: {
+        Args: {
+          p_approach: string
+          p_mission_id: string
+          p_title: string
+          p_trade_offs?: string
+        }
+        Returns: {
+          approach: string
+          created_at: string
+          id: string
+          mission_id: string
+          retired_at: string | null
+          started_at: string
+          status: string
+          title: string
+          trade_offs: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "paths"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       switch_work_session: {
         Args: { p_block_id?: string; p_task_id?: string }
         Returns: {
@@ -2365,3 +2795,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
