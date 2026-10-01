@@ -15,7 +15,9 @@ import { CriteriaList } from "@/features/direction/components/criteria-list";
 import { PathPanel } from "@/features/direction/components/path-panel";
 import { ProtocolList } from "@/features/direction/components/protocol-list";
 import { MISSION_STATUS_LABEL, type MissionSummary } from "@/features/direction/domain/direction.types";
-import { getMissionDetail, loadDirective } from "@/features/direction/queries/direction.queries";
+import { getMissionDetail, listMissionOptions, loadDirective } from "@/features/direction/queries/direction.queries";
+import { listHabits } from "@/features/direction/queries/habit.queries";
+import { HabitSection } from "@/features/direction/components/habit-section";
 
 export const metadata: Metadata = { title: "방향", robots: { index: false } };
 
@@ -23,10 +25,12 @@ export const metadata: Metadata = { title: "방향", robots: { index: false } };
 export default async function DirectivePage({ searchParams }: { searchParams: Promise<{ mission?: string }> }) {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
-  const [profile, context, view] = await Promise.all([
+  const [profile, context, view, habits, missionOptions] = await Promise.all([
     getPlayerProfile(supabase, user.id),
     getSchedulerContext(supabase, user.id),
     loadDirective(supabase, user.id),
+    listHabits(supabase, user.id),
+    listMissionOptions(supabase, user.id),
   ]);
   const terms = termsFor(!!profile?.gamification_enabled && !!profile.quest_terminology);
   const today = todayLocalDate(context.timezone);
@@ -65,6 +69,7 @@ export default async function DirectivePage({ searchParams }: { searchParams: Pr
       <div className="space-y-3 border-b border-border p-4">
         <h1 className="text-lg font-semibold">{terms.directiveNav}</h1>
         <DirectiveHeader purpose={view.purpose} identities={view.identities} />
+        <HabitSection habits={habits} options={missionOptions} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <aside aria-label={`${terms.mission} 목록`} className="flex shrink-0 flex-col border-b border-border md:w-80 md:border-r md:border-b-0">
@@ -99,7 +104,7 @@ export default async function DirectivePage({ searchParams }: { searchParams: Pr
               </div>
               <CriteriaList missionId={detail.mission.id} criteria={detail.criteria} closed={closed} />
               <PathPanel missionId={detail.mission.id} activePath={detail.activePath} retiredPaths={detail.retiredPaths} closed={closed} timezone={context.timezone} />
-              {detail.activePath && <ProtocolList pathId={detail.activePath.id} protocols={detail.protocols} closed={closed} />}
+              {detail.activePath && <ProtocolList pathId={detail.activePath.id} protocols={detail.protocols} closed={closed} habits={habits} />}
               {detail.projects.length > 0 && (
                 <section aria-label={`연결된 ${terms.project}`} className="space-y-2 border-t border-border pt-4">
                   <h3 className="text-xs font-semibold tracking-widest text-muted-foreground">{`연결된 ${terms.project}`}</h3>

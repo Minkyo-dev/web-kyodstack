@@ -8,8 +8,19 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { useTerms } from "@/hooks/use-terms";
 import { createProtocolAction, updateProtocolAction } from "../actions/direction.actions";
 import type { Protocol } from "../domain/direction.types";
+import type { HabitListItem } from "../queries/habit.queries";
 
-export function ProtocolList({ pathId, protocols, closed }: { pathId: string; protocols: Protocol[]; closed: boolean }) {
+export function ProtocolList({
+  pathId,
+  protocols,
+  closed,
+  habits,
+}: {
+  pathId: string;
+  protocols: Protocol[];
+  closed: boolean;
+  habits: HabitListItem[];
+}) {
   const terms = useTerms();
   const { run, pending } = useActionRunner();
   return (
@@ -46,6 +57,15 @@ export function ProtocolList({ pathId, protocols, closed }: { pathId: string; pr
                   )}
                 </span>
               </div>
+              {habits.some((h) => h.protocol_id === p.id && h.status === "active") && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {`${terms.habit}: `}
+                  {habits
+                    .filter((h) => h.protocol_id === p.id && h.status === "active")
+                    .map((h) => h.title)
+                    .join(", ")}
+                </p>
+              )}
               {p.steps.length > 0 && (
                 <ol className="mt-1 list-decimal pl-5 text-xs text-muted-foreground">
                   {p.steps.map((s, i) => (
