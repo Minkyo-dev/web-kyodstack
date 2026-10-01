@@ -10,6 +10,7 @@ import {
   CategorySection,
   ChartSkeleton,
   ListSkeleton,
+  PositionSection,
   RecentSection,
   SummarySection,
   SummarySkeleton,
@@ -113,10 +114,19 @@ export default async function FinanceDashboardPage({
           <Suspense key={`s-${href(period)}`} fallback={<SummarySkeleton />}>
             <SummarySection householdId={householdId} period={period} currency={currency} />
           </Suspense>
+          <Suspense key={`p-${href(period)}`} fallback={<ListSkeleton label="재정 현황 불러오는 중" rows={4} />}>
+            <PositionSection
+              householdId={householdId}
+              period={period}
+              currency={currency}
+              today={ctx.today}
+              accounts={lookups.accounts}
+            />
+          </Suspense>
           <Suspense key={`c-${href(period)}`} fallback={<ChartSkeleton />}>
             <CashFlowSection householdId={householdId} period={period} currency={currency} />
           </Suspense>
-          <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[3fr_2fr]">
             <Suspense key={`k-${href(period)}`} fallback={<ListSkeleton label="카테고리 불러오는 중" />}>
               <CategorySection householdId={householdId} period={period} currency={currency} categories={lookups.categories} />
             </Suspense>

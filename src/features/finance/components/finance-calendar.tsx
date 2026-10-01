@@ -6,9 +6,11 @@ import { ChevronLeft, ChevronRight, PanelRightOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { monthGrid } from "@/lib/month-grid";
 import { cn } from "@/lib/utils";
+import type { Charge, DailyBalanceRow } from "../domain/balances";
 import type { DayTotals, Transaction } from "../domain/finance.types";
 import { formatCompact, formatSigned } from "../domain/money";
 import { formatMonth, formatShortDay, monthKey, shiftMonth, type MonthKey } from "../domain/period";
+import { AssetFlow } from "./asset-flow";
 import { DayPanel } from "./day-panel";
 import { useFinance } from "./finance-provider";
 import { DayDrawer } from "./day-drawer";
@@ -45,11 +47,14 @@ export function FinanceCalendar({
   days,
   initialDate,
   initialDayTransactions,
+  assetFlow,
 }: {
   period: MonthKey;
   days: DayTotals[];
   initialDate: string | null;
   initialDayTransactions: Transaction[] | null;
+  /** ADR 0032: null when the balances could not be loaded (the rest of the calendar still works). */
+  assetFlow: { rows: DailyBalanceRow[]; openingDay: string; monthStart: string; monthEnd: string; charges: Charge[] } | null;
 }) {
   const f = useFinance();
   const router = useRouter();
@@ -185,6 +190,12 @@ export function FinanceCalendar({
             </div>
           ))}
         </div>
+
+        {assetFlow ? (
+          <AssetFlow {...assetFlow} selected={panelBeside ? panelDate : validSelected} onSelect={selectDate} />
+        ) : (
+          <p role="alert" className="text-sm text-muted-foreground">자산 흐름을 불러오지 못했습니다.</p>
+        )}
 
         {empty && !navigating && (
           <p className="py-2 text-center text-sm text-muted-foreground">

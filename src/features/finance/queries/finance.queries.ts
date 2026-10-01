@@ -3,6 +3,7 @@ import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { fromDbError } from "@/lib/errors";
 import type { Category, Subscription, Transaction } from "../domain/finance.types";
 import type { CategoryRow, DailyRow, MonthlyRow } from "../domain/aggregate";
+import type { AccountBalance, DailyBalanceRow } from "../domain/balances";
 import type { TransactionFilter } from "../schemas/finance.schema";
 
 /**
@@ -112,4 +113,18 @@ export async function listSubscriptions(supabase: SupabaseServerClient, househol
     .order("name");
   if (error) throw fromDbError(error);
   return data;
+}
+
+/** Every account's balance at the end of `asOf` (ADR 0032), computed in SQL from the transactions. */
+export async function getAccountBalances(supabase: SupabaseServerClient, householdId: string, asOf: string): Promise<AccountBalance[]> {
+  const { data, error } = await supabase.rpc("finance_account_balances", { p_household: householdId, p_as_of: asOf });
+  if (error) throw fromDbError(error);
+  return data.map((r) => ({ accountId: r.account_id, balance: Number(r.balance), reconciledOn: r.reconciled_on }));
+}
+
+/** End-of-day balance and the day's flows per account for each day in [from, to]. */
+export async function getDailyBalances(supabase: SupabaseServerClient, householdId: string, from: string, to: string) {
+  const { data, error } = await supabase.rpc("finance_daily_balances", { p_household: householdId, p_from: from, p_to: to });
+  if (error) throw fromDbError(error);
+  return data.map((r) => ({ ...r, balance: Number(r.balance), inflow: Number(r.inflow), outflow: Number(r.outflow), adjustment: Number(r.adjustment) })) as DailyBalanceRow[];
 }

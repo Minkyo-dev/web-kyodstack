@@ -195,6 +195,11 @@ DailyReview = `daily_reflections`.
 - Categories are deleted logically (ADR 0027): `deleted_at` set ⇒ `is_active = false` (check), and a trigger rejects any
   further update of a deleted row. Deleted categories stay for past transactions but leave settings, pickers and filters.
 - Composite FKs keep account, transfer account, category, payer and account owner inside the household.
+- Balances (ADR 0032): an account's balance on D = Σ effects of its transactions dated ≤ D (INCOME +, EXPENSE −,
+  REFUND +, TRANSFER − on `account_id` and + on `transfer_account_id`, ADJUSTMENT signed). Cards and loans are
+  negative while owed. `finance_account_balances`, `finance_daily_balances` and `finance_reconcile_account` (one
+  ADJUSTMENT, `source = 'SYSTEM'`, for the difference; sets `finance_accounts.reconciled_on`). Net worth = Σ
+  balances; liquid = CHECKING + SAVINGS + CASH; card debt = Σ owed on CREDIT_CARD. `initial_balance` is unused.
 - `finance_subscriptions` (ADR 0029): a recurring-payment plan (MONTHLY/YEARLY, billing day 1–31 clamped to month end,
   billing month for yearly only, start/end, expense category only, `charged_through`). `finance_charge_subscriptions`
   writes each due date as an EXPENSE with `source = 'SUBSCRIPTION'` and `subscription_id`; a unique index on

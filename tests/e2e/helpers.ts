@@ -101,6 +101,10 @@ export async function cleanupFinance(db: SupabaseClient) {
   // Subscription charges carry the plan name as merchant, so the transaction delete below removes them too.
   await db.from("finance_subscriptions").delete().like("name", `${E2E_PREFIX}%`);
   await db.from("finance_transactions").delete().like("merchant_name", `${E2E_PREFIX}%`);
+  // Reconcile adjustments (ADR 0032) are named "잔액 맞추기"; remove the ones on E2E accounts.
+  const { data: e2eAccounts } = await db.from("finance_accounts").select("id").like("name", `${E2E_PREFIX}%`);
+  const accountIds = (e2eAccounts ?? []).map((a) => a.id);
+  if (accountIds.length) await db.from("finance_transactions").delete().eq("type", "ADJUSTMENT").in("account_id", accountIds);
   await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`).not("parent_id", "is", null);
   await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`);
   await db.from("finance_accounts").delete().like("name", `${E2E_PREFIX}%`);

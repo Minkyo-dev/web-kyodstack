@@ -199,6 +199,10 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       `tests/unit/finance-subscription.test.ts`, RLS assertions in `finance.sql`, E2E `finance-recurring.spec.ts`
 - [x] ADR 0030: Pretendard (variable dynamic subset, self-hosted from npm) for Hangul; Geist stays for Latin
 - [x] ADR 0031: E2E runs as the dedicated user `e2e@kyodstack.test` (`.env.local`); helpers refuse a non-`.test` account
+- [x] ADR 0032 (finance upgrade A): balances by reconcile, dashboard "재정 현황" (net worth, liquid, card debt, still
+      due), balances in account settings, calendar "자산 흐름" (daily net worth + forecast, per-account table). Tests
+      `tests/unit/finance-balances.test.ts`, RLS assertions in `finance.sql`, E2E `finance-balances.spec.ts`
+- [ ] Finance upgrade B: budgets (next), then C: analytics
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is

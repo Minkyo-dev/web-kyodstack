@@ -524,7 +524,7 @@ export function BulkEntryGrid({
         hints
       )}
 
-      <div className="overflow-x-auto rounded-lg border bg-card shadow-xs">
+      <div className="relative overflow-x-auto rounded-lg border bg-card shadow-xs">
         <table
           ref={tableRef}
           aria-label="여러 건 입력"

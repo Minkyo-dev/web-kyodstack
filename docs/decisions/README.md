@@ -49,3 +49,4 @@ Template:
 | 0029 | Recurring payments (subscriptions) | accepted |
 | 0030 | Korean webfont (Pretendard) | accepted |
 | 0031 | A dedicated E2E user | accepted |
+| 0032 | Account balances by reconciling, net worth, asset flow | accepted |

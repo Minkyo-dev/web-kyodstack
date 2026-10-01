@@ -11,6 +11,7 @@ import {
   setAccountActiveAction,
   updateAccountAction,
 } from "../actions/finance.actions";
+import type { AccountBalance } from "../domain/balances";
 import { moveInOrder } from "../domain/category-tree";
 import {
   ACCOUNT_TYPES,
@@ -20,16 +21,12 @@ import {
   type AccountType,
   type OwnershipType,
 } from "../domain/finance.types";
+import { BalanceText, ReconciledNote } from "./account-balances";
+import { ACCOUNT_GROUPS } from "../domain/account-groups";
 import { useFinance } from "./finance-provider";
+import { ReconcileButton } from "./reconcile-dialog";
 import { Field, selectClass } from "./transaction-form";
 
-/** Spec §24 grouping: cash & bank, credit cards, other personal accounts, then joint ("Shared") accounts. */
-const GROUPS: { label: string; match: (a: Account) => boolean }[] = [
-  { label: "현금·은행", match: (a) => a.ownership_type === "PERSONAL" && ["CHECKING", "SAVINGS", "CASH"].includes(a.account_type) },
-  { label: "신용카드", match: (a) => a.ownership_type === "PERSONAL" && a.account_type === "CREDIT_CARD" },
-  { label: "투자·대출·기타", match: (a) => a.ownership_type === "PERSONAL" && ["INVESTMENT", "LOAN", "OTHER"].includes(a.account_type) },
-  { label: "공동", match: (a) => a.ownership_type === "JOINT" },
-];
 
 function AccountForm({ account, onDone }: { account?: Account; onDone: () => void }) {
   const f = useFinance();
@@ -110,7 +107,7 @@ function AccountForm({ account, onDone }: { account?: Account; onDone: () => voi
   );
 }
 
-function AccountRow({ account, siblings }: { account: Account; siblings: string[] }) {
+function AccountRow({ account, siblings, balance }: { account: Account; siblings: string[]; balance?: number }) {
   const f = useFinance();
   const { run, pending } = useActionRunner();
   const [editing, setEditing] = useState(false);
@@ -134,6 +131,13 @@ function AccountRow({ account, siblings }: { account: Account; siblings: string[
         <p className="truncate text-sm font-medium">{account.name}</p>
         <p className="truncate text-xs text-muted-foreground">{meta.join(" · ")}</p>
       </div>
+      {balance !== undefined && (
+        <div className="text-right">
+          <BalanceText account={account} balance={balance} className="block text-sm" />
+          <ReconciledNote account={account} />
+        </div>
+      )}
+      <ReconcileButton account={account} compact />
       {account.is_active && (
         <>
           <Button variant="ghost" size="icon-sm" aria-label={`${account.name} 위로`} disabled={pending || i <= 0} onClick={() => move(-1)}>
@@ -172,13 +176,14 @@ function AccountRow({ account, siblings }: { account: Account; siblings: string[
 }
 
 /** Accounts (spec §24): create, rename, type/owner/institution, reorder, archive. */
-export function AccountSettings() {
+export function AccountSettings({ balances }: { balances?: AccountBalance[] }) {
   const f = useFinance();
   const [adding, setAdding] = useState(false);
   const active = f.accounts.filter((a) => a.is_active);
   const archived = f.accounts.filter((a) => !a.is_active);
   // Reordering works on the household's whole active list so groups keep a stable relative order.
   const order = active.map((a) => a.id);
+  const balanceOf = (id: string) => balances?.find((b) => b.accountId === id)?.balance;
 
   return (
     <div className="space-y-5">
@@ -187,7 +192,7 @@ export function AccountSettings() {
           아직 계좌가 없습니다. 거래를 기록하려면 계좌를 먼저 추가하세요.
         </p>
       )}
-      {GROUPS.map((g) => {
+      {ACCOUNT_GROUPS.map((g) => {
         const items = active.filter(g.match);
         if (items.length === 0) return null;
         const siblings = order.filter((id) => items.some((a) => a.id === id));
@@ -196,7 +201,7 @@ export function AccountSettings() {
             <h2 className="text-xs font-semibold tracking-widest text-muted-foreground">{g.label}</h2>
             <ul className="divide-y divide-border border-b border-border">
               {items.map((a) => (
-                <AccountRow key={a.id} account={a} siblings={siblings} />
+                <AccountRow key={a.id} account={a} siblings={siblings} balance={balanceOf(a.id)} />
               ))}
             </ul>
           </section>
@@ -218,7 +223,7 @@ export function AccountSettings() {
           </summary>
           <ul className="divide-y divide-border" aria-label="보관된 계좌">
             {archived.map((a) => (
-              <AccountRow key={a.id} account={a} siblings={[]} />
+              <AccountRow key={a.id} account={a} siblings={[]} balance={balanceOf(a.id)} />
             ))}
           </ul>
         </details>

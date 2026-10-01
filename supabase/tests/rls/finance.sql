@@ -291,6 +291,58 @@ do $$ declare n int; begin
     'charges stay, unlinked';
 end $$;
 
+-- ADR 0032: balances. Joint has income 4200 and a transfer out of 1000 on 2026-10-05; A card has the expense 100,
+-- refund 30 and the transfer in on that day. Reconciling records the difference as an adjustment once, which stays
+-- out of cash flow; C and future dates are rejected.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+do $$ declare r record; d numeric; begin
+  select * into r from public.finance_daily_balances((select v from ids where k = 'h1'), '2026-10-04', '2026-10-06')
+    where account_id = (select v from ids where k = 'joint') and day = '2026-10-05';
+  assert r.balance = 3200 and r.inflow = 4200 and r.outflow = 1000 and r.adjustment = 0, format('joint day %s', r);
+  select * into r from public.finance_daily_balances((select v from ids where k = 'h1'), '2026-10-04', '2026-10-06')
+    where account_id = (select v from ids where k = 'a_acct') and day = '2026-10-05';
+  assert r.inflow = 1030 and r.outflow = 100, format('card day %s', r);
+  assert (select count(*) from public.finance_daily_balances((select v from ids where k = 'h1'), '2026-10-04', '2026-10-06')
+          where account_id = (select v from ids where k = 'joint')) = 3, 'one row per day';
+
+  assert (select balance from public.finance_account_balances((select v from ids where k = 'h1'), current_date)
+          where account_id = (select v from ids where k = 'joint')) = 0, 'joint is 0 today';
+  d := public.finance_reconcile_account((select v from ids where k = 'joint'), current_date, 500);
+  assert d = 500, format('reconcile diff %s', d);
+  d := public.finance_reconcile_account((select v from ids where k = 'joint'), current_date, 500);
+  assert d = 0, 'second reconcile writes nothing';
+  assert (select count(*) from public.finance_transactions where account_id = (select v from ids where k = 'joint')
+          and type = 'ADJUSTMENT' and source = 'SYSTEM' and amount = 500) = 1, 'one adjustment';
+  select * into r from public.finance_account_balances((select v from ids where k = 'h1'), '2026-10-05')
+    where account_id = (select v from ids where k = 'joint');
+  assert r.balance = 3700 and r.reconciled_on = current_date, format('joint after reconcile %s', r);
+  assert (select coalesce(sum(income), 0) from public.finance_daily_totals((select v from ids where k = 'h1'), current_date, current_date)) = 0,
+    'adjustment stays out of cash flow';
+  begin
+    perform public.finance_reconcile_account((select v from ids where k = 'joint'), current_date + 30, 1);
+    raise exception 'future reconcile allowed';
+  exception when invalid_parameter_value then null;
+  end;
+  begin
+    perform public.finance_reconcile_account((select v from ids where k = 'c_acct'), current_date, 1);
+    raise exception 'A reconciled a C account';
+  exception when no_data_found then null;
+  end;
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000c","role":"authenticated"}', true);
+do $$ begin
+  begin
+    perform public.finance_account_balances((select v from ids where k = 'h1'), current_date);
+    raise exception 'C read H1 balances';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.finance_daily_balances((select v from ids where k = 'h1'), current_date, current_date);
+    raise exception 'C read H1 daily balances';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
 -- The owner can delete the household; everything in it goes with it.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
 do $$ declare n int; begin

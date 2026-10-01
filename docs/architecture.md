@@ -28,8 +28,8 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/scheduler/projects/[id]` | (private) | milestones, tasks, progress, settings, AI suggestions |
 | `/scheduler/review?week=` | (private) | deterministic weekly metrics + AI interpretation |
 | `POST /api/ai/weekly-review`, `POST /api/ai/daily-recommendations` | route handlers | generation (auth via cookie, `runRoute`) |
-| `/finance?mode=monthly\|yearly&year=&month=` | (private) | household finance dashboard (ADR 0025); without a household the finance layout shows onboarding |
-| `/finance/calendar?month=yyyy-MM&date=yyyy-MM-dd` | (private) | daily totals grid + Day Drawer (date is a shallow URL update) + day panel: totals, the day's transactions, entry grid (ADR 0028) |
+| `/finance?mode=monthly\|yearly&year=&month=` | (private) | household finance dashboard (ADR 0025) with "재정 현황" balances (ADR 0032); without a household the finance layout shows onboarding |
+| `/finance/calendar?month=yyyy-MM&date=yyyy-MM-dd` | (private) | daily totals grid + Day Drawer (date is a shallow URL update) + day panel: totals, the day's transactions, entry grid (ADR 0028) + "자산 흐름" net-worth chart and account table (ADR 0032) |
 | `/finance/transactions?from&to&type&category&account&paidBy&min&max&q` | (private) | search / filter list (GET form) |
 | `/finance/transactions/bulk` | (private) | bulk entry grid for expenses / income (ADR 0027) |
 | `/finance/recurring` | (private) | recurring payments: plans, next due date, monthly total (ADR 0029) |
@@ -65,7 +65,7 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/lib/supabase/admin.ts`, `src/lib/job-route.ts` | service-role client (jobs only) and the secret-checked job endpoint wrapper |
 | `src/lib/route.ts` | `runRoute()`: the Route Handler version of `runAction` (JSON + HTTP status mapping) |
 | `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` / `MonthlyCalendar` (FullCalendar timeGrid / dayGrid, dynamic ssr:false; `?view=month`, ADR 0024), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
-| `src/features/finance` | household finance (ADR 0025): pure `domain/{money,period,aggregate,category-tree,bulk-entry,subscription}`, `schemas`, `queries/household.queries` (`getFinanceContext` (also records due subscription charges), `getFinanceLookups`, per-request cached) and `finance.queries` (SQL aggregates, day/recent/filtered rows), `services/{household,account,category,transaction,subscription,dashboard}` (household id always from the membership), one `actions/finance.actions.ts`, components (`FinanceProvider` with the lookups from the finance layout, `TransactionForm`, `TransactionDetail`, `DayDrawer`, `FinanceCalendar`, `BulkEntryGrid`, `CashFlowChart`, dashboard sections, settings) |
+| `src/features/finance` | household finance (ADR 0025): pure `domain/{money,period,aggregate,category-tree,bulk-entry,subscription,balances,account-groups}`, `schemas`, `queries/household.queries` (`getFinanceContext` (also records due subscription charges), `getFinanceLookups`, per-request cached) and `finance.queries` (SQL aggregates, day/recent/filtered rows), `services/{household,account,category,transaction,subscription,balance,dashboard}` (household id always from the membership), one `actions/finance.actions.ts`, components (`FinanceProvider` with the lookups from the finance layout, `TransactionForm`, `TransactionDetail`, `DayDrawer`, `FinanceCalendar`, `BulkEntryGrid`, `CashFlowChart`, dashboard sections, settings) |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 
 ## Calendar data flow

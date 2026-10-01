@@ -54,6 +54,22 @@ export function nextDueDate(plan: SubscriptionPlan, today: string): string | nul
   return null;
 }
 
+/**
+ * Every date in [from, to] this plan will still charge on: active, inside start/end, after `charged_through`. Used for
+ * "still due this month" and the calendar's forecast line (ADR 0032).
+ */
+export function dueDatesBetween(plan: SubscriptionPlan, from: string, to: string): string[] {
+  const dates: string[] = [];
+  let cursor = from;
+  while (cursor <= to) {
+    const due = nextDueDate(plan, cursor);
+    if (!due || due > to) break;
+    dates.push(due);
+    cursor = nextDayOf(due);
+  }
+  return dates;
+}
+
 /** What the plan costs per month (a yearly amount spread over 12), for the list total. */
 export function monthlyAmount(plan: { billing_cycle: string; amount: number }): number {
   return plan.billing_cycle === "YEARLY" ? fromCents(Math.round(toCents(plan.amount) / 12)) : plan.amount;

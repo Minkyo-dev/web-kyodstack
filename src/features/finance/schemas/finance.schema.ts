@@ -177,6 +177,29 @@ export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
 
 export const subscriptionIdSchema = z.object({ id: z.uuid() });
 
+// ------------------------------------------------------------------ balances (ADR 0032)
+
+/** The real balance on a date; signed (cards and loans are negative), 0 allowed, at most two decimals. */
+export const reconcileSchema = z.object({
+  accountId: z.uuid(),
+  date: localDate,
+  actual: z.union([z.string(), z.number()]).transform((v, ctx) => {
+    const text = String(v).trim().replace(/[,$\s]/g, "");
+    if (!/^-?\d+(\.\d{1,2})?$/.test(text)) {
+      ctx.addIssue({ code: "custom", message: "잔액은 소수점 둘째 자리까지의 숫자여야 합니다." });
+      return z.NEVER;
+    }
+    const n = Number(text);
+    if (Math.abs(n) >= 1e12) {
+      ctx.addIssue({ code: "custom", message: "금액이 너무 큽니다." });
+      return z.NEVER;
+    }
+    return n;
+  }),
+});
+export type ReconcileInput = z.infer<typeof reconcileSchema>;
+export const balanceOnSchema = z.object({ accountId: z.uuid(), date: localDate });
+
 /** Transactions page filters (spec §23). Every field is optional; bad values are dropped, never errors. */
 export const transactionFilterSchema = z.object({
   from: localDate.optional().catch(undefined),

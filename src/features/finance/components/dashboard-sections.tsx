@@ -2,10 +2,11 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
-import type { Category } from "../domain/finance.types";
-import { formatMoney, formatPercent, formatSigned } from "../domain/money";
-import { shiftMonth, type MonthKey } from "../domain/period";
-import { listRecentTransactions } from "../queries/finance.queries";
+import type { Account, Category } from "../domain/finance.types";
+import { formatMoney, formatPercent, formatSigned, sumAmounts } from "../domain/money";
+import { monthRange, shiftMonth, type MonthKey } from "../domain/period";
+import { getAccountBalances, listRecentTransactions, listSubscriptions } from "../queries/finance.queries";
+import { position, upcomingCharges } from "../domain/balances";
 import {
   getCategoryBreakdown,
   getMonthlyCashFlow,
@@ -14,6 +15,7 @@ import {
   getYearlySummary,
 } from "../services/dashboard.service";
 import { CashFlowChart, type FlowBucket } from "./cash-flow-chart";
+import { AccountBalanceList } from "./account-balances";
 import { RecentTransactions } from "./recent-transactions";
 
 export type DashboardPeriod = { mode: "monthly"; key: MonthKey } | { mode: "yearly"; year: number };
@@ -139,6 +141,72 @@ export async function CategorySection({
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/**
+ * "재정 현황" (ADR 0032): balances at the end of the period (today while it is still running), net worth, liquid assets,
+ * card debt and, for the current month, the subscription charges still to come.
+ */
+export async function PositionSection({
+  householdId,
+  period,
+  currency,
+  today,
+  accounts,
+}: {
+  householdId: string;
+  period: DashboardPeriod;
+  currency: string;
+  today: string;
+  accounts: Account[];
+}) {
+  const end = period.mode === "monthly" ? monthRange(period.key.year, period.key.month).to : `${period.year}-12-31`;
+  const asOf = end < today ? end : today;
+  const current = period.mode === "monthly" && today.startsWith(end.slice(0, 7));
+  const supabase = await createClient();
+  let balances;
+  try {
+    balances = await getAccountBalances(supabase, householdId, asOf);
+  } catch {
+    return (
+      <section aria-labelledby="position" className="space-y-2">
+        <h2 id="position" className="text-sm font-medium">재정 현황</h2>
+        <p role="alert" className="text-sm text-muted-foreground">잔액을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+      </section>
+    );
+  }
+  const due = current ? upcomingCharges(await listSubscriptions(supabase, householdId), today, end) : [];
+  const p = position(accounts, balances);
+  const anyReconciled = accounts.some((a) => a.reconciled_on);
+  const dueTotal = sumAmounts(due.map((c) => c.amount));
+  const asOfLabel = asOf === today ? "오늘 기준" : `${Number(asOf.slice(5, 7))}/${Number(asOf.slice(8))} 기준`;
+
+  return (
+    <section aria-labelledby="position" className="space-y-3">
+      <h2 id="position" className="flex items-baseline gap-2 text-sm font-medium">
+        재정 현황 <span className="text-xs font-normal text-muted-foreground">{asOfLabel}</span>
+      </h2>
+      {anyReconciled ? (
+        <dl aria-label="재정 현황 요약" className={cn("grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border", current ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+          <Metric label="순자산" value={formatSigned(p.netWorth, currency)} change={<p className="text-xs text-muted-foreground">모든 계좌 잔액의 합</p>} />
+          <Metric label="현금성 자산" value={formatMoney(p.liquid, currency)} change={<p className="text-xs text-muted-foreground">입출금·저축·현금</p>} />
+          <Metric label="카드 대금" value={formatMoney(p.cardDebt, currency)} change={<p className="text-xs text-muted-foreground">갚을 돈</p>} />
+          {current && (
+            <Metric
+              label="이번 달 남은 예정 지출"
+              value={formatMoney(dueTotal, currency)}
+              change={<p className="text-xs text-muted-foreground">정기 결제 {due.length}건</p>}
+            />
+          )}
+        </dl>
+      ) : (
+        <p className="rounded-lg border border-dashed border-border px-4 py-4 text-sm text-muted-foreground">
+          계좌마다 현재 잔액을 한 번 입력하면 순자산과 잔액 흐름을 볼 수 있습니다. 아래 계좌의 ‘시작 잔액 설정’을 눌러 보세요.
+        </p>
+      )}
+      <AccountBalanceList balances={balances} />
     </section>
   );
 }

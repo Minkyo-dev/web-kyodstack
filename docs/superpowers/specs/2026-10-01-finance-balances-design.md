@@ -11,7 +11,7 @@ this month. The user chose:
 - a "재정 현황" (financial position) section on the dashboard (no new tab);
 - under the calendar, the month's asset flow: a daily net-worth chart plus a per-account table.
 
-## 1. Calculation and data (no new table)
+## 1. Calculation and data (no new table; one column, `finance_accounts.reconciled_on`, added during implementation, see ADR 0032)
 - **Effect of a transaction on an account's balance**
   - INCOME: `+amount`
   - EXPENSE: `−amount`

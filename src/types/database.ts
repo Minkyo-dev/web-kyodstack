@@ -346,6 +346,7 @@ export type Database = {
           name: string
           owner_user_id: string | null
           ownership_type: string
+          reconciled_on: string | null
           sort_order: number
           updated_at: string
         }
@@ -361,6 +362,7 @@ export type Database = {
           name: string
           owner_user_id?: string | null
           ownership_type?: string
+          reconciled_on?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -376,6 +378,7 @@ export type Database = {
           name?: string
           owner_user_id?: string | null
           ownership_type?: string
+          reconciled_on?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -2969,6 +2972,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      finance_account_balances: {
+        Args: { p_as_of: string; p_household: string }
+        Returns: {
+          account_id: string
+          balance: number
+          reconciled_on: string
+        }[]
+      }
       finance_cash_flow: {
         Args: { p_from: string; p_household: string; p_to: string }
         Returns: {
@@ -2993,6 +3004,17 @@ export type Database = {
         Args: { p_display_name: string; p_name: string }
         Returns: string
       }
+      finance_daily_balances: {
+        Args: { p_from: string; p_household: string; p_to: string }
+        Returns: {
+          account_id: string
+          adjustment: number
+          balance: number
+          day: string
+          inflow: number
+          outflow: number
+        }[]
+      }
       finance_daily_totals: {
         Args: { p_from: string; p_household: string; p_to: string }
         Returns: {
@@ -3012,6 +3034,10 @@ export type Database = {
           income: number
           month: number
         }[]
+      }
+      finance_reconcile_account: {
+        Args: { p_account: string; p_actual: number; p_date: string }
+        Returns: number
       }
       finance_reorder: {
         Args: { p_ids: string[]; p_table: string }

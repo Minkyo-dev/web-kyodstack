@@ -7,6 +7,7 @@ import * as accounts from "../services/account.service";
 import * as categories from "../services/category.service";
 import * as transactions from "../services/transaction.service";
 import * as subscriptions from "../services/subscription.service";
+import * as balances from "../services/balance.service";
 import {
   createAccountSchema,
   createCategorySchema,
@@ -17,6 +18,8 @@ import {
   deleteCategorySchema,
   dayTransactionsSchema,
   deleteTransactionSchema,
+  reconcileSchema,
+  balanceOnSchema,
   emptySchema,
   joinHouseholdSchema,
   renameHouseholdSchema,
@@ -182,5 +185,20 @@ export async function setSubscriptionActiveAction(input: unknown) {
 export async function deleteSubscriptionAction(input: unknown) {
   return runAction("finance.subscription.delete", subscriptionIdSchema, input, async (data, ctx) =>
     done(await subscriptions.deleteSubscription(ctx, data.id)),
+  );
+}
+
+// ------------------------------------------------------------------ balances (ADR 0032)
+
+/** Read: the computed balance on a date, for the reconcile preview. */
+export async function getAccountBalanceAction(input: unknown) {
+  return runAction("finance.balance.read", balanceOnSchema, input, async (data, ctx) =>
+    balances.getAccountBalanceOn(ctx, data.accountId, data.date),
+  );
+}
+
+export async function reconcileAccountAction(input: unknown) {
+  return runAction("finance.balance.reconcile", reconcileSchema, input, async (data, ctx) =>
+    done(await balances.reconcileAccount(ctx, data)),
   );
 }

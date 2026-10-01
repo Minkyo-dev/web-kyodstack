@@ -3,8 +3,9 @@ import { requireUserOrRedirect } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { isLocalDateString } from "@/features/scheduler/utils/timezone";
 import { FinanceCalendar } from "@/features/finance/components/finance-calendar";
-import { monthKey, parseMonthKey } from "@/features/finance/domain/period";
-import { listTransactionsByDate } from "@/features/finance/queries/finance.queries";
+import { monthKey, monthRange, parseMonthKey } from "@/features/finance/domain/period";
+import { getDailyBalances, listSubscriptions, listTransactionsByDate } from "@/features/finance/queries/finance.queries";
+import { upcomingCharges } from "@/features/finance/domain/balances";
 import { getFinanceContext } from "@/features/finance/queries/household.queries";
 import { getCalendarSummary } from "@/features/finance/services/dashboard.service";
 
@@ -25,14 +26,29 @@ export default async function FinanceCalendarPage({
   const date = dateParam?.startsWith(monthKey(period.year, period.month)) ? dateParam : null;
 
   const supabase = await createClient();
-  const [days, dayTransactions] = await Promise.all([
+  // ADR 0032: balances from the previous month's last day (the opening) to the month end, or today if earlier.
+  const { from: monthStart, to: monthEnd } = monthRange(period.year, period.month);
+  const openingDay = new Date(Date.UTC(period.year, period.month - 1, 0)).toISOString().slice(0, 10);
+  const loadTo = monthEnd < ctx.today ? monthEnd : ctx.today < openingDay ? openingDay : ctx.today;
+  const [days, dayTransactions, balanceRows, plans] = await Promise.all([
     getCalendarSummary(supabase, ctx.household.id, period),
     date ? listTransactionsByDate(supabase, ctx.household.id, date) : Promise.resolve(null),
+    getDailyBalances(supabase, ctx.household.id, openingDay, loadTo).catch(() => null),
+    listSubscriptions(supabase, ctx.household.id).catch(() => []),
   ]);
+  const assetFlow = balanceRows
+    ? { rows: balanceRows, openingDay, monthStart, monthEnd, charges: upcomingCharges(plans, ctx.today, monthEnd) }
+    : null;
 
   return (
     <div className="p-4 md:p-6">
-      <FinanceCalendar period={period} days={days} initialDate={date} initialDayTransactions={dayTransactions} />
+      <FinanceCalendar
+        period={period}
+        days={days}
+        initialDate={date}
+        initialDayTransactions={dayTransactions}
+        assetFlow={assetFlow}
+      />
     </div>
   );
 }
