@@ -65,17 +65,20 @@ All tables: `user_id uuid not null references auth.users on delete cascade`, `cr
 ## 2. Feature module `src/features/direction`
 ```
 domain/direction.types.ts        statuses, row types, Breadcrumb type
-domain/breadcrumb.ts             pure: buildBreadcrumb(task, project, mission, path, protocol) → crumbs | MAINTENANCE
+domain/breadcrumb.ts             pure: buildBreadcrumb(task) → crumbs | MAINTENANCE; effectiveMissionId(task)
+domain/link-rules.ts             pure: missionConflict, countProjectConflicts, isNewLink
 schemas/direction.schema.ts      Zod for every action below
 services/direction.service.ts    CRUD, switchPath (rpc), resolveDirectionLink(ctx, {missionId, protocolId})
-queries/direction.queries.ts     loadDirective(ctx), listMissionOptions(ctx), getMissionDetail(ctx, id), loadBreadcrumbs(ctx, taskIds)
+queries/direction.queries.ts     loadDirective, listMissionOptions, getMissionDetail, getMissionRef
 actions/direction.actions.ts     server actions (Zod → user → service → ActionResult)
-components/                      directive page parts, MissionPicker, Breadcrumb
+components/                      directive page parts, DirectionPicker, DirectionBreadcrumb
 ```
 - Dependency direction: `scheduler` and `projects` services call `resolveDirectionLink`; `direction` imports neither.
+- Breadcrumb data needs no extra query: `TASK_SELECT`/`BLOCK_SELECT` embed `mission`, `protocol → path` and
+  `project → mission` through the named composite FKs.
 - `resolveDirectionLink` returns `{ mission_id, protocol_id }`, checking ownership and `active` status of each ID,
-  and filling `mission_id` from the protocol. `resolveTaskLink` (projects) is extended to return the project's
-  `mission_id` so the task service can apply the mismatch rule.
+  and filling `mission_id` from the protocol. A new `getProjectMissionId(ctx, projectId)` in the projects service
+  gives the task service the project's mission for the mismatch rule.
 
 ### Actions
 | action | input |
@@ -103,14 +106,15 @@ All mutations `revalidatePath` the directive page, `/scheduler` and `/scheduler/
 - Added to `private-nav` between the scheduler and projects entries (label = `terms.directive` group name:
   "DIRECTIVE" / "방향").
 - **Top block:** `SYSTEM DIRECTIVE` heading, the statement (or the empty state "SYSTEM DIRECTIVE가 설정되지
-  않았습니다" + [설정]), edit in a dialog. Below it, identity chips; the first active identity is labeled
-  `CLASS`. Identity management dialog: add, rename, archive, reorder with ↑/↓.
+  않았습니다" + [설정]), edited inline. Below it, identity chips; the first active identity is labeled
+  `CLASS`. Identity management is inline: add, archive, reorder with ↑/↓.
 - **Left column:** missions grouped as active / achieved / dropped (the last two collapsed). Card: title, deadline
   (with the existing `DueBadge`), identity chips, criteria `met/total` as text. [+ MISSION] opens the create form.
-- **Right column (`?mission=`):** mission header with edit and close (achieve / drop, with confirm); success
+- **Right column (`?mission=`):** mission header; a collapsed settings form (title, outcome, deadline, identities,
+  status active / achieved / dropped); success
   criteria list (check toggles, numeric "current / target unit" inline edit); `SELECTED PATH` block (title,
-  approach, "포기하는 것" = trade-offs; [편집], [PATH 교체] opening a dialog that states the current path will be
-  retired); retired paths collapsed with their dates; protocol list (title, ordered steps, intended minutes,
+  approach, "포기하는 것" = trade-offs; [편집]; a [PATH 교체] inline form that states the current path will be
+  retired and its protocols archived); retired paths collapsed with their dates; protocol list (title, ordered steps, intended minutes,
   archive); linked projects as links to `/scheduler/projects?project=`.
 - Layout and density follow the projects page (left list / right detail, stacked on mobile). Section dividers are
   `border-t`. Statuses always have text, not color alone.
@@ -143,13 +147,15 @@ All mutations `revalidatePath` the directive page, `/scheduler` and `/scheduler/
   - `task_plan_actual.effective_mission_id` comes from the project when the task has none.
 - **Unit:** `buildBreadcrumb` (protocol chain, direct mission, project-derived, closed mission, maintenance);
   Zod schemas.
-- **Service** (with the existing Supabase test doubles): `resolveDirectionLink` rejects foreign/closed IDs and fills
-  the mission from the protocol; mission mismatch on task create/update; project mission change rejected when
-  tasks conflict.
+- **Link rules** (pure, `tests/unit/direction-links.test.ts`): `missionConflict`, `countProjectConflicts`,
+  `isNewLink`. The repo has no Supabase test doubles; ownership and foreign IDs are covered by the SQL tests and
+  the E2E.
 - **E2E** `tests/e2e/directive.spec.ts`: set directive → add identity → create mission with one criterion → create path →
   add protocol → create a task linked to the protocol → drawer shows the breadcrumb → switch path → the old path
   appears under history and the task breadcrumb still shows it. All titles `[e2e]`-prefixed; cleanup deletes
-  tasks first, then protocols/paths/criteria/missions/identities/purposes with the prefix.
+  tasks first, then protocols/paths/criteria/missions/identities/purposes with the prefix. Setting an `[e2e]`
+  directive archives the owner's real one, so cleanup re-activates the newest archived purpose when none is active.
+  The test turns gamification off (plain terms) and restores the profile afterwards, like `quests.spec.ts`.
 - Existing suites keep passing.
 
 ## 6. Docs
