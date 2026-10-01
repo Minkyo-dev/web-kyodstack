@@ -7,6 +7,7 @@ import { rebuildDurationGroups } from "@/features/scheduler/services/duration-gr
 import { writeDailySnapshot } from "@/features/analytics/services/snapshot.service";
 import { reconcileProgress } from "@/features/gamification/services/progress.service";
 import { runAiNightly } from "@/features/ai/services/ai-nightly.service";
+import { syncRecentFocusChecks } from "@/features/direction/services/habit.service";
 import { pickQuestObjectives } from "@/features/ai/services/quest-picker.service";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
@@ -70,10 +71,12 @@ export function runDurationProfileRefresh(admin: SupabaseServerClient, now = new
       const missed = await markMissedBlocks(ctx.supabase, ctx.user.id);
       const groups = await rebuildDurationGroups(ctx);
       const snapshots = await writeDailySnapshot(ctx, now);
+      // Focus habits (G2) before XP, so their checks are in today's facts.
+      const habits = await syncRecentFocusChecks(ctx, now).catch(() => 0);
       // The AI picks today's daily quest here only (F2 spec §2); pages never wait on it.
       const xp = await reconcileProgress(ctx, now, { picker: (input) => pickQuestObjectives(ctx, input) });
       const ai = await runAiNightly(ctx).catch(() => ({ classified: 0, interpreted: 0, analyzed: 0 }));
-      return { status: "succeeded", detail: { groups, missed, snapshots, xp, ai } };
+      return { status: "succeeded", detail: { groups, missed, snapshots, habits, xp, ai } };
     },
   );
 }

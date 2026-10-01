@@ -38,6 +38,8 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
     }
     listeners.forEach((l) => l());
   };
+  // Habits are the DAILY QUESTS now (G2); the metric daily quest is the SYSTEM QUEST.
+  const label = (type: QuestView["type"]) => (type === "daily" ? terms.systemQuest : QUEST_META[type].label);
   const daily = quests.find((q) => q.type === "daily");
   const others = quests.filter((q) => q.type !== "daily");
 
@@ -45,7 +47,7 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
     <section aria-label="퀘스트" className="mx-4 mb-2 rounded-md border border-border text-xs">
       <button type="button" onClick={toggle} aria-expanded={!collapsed} className="flex w-full items-center gap-1.5 px-3 py-2 font-mono tracking-wider">
         {collapsed ? <ChevronRight className="size-3.5" aria-hidden /> : <ChevronDown className="size-3.5" aria-hidden />}
-        QUESTS
+        {terms.systemQuests}
         <span className="ml-auto text-muted-foreground">
           {quests.filter((q) => q.status === "cleared").length}/{quests.length} CLEARED
         </span>
@@ -56,7 +58,7 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
           {others.map((q) => (
             <div key={q.id}>
               <button type="button" onClick={() => setOpen(open === q.id ? null : q.id)} aria-expanded={open === q.id} className="flex w-full items-center gap-1.5 text-left">
-                <span className="font-mono tracking-wider">{QUEST_META[q.type].label}</span>
+                <span className="font-mono tracking-wider">{label(q.type)}</span>
                 <span className="text-muted-foreground">· {q.title}</span>
                 <span className="ml-auto tabular-nums text-muted-foreground">
                   {q.status === "cleared" ? "CLEARED" : `${q.objectives.filter((o) => o.done).length}/${q.objectives.length}`}
@@ -72,10 +74,10 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
 
   function QuestBlock({ quest, expanded = false }: { quest: QuestView; expanded?: boolean }) {
     return (
-      <div aria-label={`${QUEST_META[quest.type].label} ${quest.title}`} className="space-y-1">
+      <div aria-label={`${label(quest.type)} ${quest.title}`} className="space-y-1">
         {expanded && (
           <p className="flex items-baseline gap-1.5">
-            <span className="font-mono tracking-wider">{QUEST_META[quest.type].label}</span>
+            <span className="font-mono tracking-wider">{label(quest.type)}</span>
             <span className="text-muted-foreground">· {quest.title} · +{quest.rewardXp} XP</span>
             {quest.status === "cleared" && <span className="ml-auto font-mono">CLEARED</span>}
           </p>

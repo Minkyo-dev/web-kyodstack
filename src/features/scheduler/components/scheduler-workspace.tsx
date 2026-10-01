@@ -77,6 +77,8 @@ export type SchedulerWorkspaceProps = {
   proposals: Record<string, Proposal[]>;
   /** Quest panel slot composed by the page (E2). */
   questPanel?: React.ReactNode;
+  /** Habit panel slot composed by the page (G2). */
+  habitPanel?: React.ReactNode;
 };
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
@@ -191,6 +193,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           upcomingTaskIds={upcomingTaskIds}
           onStartTask={startTask}
           questPanel={props.questPanel}
+          habitPanel={props.habitPanel}
           onOpenTask={setSelectedTaskId}
         />
         <section aria-label="주간 캘린더" className="flex min-h-[480px] min-w-0 flex-1 flex-col md:min-h-0">

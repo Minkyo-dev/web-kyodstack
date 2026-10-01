@@ -44,7 +44,7 @@ test.describe("quests, achievements, titles, terminology", () => {
       // Daily quest panel; swap one objective once.
       await page.goto("/scheduler");
       const panel = page.getByRole("region", { name: "퀘스트" });
-      await expect(panel).toContainText("DAILY QUEST");
+      await expect(panel).toContainText(/SYSTEM QUEST|오늘의 목표/); // G2 relabel; depends on the terminology setting
       await panel.getByRole("button", { name: /교체$/ }).first().click();
       await expect(page.getByText("목표를 바꿨습니다.")).toBeVisible();
       await expect(panel.getByRole("button", { name: /교체$/ })).toHaveCount(0);

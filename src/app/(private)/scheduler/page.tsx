@@ -33,6 +33,10 @@ import { ensureQuests } from "@/features/gamification/services/quest.service";
 import { toQuestViews, type QuestView } from "@/features/gamification/utils/quest-view";
 import { QuestPanel } from "@/features/gamification/components/quest-panel";
 import { log } from "@/lib/logger";
+import { HabitPanel } from "@/features/direction/components/habit-panel";
+import { listTodayHabits } from "@/features/direction/queries/habit.queries";
+import { syncFocusChecks } from "@/features/direction/services/habit.service";
+import type { HabitToday } from "@/features/direction/domain/direction.types";
 import {
   addLocalDays,
   isLocalDateString,
@@ -123,6 +127,15 @@ export default async function SchedulerPage({
     listOpenProposals(supabase, user.id, visibleTaskIds),
   ]);
 
+  // Habits (G2): focus checks are recorded lazily here; a failure only hides the panel.
+  let habits: HabitToday[] = [];
+  try {
+    await syncFocusChecks({ user, supabase }, [today]);
+    habits = await listTodayHabits(supabase, user.id, today, timezone);
+  } catch (error) {
+    log({ action: "habits.today", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+  }
+
   // Quests (E2): generated lazily here; a failure only hides the panel.
   let quests: QuestView[] = [];
   const profile = await getPlayerProfile(supabase, user.id);
@@ -162,6 +175,7 @@ export default async function SchedulerPage({
       recommendations={recommendations}
       proposals={proposals}
       questPanel={quests.length ? <QuestPanel quests={quests} /> : null}
+      habitPanel={habits.length ? <HabitPanel habits={habits} /> : null}
     />
   );
 }

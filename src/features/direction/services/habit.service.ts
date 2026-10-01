@@ -2,7 +2,7 @@ import "server-only";
 import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
-import { todayLocalDate } from "@/features/scheduler/utils/timezone";
+import { addLocalDays, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { isNewLink } from "../domain/link-rules";
 import { canCheckToday, isDueOn, focusMinutesFor } from "../domain/habits";
 import type { Habit } from "../domain/direction.types";
@@ -148,4 +148,11 @@ export async function syncFocusChecks(ctx: ActionContext, dates: string[]): Prom
     }
   }
   return inserted;
+}
+
+/** Nightly: yesterday and today in the user's zone (late sessions settle yesterday). */
+export async function syncRecentFocusChecks(ctx: ActionContext, now = new Date()): Promise<number> {
+  const { timezone } = await getSchedulerContext(ctx.supabase, ctx.user.id);
+  const today = todayLocalDate(timezone, now);
+  return syncFocusChecks(ctx, [addLocalDays(today, -1, timezone), today]);
 }
