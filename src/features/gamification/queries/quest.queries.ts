@@ -65,6 +65,15 @@ export async function loadQuestGenContext(supabase: SupabaseServerClient, userId
   const plannedBlocks = blocks.data!.filter((b) => b.status === "planned");
   const plannedTaskIds = [...new Set([...plannedBlocks.map((b) => b.task_id), ...targetTasks.data!.map((t) => t.id)])];
 
+  // F2 picker inputs: the most important planned task (priority 1 = most important, ADR 0015) and the weakest active domain.
+  const planned = plannedTaskIds.length
+    ? await supabase.from("tasks").select("id, title, priority, created_at").eq("user_id", userId).in("id", plannedTaskIds.slice(0, 200))
+    : { data: [] as { id: string; title: string; priority: number; created_at: string }[], error: null };
+  if (planned.error) throw fromDbError(planned.error);
+  const ranked = [...planned.data!].sort((a, b) => a.priority - b.priority || a.created_at.localeCompare(b.created_at));
+  const topTask = ranked[0] ? { id: ranked[0].id, title: ranked[0].title } : null;
+  const weakDomainId = [...byRoot].filter(([, m]) => m > 0).sort((a, b) => a[1] - b[1])[0]?.[0] ?? null;
+
   // Last two planned work days before today and their focused minutes.
   const lastTwoWorkDays: { date: string; focused: number }[] = [];
   for (let d = addLocalDays(today, -1, tz), i = 0; lastTwoWorkDays.length < 2 && i < 14; d = addLocalDays(d, -1, tz), i++) {
@@ -82,7 +91,16 @@ export async function loadQuestGenContext(supabase: SupabaseServerClient, userId
     today,
     tomorrow: addLocalDays(today, 1, tz),
     week: { start: week.startDate, end: weekEnd },
-    daily: { date: today, capacity, plannedMinutes: dayPlannedMinutes(blocks.data!, todayRange), plannedTaskIds, topDomainId },
+    daily: {
+      date: today,
+      capacity,
+      plannedMinutes: dayPlannedMinutes(blocks.data!, todayRange),
+      plannedTaskIds,
+      topDomainId,
+      topTask,
+      weakDomainId,
+      taskTitles: ranked.slice(0, 5).map((t) => t.title),
+    },
     weekly: {
       weekStart: week.startDate,
       weekEnd,
@@ -131,14 +149,14 @@ export async function loadQuestFacts(supabase: SupabaseServerClient, userId: str
 
 export type QuestRow = {
   id: string; type: QuestType; title: string; status: string; period_start: string; period_end: string;
-  reward_xp: number; swap_used: boolean; spare: unknown; created_at: string;
+  reward_xp: number; swap_used: boolean; spare: unknown; created_at: string; generated_by: string; reason: string | null;
   objectives: { id: string; position: number; metric: QuestMetric; params: ObjectiveParams; target_value: number; current_value: number; completed_at: string | null }[];
 };
 
 export async function listQuests(supabase: SupabaseServerClient, userId: string, filter: { active?: boolean; visibleOn?: string }): Promise<QuestRow[]> {
   let q = supabase
     .from("quests")
-    .select("id, type, title, status, period_start, period_end, reward_xp, swap_used, spare, created_at, objectives:quest_objectives!quest_objectives_quest_id_user_id_fkey(id, position, metric, params, target_value, current_value, completed_at)")
+    .select("id, type, title, status, period_start, period_end, reward_xp, swap_used, spare, created_at, generated_by, reason, objectives:quest_objectives!quest_objectives_quest_id_user_id_fkey(id, position, metric, params, target_value, current_value, completed_at)")
     .eq("user_id", userId);
   if (filter.active) q = q.eq("status", "active");
   if (filter.visibleOn) q = q.in("status", ["active", "cleared"]).gte("period_end", filter.visibleOn).lte("period_start", filter.visibleOn);

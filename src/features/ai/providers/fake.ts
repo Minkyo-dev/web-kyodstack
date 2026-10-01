@@ -18,6 +18,10 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  quest_picker: (prompt) => {
+    const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { candidates: { key: string }[] };
+    return { picks: input.candidates.slice(0, 3).map((c) => c.key), title: "집중의 날", reason: "오늘 계획에 맞춘 목표예요" };
+  },
   weekly_analysis: (prompt) => {
     const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { stats: { calibration: { now: number | null; weekAgo: number | null } } };
     const c = input.stats.calibration;

@@ -80,6 +80,11 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
             {quest.status === "cleared" && <span className="ml-auto font-mono">CLEARED</span>}
           </p>
         )}
+        {expanded && quest.reason && (
+          <p className="text-muted-foreground">
+            <span className="font-mono tracking-wider">SYSTEM 추천</span> · {quest.reason}
+          </p>
+        )}
         <ul className="space-y-0.5">
           {quest.objectives.map((o) => (
             <li key={o.id} className="flex items-center gap-2">

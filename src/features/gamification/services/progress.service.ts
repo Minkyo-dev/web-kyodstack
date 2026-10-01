@@ -8,7 +8,7 @@ import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queri
 import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
 import type { NewXpEvent } from "../domain/xp.types";
 import { evaluateAchievements } from "./achievement.service";
-import { ensureQuests, evaluateQuests } from "./quest.service";
+import { ensureQuests, evaluateQuests, type QuestPicker } from "./quest.service";
 import { ACHIEVEMENTS } from "../utils/achievements";
 import { firstActivityDate, getPlayerProfile, loadLedger, loadXpRaw } from "../queries/xp.queries";
 import type { GamificationSettingsInput } from "../schemas/gamification.schema";
@@ -80,10 +80,10 @@ async function evaluateAll(ctx: ActionContext, now: Date, admin: boolean): Promi
 }
 
 /** Nightly: create/expire quests, then re-evaluate yesterday and today. Admin client → explicit user id. */
-export async function reconcileProgress(ctx: ActionContext, now: Date): Promise<number> {
+export async function reconcileProgress(ctx: ActionContext, now: Date, opts: { picker?: QuestPicker } = {}): Promise<number> {
   const profile = await getPlayerProfile(ctx.supabase, ctx.user.id);
   if (!profile?.gamification_enabled) return 0;
-  await ensureQuests(ctx, now, true);
+  await ensureQuests(ctx, now, true, opts);
   const d = await evaluateAll(ctx, now, true);
   return d ? d.xp.length : 0;
 }

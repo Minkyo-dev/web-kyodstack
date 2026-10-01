@@ -4,7 +4,18 @@ import type { QuestMetric, QuestType } from "../domain/quest.types";
 import type { QuestRow } from "../queries/quest.queries";
 
 export type ObjectiveView = { id: string; metric: QuestMetric; current: number; target: number; done: boolean; domainName: string | null; before: string | null; minMinutes: number | null };
-export type QuestView = { id: string; type: QuestType; title: string; status: string; rewardXp: number; canSwap: boolean; swapUsed: boolean; objectives: ObjectiveView[] };
+export type QuestView = {
+  id: string;
+  type: QuestType;
+  title: string;
+  status: string;
+  rewardXp: number;
+  canSwap: boolean;
+  swapUsed: boolean;
+  /** SYSTEM 추천 line for an AI-picked quest (F2). */
+  reason: string | null;
+  objectives: ObjectiveView[];
+};
 
 export function toQuestViews(rows: QuestRow[], domainNames: Record<string, string>): QuestView[] {
   return rows.map((q) => ({
@@ -14,6 +25,7 @@ export function toQuestViews(rows: QuestRow[], domainNames: Record<string, strin
     status: q.status,
     rewardXp: q.reward_xp,
     swapUsed: q.swap_used,
+    reason: q.generated_by === "ai" ? (q.reason ?? null) : null,
     canSwap: q.type === "daily" && q.status === "active" && !q.swap_used && Array.isArray(q.spare) && q.spare.length > 0,
     objectives: q.objectives.map((o) => ({
       id: o.id,

@@ -23,7 +23,18 @@ export type QuestDraft = {
   objectives: ObjectiveDraft[];
   spare: ObjectiveDraft[];
 };
-export type DailyContext = { date: string; capacity: number | null; plannedMinutes: number; plannedTaskIds: string[]; topDomainId: string | null };
+export type DailyContext = {
+  date: string;
+  capacity: number | null;
+  plannedMinutes: number;
+  plannedTaskIds: string[];
+  topDomainId: string | null;
+  /** F2 AI picker inputs (optional for the rule quest). */
+  topTask?: { id: string; title: string } | null;
+  weakDomainId?: string | null;
+  taskTitles?: string[];
+  stats?: Record<string, number | null>;
+};
 export type WeeklyContext = { weekStart: string; weekEnd: string; capacity: number | null; plannedWorkDayCount: number; topDomainId: string | null };
 
 export type QuestFacts = {

@@ -7,22 +7,65 @@ import { toLocalDate } from "@/features/scheduler/utils/timezone";
 import type { ObjectiveDraft, QuestDraft } from "../domain/quest.types";
 import { listQuests, loadQuestFacts, loadQuestGenContext } from "../queries/quest.queries";
 import { getPlayerProfile } from "../queries/xp.queries";
+import { loadStatInput } from "@/features/analytics/queries/stat-input.queries";
+import { computeStats } from "@/features/analytics/utils/stats";
+import { STAT_TYPES } from "@/features/analytics/domain/stats.types";
+import { questPool, validatePicks, type PickerOutput } from "../utils/quest-pool";
+
+/** Plain-data input for an AI picker (F2 spec §2); provided by the jobs layer so gamification never imports AI. */
+export type PickerInput = {
+  candidates: { key: string; label: string; target: number }[];
+  capacity: number | null;
+  plannedMinutes: number;
+  plannedTasks: number;
+  topTitles: string[];
+  stats: Record<string, number | null>;
+};
+export type QuestPicker = (input: PickerInput) => Promise<PickerOutput | null>;
 import { dailyQuest, evaluateQuest, nextSwap, QUEST_RULES_VERSION, recoveryDue, recoveryQuest, weeklyQuest } from "../utils/quest-rules";
 
 const obj = (o: ObjectiveDraft, position?: number) => ({ ...(position ? { position } : {}), metric: o.metric, params: o.params, target_value: o.target });
 
-async function create(ctx: ActionContext, d: QuestDraft, admin: boolean) {
-  const { error } = await ctx.supabase.rpc("create_quest", {
+async function create(ctx: ActionContext, d: QuestDraft, admin: boolean, ai?: { reason: string | null }) {
+  const { data: id, error } = await ctx.supabase.rpc("create_quest", {
     p_quest: { type: d.type, title: d.title, period_start: d.periodStart, period_end: d.periodEnd, reward_xp: d.rewardXp, rules_version: QUEST_RULES_VERSION, spare: d.spare.map((s) => obj(s)) } as unknown as Json,
     p_objectives: d.objectives.map((o, i) => obj(o, i + 1)) as unknown as Json,
     ...(admin ? { p_user_id: ctx.user.id } : {}),
   });
   // A concurrent recovery insert loses the partial unique index race: fine, one exists.
   if (error && error.code !== "23505") throw fromDbError(error);
+  if (ai && id) {
+    const up = await ctx.supabase.from("quests").update({ generated_by: "ai", reason: ai.reason }).eq("id", id as string).eq("user_id", ctx.user.id);
+    if (up.error) throw fromDbError(up.error);
+  }
+}
+
+/** AI-picked daily quest when a picker is given and its picks validate; otherwise the E2 rule quest. */
+async function dailyDraft(ctx: ActionContext, daily: Parameters<typeof dailyQuest>[0], now: Date, picker?: QuestPicker) {
+  const rule = dailyQuest(daily);
+  if (!picker) return { draft: rule };
+  const stats = computeStats(await loadStatInput(ctx.supabase, ctx.user.id, now));
+  const pool = questPool(daily);
+  const out = await picker({
+    candidates: pool.map((c) => ({ key: c.key, label: c.label, target: c.draft.target })),
+    capacity: daily.capacity,
+    plannedMinutes: Math.round(daily.plannedMinutes),
+    plannedTasks: daily.plannedTaskIds.length,
+    topTitles: daily.taskTitles ?? [],
+    stats: Object.fromEntries(STAT_TYPES.map((t) => [t, stats[t].value])),
+  }).catch(() => null);
+  const v = out ? validatePicks(pool, out, daily.capacity) : null;
+  if (!v) return { draft: rule };
+  return { draft: { ...rule, title: v.title, objectives: v.objectives, spare: v.spare }, ai: { reason: v.reason } };
 }
 
 /** Expire past quests and create today's/this week's/recovery quests (idempotent). No-op while gamification is off. */
-export async function ensureQuests(ctx: ActionContext, now: Date, admin = false): Promise<void> {
+export async function ensureQuests(
+  ctx: ActionContext,
+  now: Date,
+  admin = false,
+  opts: { picker?: QuestPicker } = {},
+): Promise<void> {
   const profile = await getPlayerProfile(ctx.supabase, ctx.user.id);
   if (!profile?.gamification_enabled) return;
   const { timezone } = await getSchedulerContext(ctx.supabase, ctx.user.id);
@@ -34,7 +77,10 @@ export async function ensureQuests(ctx: ActionContext, now: Date, admin = false)
   if (existing.error) throw fromDbError(existing.error);
   const g = await loadQuestGenContext(ctx.supabase, ctx.user.id, now);
   const has = (type: string, start: string) => existing.data.some((q) => q.type === type && q.period_start === start);
-  if (!has("daily", g.today)) await create(ctx, dailyQuest(g.daily), admin);
+  if (!has("daily", g.today)) {
+    const d = await dailyDraft(ctx, g.daily, now, opts.picker);
+    await create(ctx, d.draft, admin, d.ai);
+  }
   if (!has("weekly", g.week.start)) await create(ctx, weeklyQuest(g.weekly), admin);
   const activeRecovery = existing.data.some((q) => q.type === "recovery" && q.status === "active");
   if (!activeRecovery && recoveryDue({ today: g.today, ...g.recovery })) await create(ctx, recoveryQuest(g.today, g.tomorrow), admin);
