@@ -6,11 +6,15 @@ import * as household from "../services/household.service";
 import * as accounts from "../services/account.service";
 import * as categories from "../services/category.service";
 import * as transactions from "../services/transaction.service";
+import * as subscriptions from "../services/subscription.service";
 import {
   createAccountSchema,
   createCategorySchema,
   createHouseholdSchema,
+  createSubscriptionSchema,
   createTransactionSchema,
+  createTransactionsSchema,
+  deleteCategorySchema,
   dayTransactionsSchema,
   deleteTransactionSchema,
   emptySchema,
@@ -18,9 +22,11 @@ import {
   renameHouseholdSchema,
   reorderSchema,
   setActiveSchema,
+  subscriptionIdSchema,
   updateAccountSchema,
   updateCategorySchema,
   updateDisplayNameSchema,
+  updateSubscriptionSchema,
   updateTransactionSchema,
 } from "../schemas/finance.schema";
 
@@ -107,6 +113,12 @@ export async function setCategoryActiveAction(input: unknown) {
   );
 }
 
+export async function deleteCategoryAction(input: unknown) {
+  return runAction("finance.category.delete", deleteCategorySchema, input, async (data, ctx) =>
+    done(await categories.deleteCategory(ctx, data.id)),
+  );
+}
+
 export async function reorderCategoriesAction(input: unknown) {
   return runAction("finance.category.reorder", reorderSchema, input, async (data, ctx) =>
     done(await categories.reorderCategories(ctx, data)),
@@ -118,6 +130,13 @@ export async function reorderCategoriesAction(input: unknown) {
 export async function createTransactionAction(input: unknown) {
   return runAction("finance.transaction.create", createTransactionSchema, input, async (data, ctx) =>
     done(await transactions.createTransaction(ctx, data)),
+  );
+}
+
+/** Bulk entry grid: every row is saved, or none is. */
+export async function createTransactionsAction(input: unknown) {
+  return runAction("finance.transaction.create_many", createTransactionsSchema, input, async (data, ctx) =>
+    done(await transactions.createTransactions(ctx, data.rows)),
   );
 }
 
@@ -137,5 +156,31 @@ export async function deleteTransactionAction(input: unknown) {
 export async function getDayTransactionsAction(input: unknown) {
   return runAction("finance.transaction.by_date", dayTransactionsSchema, input, async (data, ctx) =>
     transactions.getTransactionsByDate(ctx, data.date),
+  );
+}
+
+// ------------------------------------------------------------------ subscriptions (ADR 0029)
+
+export async function createSubscriptionAction(input: unknown) {
+  return runAction("finance.subscription.create", createSubscriptionSchema, input, async (data, ctx) =>
+    done(await subscriptions.createSubscription(ctx, data)),
+  );
+}
+
+export async function updateSubscriptionAction(input: unknown) {
+  return runAction("finance.subscription.update", updateSubscriptionSchema, input, async (data, ctx) =>
+    done(await subscriptions.updateSubscription(ctx, data)),
+  );
+}
+
+export async function setSubscriptionActiveAction(input: unknown) {
+  return runAction("finance.subscription.pause", setActiveSchema, input, async (data, ctx) =>
+    done(await subscriptions.setSubscriptionActive(ctx, data)),
+  );
+}
+
+export async function deleteSubscriptionAction(input: unknown) {
+  return runAction("finance.subscription.delete", subscriptionIdSchema, input, async (data, ctx) =>
+    done(await subscriptions.deleteSubscription(ctx, data.id)),
   );
 }

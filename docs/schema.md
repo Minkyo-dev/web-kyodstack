@@ -192,7 +192,14 @@ DailyReview = `daily_reflections`.
   `finance_create_household` / `finance_join_household`; members may update only `display_name`, the owner only the
   household `name`. Unused accounts/categories may be deleted (FKs protect referenced ones); the owner may delete the
   household (cascade).
+- Categories are deleted logically (ADR 0027): `deleted_at` set ⇒ `is_active = false` (check), and a trigger rejects any
+  further update of a deleted row. Deleted categories stay for past transactions but leave settings, pickers and filters.
 - Composite FKs keep account, transfer account, category, payer and account owner inside the household.
+- `finance_subscriptions` (ADR 0029): a recurring-payment plan (MONTHLY/YEARLY, billing day 1–31 clamped to month end,
+  billing month for yearly only, start/end, expense category only, `charged_through`). `finance_charge_subscriptions`
+  writes each due date as an EXPENSE with `source = 'SUBSCRIPTION'` and `subscription_id`; a unique index on
+  `(subscription_id, transaction_date)` makes it idempotent. Deleting a plan keeps its charges (`subscription_id` →
+  null).
 - Transaction checks: `amount > 0` (ADJUSTMENT may be negative and non-zero); TRANSFER has `transfer_account_id`
   (≠ `account_id`), `transfer_group_id` and no category; INCOME/EXPENSE need a category of the matching type.
   `created_by_user_id` must be the caller on insert and never changes; `updated_by_user_id` is stamped on update.

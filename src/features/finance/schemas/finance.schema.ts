@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isLocalDateString } from "@/features/scheduler/utils/timezone";
 import { ACCOUNT_TYPES, CATEGORY_TYPES, ENTRY_TYPES, OWNERSHIP_TYPES } from "../domain/finance.types";
 import { parseAmount } from "../domain/money";
+import { BILLING_CYCLES } from "../domain/subscription";
 
 const localDate = z.string().refine(isLocalDateString, "날짜 형식이 올바르지 않습니다.");
 const optionalText = (max: number) =>
@@ -75,6 +76,8 @@ export const updateCategorySchema = z.object({
 });
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 
+export const deleteCategorySchema = z.object({ id: z.uuid() });
+
 // ------------------------------------------------------------------ transactions
 
 const amount = z
@@ -118,6 +121,16 @@ const transactionRules = (v: z.infer<typeof transactionFields>, ctx: z.Refinemen
 export const createTransactionSchema = transactionFields.superRefine(transactionRules);
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 
+/** Bulk entry (ADR 0027): expense, income and transfer rows, the same rules as the single form. */
+export const BULK_MAX_ROWS = 200;
+export const createTransactionsSchema = z.object({
+  rows: z
+    .array(createTransactionSchema)
+    .min(1, "입력한 거래가 없습니다.")
+    .max(BULK_MAX_ROWS, `한 번에 ${BULK_MAX_ROWS}건까지 저장할 수 있습니다.`),
+});
+export type CreateTransactionsInput = z.infer<typeof createTransactionsSchema>;
+
 export const updateTransactionSchema = transactionFields
   .extend({ transactionId: z.uuid() })
   .superRefine(transactionRules);
@@ -125,6 +138,44 @@ export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 
 export const deleteTransactionSchema = z.object({ transactionId: z.uuid() });
 export const dayTransactionsSchema = z.object({ date: localDate });
+
+// ------------------------------------------------------------------ subscriptions (ADR 0029)
+
+const subscriptionFields = z.object({
+  name: z.string().trim().min(1, "이름을 입력해 주세요.").max(100),
+  amount,
+  billingCycle: z.enum(BILLING_CYCLES),
+  billingDay: z.coerce.number().int().min(1, "결제일은 1–31일입니다.").max(31, "결제일은 1–31일입니다."),
+  billingMonth: z.coerce.number().int().min(1).max(12).nullish().transform((v) => v ?? null),
+  startDate: localDate,
+  endDate: localDate.nullish().or(z.literal("")).transform((v) => v || null),
+  accountId: z.uuid({ message: "계좌를 선택해 주세요." }),
+  categoryId: z.uuid({ message: "카테고리를 선택해 주세요." }),
+  paidByUserId: z.uuid().nullable().default(null),
+  note: optionalText(2000),
+});
+
+const subscriptionRules = (v: z.infer<typeof subscriptionFields>, ctx: z.RefinementCtx) => {
+  if (v.billingCycle === "YEARLY" && v.billingMonth === null)
+    ctx.addIssue({ code: "custom", message: "결제 월을 선택해 주세요.", path: ["billingMonth"] });
+  if (v.endDate && v.endDate < v.startDate)
+    ctx.addIssue({ code: "custom", message: "종료일은 시작일 이후여야 합니다.", path: ["endDate"] });
+};
+const yearlyOnlyMonth = <T extends { billingCycle: string; billingMonth: number | null }>(v: T): T => ({
+  ...v,
+  billingMonth: v.billingCycle === "YEARLY" ? v.billingMonth : null,
+});
+
+export const createSubscriptionSchema = subscriptionFields.superRefine(subscriptionRules).transform(yearlyOnlyMonth);
+export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
+
+export const updateSubscriptionSchema = subscriptionFields
+  .extend({ subscriptionId: z.uuid() })
+  .superRefine(subscriptionRules)
+  .transform(yearlyOnlyMonth);
+export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
+
+export const subscriptionIdSchema = z.object({ id: z.uuid() });
 
 /** Transactions page filters (spec §23). Every field is optional; bad values are dropped, never errors. */
 export const transactionFilterSchema = z.object({

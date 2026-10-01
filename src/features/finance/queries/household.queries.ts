@@ -2,7 +2,9 @@ import "server-only";
 import { cache } from "react";
 import { createClient, type SupabaseServerClient } from "@/lib/supabase/server";
 import { fromDbError } from "@/lib/errors";
+import { log } from "@/lib/logger";
 import { todayLocalDate } from "@/features/scheduler/utils/timezone";
+import { chargeDueSubscriptions } from "../services/subscription.service";
 import type { FinanceContext, FinanceLookups, MemberRef, MemberRole } from "../domain/finance.types";
 
 /** The caller's household, their membership and the member list; null before they create or join one. */
@@ -40,8 +42,22 @@ export async function loadFinanceContext(supabase: SupabaseServerClient, userId:
   };
 }
 
-/** Per-request cache for pages: the layout and the page share one lookup. */
-export const getFinanceContext = cache(async (userId: string) => loadFinanceContext(await createClient(), userId));
+/**
+ * Per-request cache for pages: the layout and the page share one lookup. It also records any subscription charges
+ * that fell due (ADR 0029) before a page reads totals; that write is idempotent and never blocks the page.
+ */
+export const getFinanceContext = cache(async (userId: string) => {
+  const supabase = await createClient();
+  const ctx = await loadFinanceContext(supabase, userId);
+  if (ctx) {
+    try {
+      await chargeDueSubscriptions(supabase, ctx.household.id);
+    } catch (error) {
+      log({ action: "finance.subscription.charge", userId, success: false, detail: String(error) });
+    }
+  }
+  return ctx;
+});
 
 /** Accounts and categories (archived ones included: old transactions still show them) plus members. */
 export const getFinanceLookups = cache(async (userId: string): Promise<FinanceLookups | null> => {

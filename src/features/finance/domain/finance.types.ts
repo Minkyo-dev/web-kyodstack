@@ -6,6 +6,7 @@ export type HouseholdMember = Tables["finance_household_members"]["Row"];
 export type Account = Tables["finance_accounts"]["Row"];
 export type Category = Tables["finance_categories"]["Row"];
 export type Transaction = Tables["finance_transactions"]["Row"];
+export type Subscription = Tables["finance_subscriptions"]["Row"];
 
 export const MEMBER_ROLES = ["OWNER", "MEMBER"] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];

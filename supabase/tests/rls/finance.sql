@@ -201,6 +201,96 @@ do $$ declare n int; begin
   assert n = 0, 'C cannot delete H1 transactions';
 end $$;
 
+-- ADR 0027: C cannot soft-delete an H1 category; a member can, and a deleted category is frozen.
+do $$ declare n int; begin
+  update public.finance_categories set is_active = false, deleted_at = now() where id = (select v from ids where k = 'grocery');
+  get diagnostics n = row_count;
+  assert n = 0, 'C cannot soft-delete H1 categories';
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+do $$ begin
+  begin
+    update public.finance_categories set deleted_at = now() where id = (select v from ids where k = 'grocery');
+    raise exception 'deleted category left active';
+  exception when check_violation then null;
+  end;
+  update public.finance_categories set is_active = false, deleted_at = now() where id = (select v from ids where k = 'grocery');
+  assert (select deleted_at is not null from public.finance_categories where id = (select v from ids where k = 'grocery')),
+    'member soft-deletes a category';
+  assert (select count(*) from public.finance_transactions where category_id = (select v from ids where k = 'grocery')) > 0,
+    'transactions keep the deleted category';
+  begin
+    update public.finance_categories set is_active = true, deleted_at = null where id = (select v from ids where k = 'grocery');
+    raise exception 'deleted category restored';
+  exception when check_violation then null;
+  end;
+end $$;
+
+-- ADR 0029: subscriptions. A member adds a plan; charging records each due date once (idempotent); C cannot see,
+-- add to or charge H1; a plan needs an expense category; deleting it keeps its charges.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+with x as (
+  insert into public.finance_subscriptions (household_id, name, amount, billing_day, start_date, account_id, category_id)
+  values ((select v from ids where k = 'h1'), 'Netflix', 17.99, 1, current_date - 70,
+          (select v from ids where k = 'a_acct'), (select v from ids where k = 'food'))
+  returning id)
+insert into ids select 'sub', id from x;
+do $$ declare n int; m int; begin
+  begin
+    insert into public.finance_subscriptions (household_id, name, amount, billing_day, start_date, account_id, category_id)
+    values ((select v from ids where k = 'h1'), 'bad', 1, 1, current_date,
+            (select v from ids where k = 'a_acct'), (select v from ids where k = 'salary'));
+    raise exception 'income category accepted';
+  exception when check_violation then null;
+  end;
+  n := public.finance_charge_subscriptions((select v from ids where k = 'h1'));
+  assert n >= 2, 'past due dates charged';
+  assert (select count(*) from public.finance_transactions where subscription_id = (select v from ids where k = 'sub')
+          and source = 'SUBSCRIPTION' and type = 'EXPENSE' and extract(day from transaction_date) = 1) = n,
+    'charges are expenses on the billing day';
+  assert (select charged_through is not null from public.finance_subscriptions where id = (select v from ids where k = 'sub')),
+    'charged_through advanced';
+  m := public.finance_charge_subscriptions((select v from ids where k = 'h1'));
+  assert m = 0, 'charging again records nothing';
+  -- The creator and household never change.
+  update public.finance_subscriptions set created_by_user_id = '00000000-0000-4000-a000-00000000000b',
+    household_id = (select v from ids where k = 'h2') where id = (select v from ids where k = 'sub');
+  assert (select created_by_user_id = '00000000-0000-4000-a000-00000000000a' and household_id = (select v from ids where k = 'h1')
+          from public.finance_subscriptions where id = (select v from ids where k = 'sub')), 'owner columns kept';
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000c","role":"authenticated"}', true);
+do $$ declare n int; begin
+  assert (select count(*) from public.finance_subscriptions) = 0, 'C cannot see H1 subscriptions';
+  begin
+    perform public.finance_charge_subscriptions((select v from ids where k = 'h1'));
+    raise exception 'C charged H1';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.finance_subscriptions (household_id, name, amount, billing_day, start_date, account_id, category_id)
+    values ((select v from ids where k = 'h1'), 'x', 1, 1, current_date, (select v from ids where k = 'c_acct'), (select v from ids where k = 'c_cat'));
+    raise exception 'C inserted into H1';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.finance_subscriptions (household_id, name, amount, billing_day, start_date, account_id, category_id)
+    values ((select v from ids where k = 'h2'), 'x', 1, 1, current_date, (select v from ids where k = 'a_acct'), (select v from ids where k = 'c_cat'));
+    raise exception 'C used an H1 account';
+  exception when foreign_key_violation then null;
+  end;
+  delete from public.finance_subscriptions where id = (select v from ids where k = 'sub');
+  get diagnostics n = row_count;
+  assert n = 0, 'C deleted an H1 subscription';
+end $$;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000b","role":"authenticated"}', true);
+do $$ declare n int; begin
+  delete from public.finance_subscriptions where id = (select v from ids where k = 'sub');
+  get diagnostics n = row_count;
+  assert n = 1, 'member B deletes the plan';
+  assert (select count(*) from public.finance_transactions where source = 'SUBSCRIPTION' and subscription_id is null) >= 2,
+    'charges stay, unlinked';
+end $$;
+
 -- The owner can delete the household; everything in it goes with it.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
 do $$ declare n int; begin

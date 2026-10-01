@@ -23,6 +23,7 @@ const cat = (id: string, name: string, extra: Partial<Category> = {}): Category 
   icon: null,
   sort_order: 0,
   is_active: true,
+  deleted_at: null,
   created_at: "",
   updated_at: "",
   ...extra,
@@ -147,6 +148,13 @@ describe("category tree", () => {
     expect(categoryOptions(cats, "EXPENSE").map((o) => o.label)).toEqual(["주거", "식비", "식비 > 장보기"]);
     expect(categoryOptions(cats, "EXPENSE", "coffee").map((o) => o.label)).toContain("식비 > 커피");
     expect(categoryOptions(cats, "INCOME").map((o) => o.id)).toEqual(["salary"]);
+  });
+
+  it("leaves deleted categories out of the tree and the picker, except the current one (ADR 0027)", () => {
+    const withDeleted = [...cats, cat("old", "옛날", { is_active: false, deleted_at: "2026-10-01T00:00:00Z" })];
+    expect(buildCategoryTree(withDeleted, "EXPENSE").map((n) => n.id)).not.toContain("old");
+    expect(categoryOptions(withDeleted, "EXPENSE").map((o) => o.id)).not.toContain("old");
+    expect(categoryOptions(withDeleted, "EXPENSE", "old").map((o) => o.id)).toContain("old");
   });
 
   it("reorders by step or drop", () => {

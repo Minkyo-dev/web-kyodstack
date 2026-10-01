@@ -23,5 +23,7 @@ export const config: VercelConfig = {
     { path: "/api/internal/jobs/weekly-review", schedule: "0 12 * * *" },
     // Nightly derived-data rebuild
     { path: "/api/internal/jobs/duration-profile-refresh", schedule: "0 8 * * *" },
+    // Subscription charges (ADR 0029); each household's own timezone decides "today"
+    { path: "/api/internal/jobs/finance-subscriptions", schedule: "0 9 * * *" },
   ],
 };

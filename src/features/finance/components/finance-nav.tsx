@@ -8,6 +8,7 @@ const NAV = [
   { href: "/finance", label: "대시보드", exact: true },
   { href: "/finance/calendar", label: "캘린더", exact: false },
   { href: "/finance/transactions", label: "거래", exact: false },
+  { href: "/finance/recurring", label: "정기 결제", exact: false },
   { href: "/finance/settings", label: "설정", exact: false },
 ] as const;
 

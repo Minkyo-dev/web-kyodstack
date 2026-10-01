@@ -189,6 +189,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] Settings: accounts (create, edit type/owner/institution, reorder, archive), categories (create, sub, rename,
       icon, move, drag & drop / arrow reorder, archive), household (name, display name, invite code)
 - [x] Unit tests `tests/unit/finance.test.ts`; E2E `finance.spec.ts` (cleanup removes `[e2e]` finance rows)
+- [x] ADR 0027: logical category delete (`deleted_at`, confirm dialog, parent takes its children) and the bulk entry
+      grid `/finance/transactions/bulk` (keyboard navigation, picker cells, spreadsheet paste, all-or-nothing save).
+      Tests `tests/unit/finance-bulk.test.ts`, E2E `finance-bulk.spec.ts`, RLS assertions in `finance.sql`
+- [x] ADR 0028: calendar day panel (xl two columns: the day's totals, every income/expense/transfer with detail on
+      click, and the entry grid for that day); bulk entry takes transfers and starts with no rows
+- [x] ADR 0029: recurring payments `/finance/recurring` (`finance_subscriptions`, idempotent charging into ordinary
+      EXPENSE transactions on page load, after a save and from the daily job). Tests
+      `tests/unit/finance-subscription.test.ts`, RLS assertions in `finance.sql`, E2E `finance-recurring.spec.ts`
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is

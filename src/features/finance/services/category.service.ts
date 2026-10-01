@@ -13,7 +13,8 @@ async function loadCategory(ctx: ActionContext, householdId: string, id: string)
     .eq("household_id", householdId)
     .maybeSingle();
   if (error) throw fromDbError(error);
-  if (!data) throw new AppError("NOT_FOUND");
+  // A deleted category (ADR 0027) is gone for every write path.
+  if (!data || data.deleted_at) throw new AppError("NOT_FOUND");
   return data;
 }
 
@@ -100,8 +101,26 @@ export async function setCategoryActive(ctx: ActionContext, input: SetActiveInpu
     if (!parent.is_active) throw new AppError("VALIDATION_ERROR", "상위 카테고리를 먼저 복원해 주세요.");
   }
   let query = ctx.supabase.from("finance_categories").update({ is_active: input.active }).eq("household_id", householdId);
-  query = input.active ? query.eq("id", current.id) : query.or(`id.eq.${current.id},parent_id.eq.${current.id}`);
+  query = input.active
+    ? query.eq("id", current.id)
+    : query.is("deleted_at", null).or(`id.eq.${current.id},parent_id.eq.${current.id}`);
   const { error } = await query;
+  if (error) throw fromDbError(error);
+}
+
+/**
+ * Logical delete (ADR 0027): the row stays so past transactions keep their category, but it leaves settings, pickers
+ * and filters for good. Deleting a parent deletes its children too.
+ */
+export async function deleteCategory(ctx: ActionContext, id: string): Promise<void> {
+  const { householdId } = await requireHousehold(ctx);
+  const current = await loadCategory(ctx, householdId, id);
+  const { error } = await ctx.supabase
+    .from("finance_categories")
+    .update({ is_active: false, deleted_at: new Date().toISOString() })
+    .eq("household_id", householdId)
+    .is("deleted_at", null)
+    .or(`id.eq.${current.id},parent_id.eq.${current.id}`);
   if (error) throw fromDbError(error);
 }
 

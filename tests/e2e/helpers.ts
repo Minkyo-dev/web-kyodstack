@@ -94,6 +94,8 @@ export async function cleanup(db: SupabaseClient) {
 
 /** Finance rows made by E2E: "[e2e]"-named transactions, then unused accounts/categories, then an E2E household. */
 export async function cleanupFinance(db: SupabaseClient) {
+  // Subscription charges carry the plan name as merchant, so the transaction delete below removes them too.
+  await db.from("finance_subscriptions").delete().like("name", `${E2E_PREFIX}%`);
   await db.from("finance_transactions").delete().like("merchant_name", `${E2E_PREFIX}%`);
   await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`).not("parent_id", "is", null);
   await db.from("finance_categories").delete().like("name", `${E2E_PREFIX}%`);

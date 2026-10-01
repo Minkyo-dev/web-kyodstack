@@ -22,8 +22,8 @@ export function TransactionFilters({ filter }: { filter: TransactionFilter }) {
   // Archived categories and accounts stay filterable: old transactions use them.
   const categories = useMemo(
     () => [
-      ...categoryOptions(f.categories.map((c) => ({ ...c, is_active: true })), "EXPENSE").map((o) => ({ ...o, group: "지출" })),
-      ...categoryOptions(f.categories.map((c) => ({ ...c, is_active: true })), "INCOME").map((o) => ({ ...o, group: "수입" })),
+      ...categoryOptions(f.categories.filter((c) => !c.deleted_at).map((c) => ({ ...c, is_active: true })), "EXPENSE").map((o) => ({ ...o, group: "지출" })),
+      ...categoryOptions(f.categories.filter((c) => !c.deleted_at).map((c) => ({ ...c, is_active: true })), "INCOME").map((o) => ({ ...o, group: "수입" })),
     ],
     [f.categories],
   );

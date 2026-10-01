@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { Rows3 } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { PageHelp } from "@/components/layout/page-help";
 import { FinanceNav } from "@/features/finance/components/finance-nav";
@@ -24,7 +27,12 @@ export default async function FinanceLayout({ children }: { children: React.Reac
             <h1 className="text-lg font-semibold">가계부</h1>
             <PageHelp page="finance" />
             <span className="truncate text-sm text-muted-foreground">· {ctx.household.name}</span>
-            <AddTransactionButton className="ml-auto" />
+            <Link href="/finance/transactions/bulk" className={buttonVariants({ variant: "outline", className: "ml-auto" })}>
+              <Rows3 aria-hidden />
+              <span className="hidden sm:inline">여러 건 입력</span>
+              <span className="sr-only sm:hidden">여러 건 입력</span>
+            </Link>
+            <AddTransactionButton />
           </div>
           <FinanceNav />
         </header>

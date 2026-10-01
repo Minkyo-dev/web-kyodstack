@@ -44,3 +44,6 @@ Template:
 | 0024 | Project archive folder and the scheduler month view | accepted |
 | 0025 | Household finance service | accepted |
 | 0026 | Visual refresh: tinted neutrals, indigo accent, native select styling | accepted |
+| 0027 | Logical category delete and the bulk entry grid | accepted |
+| 0028 | The finance calendar's day panel | accepted |
+| 0029 | Recurring payments (subscriptions) | accepted |

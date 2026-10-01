@@ -4,9 +4,12 @@ export type CategoryNode = Category & { children: Category[] };
 
 const bySort = (a: Category, b: Category) => a.sort_order - b.sort_order || a.name.localeCompare(b.name);
 
-/** Two-level tree (spec §7) of one type, siblings in sort order. Orphans (parent missing) are shown at the top level. */
-export function buildCategoryTree(categories: Category[], type: CategoryType): CategoryNode[] {
-  const ofType = categories.filter((c) => c.type === type);
+/**
+ * Two-level tree (spec §7) of one type, siblings in sort order. Orphans (parent missing) are shown at the top level.
+ * Deleted categories (ADR 0027) are left out, except `keepId` (a transaction's current category).
+ */
+export function buildCategoryTree(categories: Category[], type: CategoryType, keepId?: string | null): CategoryNode[] {
+  const ofType = categories.filter((c) => c.type === type && (!c.deleted_at || c.id === keepId));
   const ids = new Set(ofType.map((c) => c.id));
   return ofType
     .filter((c) => !c.parent_id || !ids.has(c.parent_id))
@@ -26,7 +29,7 @@ export type CategoryOption = { id: string; label: string; depth: 0 | 1 };
 export function categoryOptions(categories: Category[], type: CategoryType, keepId?: string | null): CategoryOption[] {
   const visible = (c: Category) => c.is_active || c.id === keepId;
   const options: CategoryOption[] = [];
-  for (const node of buildCategoryTree(categories, type)) {
+  for (const node of buildCategoryTree(categories, type, keepId)) {
     if (visible(node)) options.push({ id: node.id, label: node.name, depth: 0 });
     for (const child of node.children) {
       if (visible(child)) options.push({ id: child.id, label: `${node.name} > ${child.name}`, depth: 1 });

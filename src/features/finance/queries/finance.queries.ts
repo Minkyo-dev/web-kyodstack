@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { fromDbError } from "@/lib/errors";
-import type { Category, Transaction } from "../domain/finance.types";
+import type { Category, Subscription, Transaction } from "../domain/finance.types";
 import type { CategoryRow, DailyRow, MonthlyRow } from "../domain/aggregate";
 import type { TransactionFilter } from "../schemas/finance.schema";
 
@@ -100,4 +100,16 @@ export async function listTransactions(
     .limit(TRANSACTION_LIST_LIMIT + 1);
   if (error) throw fromDbError(error);
   return { rows: (data as Transaction[]).slice(0, TRANSACTION_LIST_LIMIT), truncated: data.length > TRANSACTION_LIST_LIMIT };
+}
+
+/** Recurring payment plans (ADR 0029), active first. */
+export async function listSubscriptions(supabase: SupabaseServerClient, householdId: string): Promise<Subscription[]> {
+  const { data, error } = await supabase
+    .from("finance_subscriptions")
+    .select("*")
+    .eq("household_id", householdId)
+    .order("is_active", { ascending: false })
+    .order("name");
+  if (error) throw fromDbError(error);
+  return data;
 }

@@ -16,6 +16,8 @@ async function addAccount(page: Page, name: string, type: string) {
 }
 
 test.describe("finance", () => {
+  // The Day Drawer is the calendar's day view below xl; from xl the day panel takes over (ADR 0028, finance-bulk.spec).
+  test.use({ viewport: { width: 1200, height: 900 } });
   test.beforeAll(async () => cleanupFinance(await dbAsUser()));
   test.afterAll(async () => cleanupFinance(await dbAsUser()));
 

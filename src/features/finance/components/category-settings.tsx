@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, GripVertical, Pencil, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { cn } from "@/lib/utils";
 import {
   createCategoryAction,
+  deleteCategoryAction,
   reorderCategoriesAction,
   setCategoryActiveAction,
   updateCategoryAction,
@@ -101,10 +103,60 @@ function CategoryForm({
   );
 }
 
+/** Logical delete (ADR 0027), confirmed first: unlike archive it cannot be undone from the UI. */
+function DeleteCategoryButton({ category, childCount }: { category: Category; childCount: number }) {
+  const { run, pending } = useActionRunner();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label={`${category.name} 삭제`}
+        className="text-muted-foreground hover:text-destructive"
+        onClick={() => setOpen(true)}
+      >
+        <Trash2 aria-hidden />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>‘{category.name}’ 카테고리를 삭제할까요?</DialogTitle>
+            <DialogDescription>
+              설정과 카테고리 선택지에서 사라지며 되돌릴 수 없습니다. 이미 기록된 거래는 그대로 남고, 거래에는 이
+              카테고리 이름이 계속 표시됩니다.
+              {childCount > 0 && ` 하위 카테고리 ${childCount}개도 함께 삭제됩니다.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={() =>
+                run(() => deleteCategoryAction({ id: category.id }), {
+                  success: "카테고리를 삭제했습니다.",
+                  onSuccess: () => setOpen(false),
+                })
+              }
+            >
+              <Trash2 aria-hidden />
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function CategoryItem({
   category,
   siblings,
   depth,
+  childCount = 0,
   dragging,
   setDragging,
   onAddChild,
@@ -112,6 +164,7 @@ function CategoryItem({
   category: Category;
   siblings: string[];
   depth: 0 | 1;
+  childCount?: number;
   dragging: string | null;
   setDragging: (id: string | null) => void;
   onAddChild?: () => void;
@@ -211,11 +264,15 @@ function CategoryItem({
         {category.is_active ? <Archive aria-hidden /> : <ArchiveRestore aria-hidden />}
         <span className="hidden sm:inline">{category.is_active ? "보관" : "복원"}</span>
       </Button>
+      <DeleteCategoryButton category={category} childCount={childCount} />
     </div>
   );
 }
 
-/** Categories (spec §25): shared by the household; two levels; drag & drop or arrows to reorder; archive, never delete. */
+/**
+ * Categories (spec §25): shared by the household; two levels; drag & drop or arrows to reorder; archive, or delete
+ * logically (ADR 0027).
+ */
 export function CategorySettings() {
   const f = useFinance();
   const [type, setType] = useState<CategoryType>("EXPENSE");
@@ -253,6 +310,7 @@ export function CategorySettings() {
                 category={node}
                 siblings={topIds}
                 depth={0}
+                childCount={node.children.length}
                 dragging={dragging}
                 setDragging={setDragging}
                 onAddChild={() => setAdding({ parentId: node.id })}

@@ -50,7 +50,16 @@ export function ResponsiveSheet({
 }
 
 /** One transaction's detail (transactions page, recent list). */
-export function TransactionSheet({ tx, onClose }: { tx: Transaction | null; onClose: () => void }) {
+export function TransactionSheet({
+  tx,
+  onClose,
+  onChanged,
+}: {
+  tx: Transaction | null;
+  onClose: () => void;
+  /** After an edit or delete (the caller refreshes its list). */
+  onChanged?: () => void;
+}) {
   // Follow the prop only when it changes (an edit replaces `shown`), and keep the last transaction while closing.
   const [opened, setOpened] = useState<Transaction | null>(tx);
   const [shown, setShown] = useState<Transaction | null>(tx);
@@ -62,7 +71,18 @@ export function TransactionSheet({ tx, onClose }: { tx: Transaction | null; onCl
     <ResponsiveSheet open={!!tx} onOpenChange={(o) => !o && onClose()} title="거래 상세">
       {shown && (
         <div className="p-4">
-          <TransactionDetail key={shown.id} tx={shown} onChanged={setShown} onDeleted={onClose} />
+          <TransactionDetail
+            key={shown.id}
+            tx={shown}
+            onChanged={(next) => {
+              setShown(next);
+              onChanged?.();
+            }}
+            onDeleted={() => {
+              onChanged?.();
+              onClose();
+            }}
+          />
         </div>
       )}
     </ResponsiveSheet>

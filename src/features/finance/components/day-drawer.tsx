@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDayTransactionsAction } from "../actions/finance.actions";
 import type { DayTotals, Transaction } from "../domain/finance.types";
 import { formatDay, formatShortDay } from "../domain/period";
 import { Amount } from "./amount";
@@ -12,6 +11,7 @@ import { useFinance } from "./finance-provider";
 import { ResponsiveSheet } from "./panels";
 import { TransactionDetail, TransactionRow } from "./transaction-detail";
 import { TransactionForm } from "./transaction-form";
+import { useDayTransactions } from "./use-day-transactions";
 
 type View = { kind: "list" } | { kind: "detail"; tx: Transaction } | { kind: "add" };
 
@@ -38,44 +38,15 @@ export function DayDrawer({
 }) {
   const f = useFinance();
   const [view, setView] = useState<View>({ kind: "list" });
-  const [loaded, setLoaded] = useState<{ date: string; rows: Transaction[] } | null>(
-    initialTransactions && date ? { date, rows: initialTransactions } : null,
-  );
-  const [failedFor, setFailedFor] = useState<string | null>(null);
   const [shownDate, setShownDate] = useState(date);
   if (date && date !== shownDate) {
     setShownDate(date);
     setView({ kind: "list" });
   }
-  const rows = loaded && loaded.date === shownDate ? loaded.rows : null;
-  const failed = failedFor !== null && failedFor === shownDate;
-
-  const apply = (day: string, result: Awaited<ReturnType<typeof getDayTransactionsAction>>) => {
-    if (result.ok) {
-      setLoaded({ date: day, rows: result.data });
-      setFailedFor(null);
-    } else {
-      setFailedFor(day);
-    }
-  };
-
-  useEffect(() => {
-    if (!date || loaded?.date === date) return;
-    let cancelled = false;
-    getDayTransactionsAction({ date }).then((result) => {
-      if (!cancelled) apply(date, result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [date, loaded?.date]);
-
-  const reload = () => {
-    if (!shownDate) return;
-    const day = shownDate;
-    setFailedFor(null);
-    getDayTransactionsAction({ date: day }).then((result) => apply(day, result));
-  };
+  const { rows, failed, reload } = useDayTransactions(
+    shownDate,
+    initialTransactions && date ? { date, rows: initialTransactions } : null,
+  );
 
   const day = shownDate;
   const back = (

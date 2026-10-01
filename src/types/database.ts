@@ -399,6 +399,7 @@ export type Database = {
       finance_categories: {
         Row: {
           created_at: string
+          deleted_at: string | null
           household_id: string
           icon: string | null
           id: string
@@ -411,6 +412,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           household_id: string
           icon?: string | null
           id?: string
@@ -423,6 +425,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           household_id?: string
           icon?: string | null
           id?: string
@@ -515,6 +518,98 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_subscriptions: {
+        Row: {
+          account_id: string
+          amount: number
+          billing_cycle: string
+          billing_day: number
+          billing_month: number | null
+          category_id: string
+          charged_through: string | null
+          created_at: string
+          created_by_user_id: string
+          end_date: string | null
+          household_id: string
+          id: string
+          is_active: boolean
+          name: string
+          note: string | null
+          paid_by_user_id: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          billing_cycle?: string
+          billing_day: number
+          billing_month?: number | null
+          category_id: string
+          charged_through?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          end_date?: string | null
+          household_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          note?: string | null
+          paid_by_user_id?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          billing_cycle?: string
+          billing_day?: number
+          billing_month?: number | null
+          category_id?: string
+          charged_through?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          end_date?: string | null
+          household_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          note?: string | null
+          paid_by_user_id?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_subscriptions_account_id_household_id_fkey"
+            columns: ["account_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id", "household_id"]
+          },
+          {
+            foreignKeyName: "finance_subscriptions_category_id_household_id_fkey"
+            columns: ["category_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id", "household_id"]
+          },
+          {
+            foreignKeyName: "finance_subscriptions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_subscriptions_household_id_paid_by_user_id_fkey"
+            columns: ["household_id", "paid_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "finance_household_members"
+            referencedColumns: ["household_id", "user_id"]
+          },
+        ]
+      }
       finance_transactions: {
         Row: {
           account_id: string
@@ -530,6 +625,7 @@ export type Database = {
           note: string | null
           paid_by_user_id: string | null
           source: string
+          subscription_id: string | null
           transaction_date: string
           transaction_time: string | null
           transfer_account_id: string | null
@@ -552,6 +648,7 @@ export type Database = {
           note?: string | null
           paid_by_user_id?: string | null
           source?: string
+          subscription_id?: string | null
           transaction_date: string
           transaction_time?: string | null
           transfer_account_id?: string | null
@@ -574,6 +671,7 @@ export type Database = {
           note?: string | null
           paid_by_user_id?: string | null
           source?: string
+          subscription_id?: string | null
           transaction_date?: string
           transaction_time?: string | null
           transfer_account_id?: string | null
@@ -610,6 +708,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "finance_household_members"
             referencedColumns: ["household_id", "user_id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_subscription_fkey"
+            columns: ["subscription_id", "household_id"]
+            isOneToOne: false
+            referencedRelation: "finance_subscriptions"
+            referencedColumns: ["id", "household_id"]
           },
           {
             foreignKeyName: "finance_transactions_transfer_account_id_household_id_fkey"
@@ -2879,6 +2984,10 @@ export type Database = {
           category_id: string
           expense: number
         }[]
+      }
+      finance_charge_subscriptions: {
+        Args: { p_household: string }
+        Returns: number
       }
       finance_create_household: {
         Args: { p_display_name: string; p_name: string }
