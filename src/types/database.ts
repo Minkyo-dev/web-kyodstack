@@ -438,6 +438,7 @@ export type Database = {
           animations_enabled: boolean
           backfilled_at: string | null
           created_at: string
+          equipped_title: string | null
           gamification_enabled: boolean
           level: number
           quest_terminology: boolean
@@ -450,6 +451,7 @@ export type Database = {
           animations_enabled?: boolean
           backfilled_at?: string | null
           created_at?: string
+          equipped_title?: string | null
           gamification_enabled?: boolean
           level?: number
           quest_terminology?: boolean
@@ -462,6 +464,7 @@ export type Database = {
           animations_enabled?: boolean
           backfilled_at?: string | null
           created_at?: string
+          equipped_title?: string | null
           gamification_enabled?: boolean
           level?: number
           quest_terminology?: boolean
@@ -672,6 +675,116 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_objectives: {
+        Row: {
+          completed_at: string | null
+          current_value: number
+          id: string
+          metric: string
+          params: Json
+          position: number
+          quest_id: string
+          target_value: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_value?: number
+          id?: string
+          metric: string
+          params?: Json
+          position: number
+          quest_id: string
+          target_value: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_value?: number
+          id?: string
+          metric?: string
+          params?: Json
+          position?: number
+          quest_id?: string
+          target_value?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_objectives_quest_id_user_id_fkey"
+            columns: ["quest_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "quest_objectives_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          cleared_at: string | null
+          created_at: string
+          generated_by: string
+          id: string
+          period_end: string
+          period_start: string
+          reward_xp: number
+          rules_version: string
+          spare: Json
+          status: string
+          swap_used: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          cleared_at?: string | null
+          created_at?: string
+          generated_by?: string
+          id?: string
+          period_end: string
+          period_start: string
+          reward_xp: number
+          rules_version: string
+          spare?: Json
+          status?: string
+          swap_used?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          cleared_at?: string | null
+          created_at?: string
+          generated_by?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          reward_xp?: number
+          rules_version?: string
+          spare?: Json
+          status?: string
+          swap_used?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1286,6 +1399,32 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1306,6 +1445,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_titles: {
+        Row: {
+          key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_titles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_reviews: {
         Row: {
@@ -1694,6 +1859,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      create_quest: {
+        Args: { p_objectives: Json; p_quest: Json; p_user_id?: string }
+        Returns: string
+      }
       create_schedule_block: {
         Args: {
           p_ends_at: string
@@ -1847,6 +2016,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      swap_quest_objective: {
+        Args: { p_objective: Json; p_objective_id: string; p_spare: Json }
+        Returns: undefined
       }
       switch_work_session: {
         Args: { p_block_id?: string; p_task_id?: string }
