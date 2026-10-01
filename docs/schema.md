@@ -125,6 +125,21 @@ DailyReview = `daily_reflections`.
 - `scheduler_settings.insight_weekday` (0–6, null = off) and `insight_hour` (0–23, default 8), local time.
 - `quests.generated_by` ∈ system|ai; `quests.reason` (≤ 80) for AI-picked daily quests.
 
+## Direction layer G1 (ADR 0020)
+- `purposes(statement, status active|archived)`: one active per user (partial unique).
+- `identities(name, description, status, sort_order)`; `mission_identities(mission_id, identity_id)` N:M, composite FKs.
+- `missions(title, outcome, deadline date, status active|achieved|dropped, closed_at, purpose_id)`;
+  `(status = 'active') = (closed_at is null)`.
+- `mission_criteria(label, kind check|numeric, target_value, current_value, unit, met_at, position)`; numeric needs
+  `target_value > 0` (not null; fix migration `mission_criteria_target_check`).
+- `paths(mission_id, title, approach, trade_offs, status active|retired, started_at, retired_at)`: one active per
+  mission; retired rows read-only (trigger, 23514). `switch_path(mission, title, approach, trade_offs)` (invoker).
+- `protocols(path_id, mission_id, title, steps text[] ≤ 12, intended_minutes 5–600, status, sort_order)`;
+  FK `(path_id, mission_id) → paths`; only archiving is allowed on a retired path.
+- `tasks.mission_id/protocol_id` (FK `(protocol_id, mission_id) → protocols`, protocol ⇒ mission),
+  `projects.mission_id`. `task_plan_actual` appends `mission_id, protocol_id, effective_mission_id`.
+- Growth = effective mission set; maintenance otherwise (derived, not stored).
+
 ## AI features F1 (ADR 0018)
 - `task_features(user_id, task_id, feature_type task_type|domain|complexity|skills, feature_value jsonb, source
   ai|user|system, status proposed|accepted|rejected, confidence, model, prompt_version, decided_at)`: composite FK to

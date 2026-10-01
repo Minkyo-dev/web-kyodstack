@@ -90,6 +90,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement G1 — direction layer (docs/superpowers/specs/2026-09-30-direction-layer-g1-design.md)
+- [x] Purposes, identities, missions (+ identities, criteria), paths, protocols; task/project links; `switch_path`; retired guards (SQL tests, ADR 0020)
+- [x] Pure breadcrumb and link rules; terms for directive/mission/path/protocol
+- [x] `/scheduler/directive` (directive, identities, missions, criteria, path + history, protocols)
+- [x] Task drawer picker + breadcrumb, Growth chip in the list, mission on projects
+- [x] E2E `directive.spec.ts`; cleanup restores the owner's purpose
+
 ## Improvement F2 — SYSTEM analysis + AI quest candidates (docs/superpowers/specs/2026-09-30-system-analysis-ai-quests-design.md)
 - [x] `system_insights`, analysis schedule settings (default off), `quests.generated_by = 'ai'` + `reason` (SQL tests, ADR 0019)
 - [x] Analysis slot / due check / input builder / evidence check (pure)

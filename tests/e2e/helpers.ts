@@ -51,6 +51,31 @@ export async function cleanup(db: SupabaseClient) {
   await db.from("task_templates").delete().like("name", `${E2E_PREFIX}%`);
   // Projects cascade into milestones (their tasks were deleted above).
   await db.from("projects").delete().like("name", `${E2E_PREFIX}%`);
+  // Direction layer (G1). Tasks and projects are gone already, so children can go first.
+  const { data: e2eMissions } = await db.from("missions").select("id").like("title", `${E2E_PREFIX}%`);
+  const missionIds = (e2eMissions ?? []).map((m) => m.id);
+  if (missionIds.length > 0) {
+    await db.from("protocols").delete().in("mission_id", missionIds);
+    await db.from("paths").delete().in("mission_id", missionIds);
+    await db.from("missions").delete().in("id", missionIds); // cascades criteria and identity links
+  }
+  await db.from("identities").delete().like("name", `${E2E_PREFIX}%`);
+  const { data: e2ePurposes } = await db.from("purposes").select("id").like("statement", `${E2E_PREFIX}%`);
+  if (e2ePurposes?.length) {
+    await db.from("purposes").delete().in("id", e2ePurposes.map((p) => p.id));
+    // Setting an [e2e] directive archived the owner's real one: bring the newest archived one back.
+    const { data: active } = await db.from("purposes").select("id").eq("status", "active").maybeSingle();
+    if (!active) {
+      const { data: last } = await db
+        .from("purposes")
+        .select("id")
+        .eq("status", "archived")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (last) await db.from("purposes").update({ status: "active" }).eq("id", last.id);
+    }
+  }
   // Classification rows: tags/domains made by E2E ("[e2e] …" template tags, "e2e-…" inline tags, "E2E…" domains).
   await db.from("tags").delete().like("name", `${E2E_PREFIX}%`);
   await db.from("tags").delete().like("name", "e2e-%");
