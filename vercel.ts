@@ -7,6 +7,15 @@ import type { VercelConfig } from "@vercel/config/v1/types";
  */
 export const config: VercelConfig = {
   framework: "nextjs",
+  // Only main deploys automatically; previews and the feature branch don't.
+  git: {
+    deploymentEnabled: {
+      main: true,
+      preview: false,
+      development: false,
+      "feat/work-scheduler": false,
+    },
+  },
   crons: [
     // 10:00 UTC = 06:00 EDT / 05:00 EST → inside the 05:00–10:00 local planner window
     { path: "/api/internal/jobs/daily-planner", schedule: "0 10 * * *" },
