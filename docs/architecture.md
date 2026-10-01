@@ -58,11 +58,12 @@ Private prefixes enforced in `lib/supabase/proxy.ts`: `/dashboard`, `/scheduler`
 | `src/features/jobs` | `services/job-runner.ts` (users × local-time due check × ledger claim), `services/jobs.ts` (the three jobs), `utils/{job-window,claim}.ts` |
 | `src/lib/supabase/admin.ts`, `src/lib/job-route.ts` | service-role client (jobs only) and the secret-checked job endpoint wrapper |
 | `src/lib/route.ts` | `runRoute()`: the Route Handler version of `runAction` (JSON + HTTP status mapping) |
-| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` (FullCalendar, dynamic ssr:false), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
+| `src/features/scheduler/components` | `SchedulerWorkspace` (client state holder), `TodayTaskPanel`, `WeeklyCalendar` / `MonthlyCalendar` (FullCalendar timeGrid / dayGrid, dynamic ssr:false; `?view=month`, ADR 0024), `TaskDetailDrawer`, `TodayMetricsBar`, `WorkSessionTimer` + `StopSessionDialog`, `DailyReflectionDialog`, `ScoreInput`, `DurationInsight` |
 | `archive/legacy-scaffold` | parked admin/resume code; not built (ADR 0001) |
 
 ## Calendar data flow
 - The page computes the local week in the profile timezone and fetches blocks for week ± 1 day, the Today tasks and the templates in parallel.
+- Page help: `src/lib/page-help.ts` (texts, terminology-aware) + `src/components/layout/page-help.tsx` (hover/click popover) next to each private page title.
 - `WeeklyCalendar` keeps a local copy of the blocks for optimistic updates. Every action calls `revalidatePath`, and the fresh server props replace the local copy.
 - Drop: the temporary FC event is shown → `scheduleTaskAction` (the server sizes the block) → the temp event is replaced with the saved block, or removed with a toast on error.
 - Move/resize: `moveScheduleBlockAction` → `info.revert()` on failure. Overlaps show a warning toast, never an error.

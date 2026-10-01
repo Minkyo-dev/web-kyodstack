@@ -41,3 +41,4 @@ Template:
 | 0021 | Habits and daily checks | accepted |
 | 0022 | Direction status: mission progress, alignment, identity evidence | accepted |
 | 0023 | Strategy review: layer diagnosis and SYSTEM QUESTION | accepted |
+| 0024 | Project archive folder and the scheduler month view | accepted |

@@ -90,6 +90,11 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement H — help, project archive, month view (ADR 0024)
+- [x] (?) help popover with concept + how-to on scheduler, directive, projects, review, progress (E2E `page-help.spec.ts`)
+- [x] Project archive folder (`projects.archived_at`), archive/restore, archived projects leave pickers (SQL + E2E `project-archive.spec.ts`)
+- [x] Scheduler month view (`?view=month`), week/month toggle, month navigation, drag to another day (E2E `month-view.spec.ts`)
+
 ## Improvement G4 — strategy review (docs/superpowers/specs/2026-10-01-strategy-review-g4-design.md)
 - [x] Pure `diagnosis-v1` (lowest firing layer, collecting below 5 sessions) and neutral SYSTEM QUESTION texts (ADR 0023)
 - [x] SYSTEM QUESTION on mission cards with navigate-only choices and a per-week [유지]

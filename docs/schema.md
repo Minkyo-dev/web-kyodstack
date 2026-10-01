@@ -49,6 +49,7 @@ This file lists only the **differences and additions** relative to the spec, plu
 - The task FKs are NO ACTION: a project or milestone with tasks can't be hard-deleted. Close it with `status`.
   NO ACTION is checked at statement end, so an account deletion still cascades.
 - `task_plan_actual` now also exposes `project_id` and `milestone_id`.
+- `projects.archived_at` (ADR 0024): archive folder, independent of `status`; archived projects leave the pickers.
 - Remaining estimate (v1) = Σ over open tasks of max(personal estimate − actual minutes so far, 0).
 
 ## weekly_reviews / ai_recommendations (Phase 5)
