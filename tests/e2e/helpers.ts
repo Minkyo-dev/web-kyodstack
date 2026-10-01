@@ -7,6 +7,10 @@ export function credentials() {
   const email = process.env.E2E_EMAIL;
   const password = process.env.E2E_PASSWORD;
   if (!email || !password) throw new Error("Set E2E_EMAIL and E2E_PASSWORD (never commit them).");
+  // ADR 0031: E2E runs as a dedicated `.test` user so it never touches the owner's real data.
+  if (!email.endsWith(".test") && process.env.E2E_ALLOW_REAL_ACCOUNT !== "1") {
+    throw new Error(`E2E_EMAIL (${email}) is not a dedicated .test account; set E2E_ALLOW_REAL_ACCOUNT=1 to override.`);
+  }
   return { email, password };
 }
 

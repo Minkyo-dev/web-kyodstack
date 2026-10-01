@@ -75,7 +75,8 @@ npx vitest run
 npm run build
 E2E_EMAIL=… E2E_PASSWORD=… npm run test:e2e   # needs SUPABASE_PUBLISHABLE_KEY* in env (source .env.local)
 ```
-E2E data must use the `[e2e]` title prefix, so the suite's cleanup can delete it.
+E2E runs as the dedicated user `e2e@kyodstack.test` (ADR 0031), never the owner account. E2E data must still use the
+`[e2e]` title prefix, so the suite's cleanup can delete it.
 For UI changes, also exercise them in the browser (next-devtools / Playwright MCP) before you report them as working.
 
 # Working style

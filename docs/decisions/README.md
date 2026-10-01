@@ -48,3 +48,4 @@ Template:
 | 0028 | The finance calendar's day panel | accepted |
 | 0029 | Recurring payments (subscriptions) | accepted |
 | 0030 | Korean webfont (Pretendard) | accepted |
+| 0031 | A dedicated E2E user | accepted |
