@@ -40,3 +40,4 @@ Template:
 | 0020 | Direction layer: purpose, identities, missions, paths, protocols | accepted |
 | 0021 | Habits and daily checks | accepted |
 | 0022 | Direction status: mission progress, alignment, identity evidence | accepted |
+| 0023 | Strategy review: layer diagnosis and SYSTEM QUESTION | accepted |

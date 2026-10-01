@@ -206,6 +206,13 @@ Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, u
 - `identity-evidence-v1`: 28 days; sessions on the identity's missions; its missions' habit checks / scheduled days;
   sentence at ≥ 0.6 with ≥ 5 scheduled days.
 
+## Layer diagnosis `diagnosis-v1` (G4, ADR 0023). Pure, 28 local days, per active mission.
+- goal: pace gap ≥ 0.25 · strategy: habit completion ≥ 0.7 and progress now − progress 28 days ago ≤ 0 · tactic:
+  median protocol session < 0.6 × intended (≥ 3) or habit completion < 0.5 · planning: ≥ 5 blocks and missed+skipped
+  ≥ 0.4 · execution: ≥ 5 work logs and confirmed blockers ≥ 0.3 · recovery: Recovery stat < 50.
+- Habit rules need ≥ 5 scheduled days; < 5 mission sessions → collecting. Suspected = lowest firing layer.
+- `system_insights` input gains `direction` (numbers only); content may carry `directionNote` (`analysis-v2`).
+
 ## Views
 - `task_plan_actual` (`security_invoker = true`, anon revoked): per-task `planned_minutes` (non-cancelled blocks,
   skipped included), `skipped_minutes`, `actual_minutes` (finished sessions), `session_count`, `average_focus`,

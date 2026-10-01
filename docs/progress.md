@@ -90,6 +90,12 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement G4 — strategy review (docs/superpowers/specs/2026-10-01-strategy-review-g4-design.md)
+- [x] Pure `diagnosis-v1` (lowest firing layer, collecting below 5 sessions) and neutral SYSTEM QUESTION texts (ADR 0023)
+- [x] SYSTEM QUESTION on mission cards with navigate-only choices and a per-week [유지]
+- [x] F2 analysis input gains the direction block; `analysis-v2` `directionNote` behind the evidence check
+- [ ] No dedicated E2E (needs ≥ 5 sessions over days); unit tests cover the rules, G3/F2 E2E cover the screens
+
 ## Improvement G3 — evidence & status (docs/superpowers/specs/2026-10-01-evidence-status-g3-design.md)
 - [x] Pure mission progress, pace, alignment, habit consistency, identity evidence; deny-listed sentences (ADR 0022)
 - [x] `loadDirectionStatus` and the ACTIVE MISSION / PATH / 이번 주 / identity evidence section on the progress page
