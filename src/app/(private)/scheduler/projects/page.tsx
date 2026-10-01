@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Archive } from "lucide-react";
 import { z } from "zod";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
@@ -11,7 +12,8 @@ import { ProjectCreateForm } from "@/features/projects/components/project-forms"
 import { ProjectDetail } from "@/features/projects/components/project-detail";
 import { PROJECT_STATUS_LABEL } from "@/features/projects/domain/project.types";
 import { loadProjectContext } from "@/features/projects/queries/context";
-import { getProjectOverview, listProjectOverviews } from "@/features/projects/queries/project.queries";
+import { getProjectOverview, listProjectOverviews, type ProjectOverview } from "@/features/projects/queries/project.queries";
+import { splitArchived } from "@/features/projects/utils/progress";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
 import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
 import { josa, termsFor } from "@/lib/terms";
@@ -50,6 +52,38 @@ export default async function ProjectsPage({
     selected?.overview.mission_id ? getMissionRef(supabase, user.id, selected.overview.mission_id) : Promise.resolve(null),
   ]);
 
+  const { current, archived } = splitArchived(projects);
+  const item = (p: ProjectOverview) => {
+    const closed = p.status === "completed" || p.status === "cancelled";
+    const active = p.id === selected?.overview.id;
+    return (
+      <li key={p.id}>
+        <Link
+          href={`/scheduler/projects?project=${p.id}#project-detail`}
+          aria-current={active ? "page" : undefined}
+          className={cn("block space-y-2 px-4 py-3 hover:bg-muted/50", active && "bg-muted")}
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="font-medium">{p.name}</span>
+            <span className="flex items-center gap-2">
+              <DueBadge today={ctx.today} target={p.target_date} closed={closed || p.archived_at !== null} />
+              <span className="rounded-sm border border-border px-1.5 text-xs text-muted-foreground">
+                {PROJECT_STATUS_LABEL[p.status]}
+              </span>
+            </span>
+          </div>
+          <ProgressBar progress={p.progress} label={`${p.name} 진행률`} />
+          {p.nextMilestone && (
+            <p className="text-xs text-muted-foreground">
+              다음 마일스톤: {p.nextMilestone.name}
+              {p.nextMilestone.target_date && ` · ${p.nextMilestone.target_date}`}
+            </p>
+          )}
+        </Link>
+      </li>
+    );
+  };
+
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row">
       <aside
@@ -67,38 +101,22 @@ export default async function ProjectsPage({
             {`아직 ${josa(terms.project, "이/가")} 없습니다. 목표가 있는 작업 묶음을 ${josa(terms.project, "으로/로")} 만들어 보세요.`}
           </p>
         ) : (
-          <ul className="min-h-0 flex-1 divide-y divide-border overflow-y-auto" aria-label={`${terms.project} 목록`}>
-            {projects.map((p) => {
-              const closed = p.status === "completed" || p.status === "cancelled";
-              const active = p.id === selected?.overview.id;
-              return (
-                <li key={p.id}>
-                  <Link
-                    href={`/scheduler/projects?project=${p.id}#project-detail`}
-                    aria-current={active ? "page" : undefined}
-                    className={cn("block space-y-2 px-4 py-3 hover:bg-muted/50", active && "bg-muted")}
-                  >
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-medium">{p.name}</span>
-                      <span className="flex items-center gap-2">
-                        <DueBadge today={ctx.today} target={p.target_date} closed={closed} />
-                        <span className="rounded-sm border border-border px-1.5 text-xs text-muted-foreground">
-                          {PROJECT_STATUS_LABEL[p.status]}
-                        </span>
-                      </span>
-                    </div>
-                    <ProgressBar progress={p.progress} label={`${p.name} 진행률`} />
-                    {p.nextMilestone && (
-                      <p className="text-xs text-muted-foreground">
-                        다음 마일스톤: {p.nextMilestone.name}
-                        {p.nextMilestone.target_date && ` · ${p.nextMilestone.target_date}`}
-                      </p>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <ul className="divide-y divide-border" aria-label={`${terms.project} 목록`}>
+              {current.map(item)}
+            </ul>
+            {archived.length > 0 && (
+              <details className="border-t border-border" open={!!selected?.overview.archived_at}>
+                <summary className="flex cursor-pointer items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground">
+                  <Archive className="size-3.5" aria-hidden />
+                  아카이브 ({archived.length})
+                </summary>
+                <ul className="divide-y divide-border" aria-label={`아카이브된 ${terms.project}`}>
+                  {archived.map(item)}
+                </ul>
+              </details>
+            )}
+          </div>
         )}
       </aside>
 

@@ -109,7 +109,7 @@ export async function getProjectOverview(
 /** Open projects and milestones for pickers. */
 export async function listProjectOptions(supabase: SupabaseServerClient): Promise<ProjectOption[]> {
   const [projects, milestones] = await Promise.all([
-    supabase.from("projects").select("id, name").in("status", ["planned", "active", "paused"]).order("name"),
+    supabase.from("projects").select("id, name").in("status", ["planned", "active", "paused"]).is("archived_at", null).order("name"),
     supabase
       .from("milestones")
       .select("id, name, project_id, sort_order")

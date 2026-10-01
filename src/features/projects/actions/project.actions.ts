@@ -6,6 +6,7 @@ import * as projects from "../services/project.service";
 import {
   createMilestoneSchema,
   createProjectSchema,
+  setProjectArchivedSchema,
   updateMilestoneSchema,
   updateProjectSchema,
 } from "../schemas/project.schema";
@@ -24,6 +25,12 @@ export async function createProjectAction(input: unknown) {
 export async function updateProjectAction(input: unknown) {
   return runAction("project.update", updateProjectSchema, input, async (data, ctx) =>
     done(await projects.updateProject(ctx, data)),
+  );
+}
+
+export async function setProjectArchivedAction(input: unknown) {
+  return runAction("project.archive", setProjectArchivedSchema, input, async (data, ctx) =>
+    done(await projects.setProjectArchived(ctx, data)),
   );
 }
 

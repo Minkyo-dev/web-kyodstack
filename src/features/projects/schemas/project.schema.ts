@@ -46,3 +46,7 @@ export const updateMilestoneSchema = z.object({
   sortOrder: z.coerce.number().int().min(0).max(10_000),
 });
 export type UpdateMilestoneInput = z.infer<typeof updateMilestoneSchema>;
+
+/** Move a project into (or out of) the archive folder; independent of its status (ADR 0024). */
+export const setProjectArchivedSchema = z.object({ projectId: z.uuid(), archived: z.boolean() });
+export type SetProjectArchivedInput = z.infer<typeof setProjectArchivedSchema>;

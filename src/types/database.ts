@@ -1039,6 +1039,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          archived_at: string | null
           created_at: string
           description: string | null
           id: string
@@ -1052,6 +1053,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -1065,6 +1067,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           description?: string | null
           id?: string

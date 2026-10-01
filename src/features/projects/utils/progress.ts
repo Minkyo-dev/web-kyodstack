@@ -56,3 +56,13 @@ export function dueState(today: string, target: string | null, closed: boolean):
   if (d <= 3) return "due_soon";
   return "on_track";
 }
+
+/** Main list vs the archive folder; archived ones newest first (ADR 0024). Keeps the input order otherwise. */
+export function splitArchived<T extends { archived_at: string | null }>(projects: T[]): { current: T[]; archived: T[] } {
+  return {
+    current: projects.filter((p) => p.archived_at === null),
+    archived: projects
+      .filter((p) => p.archived_at !== null)
+      .sort((a, b) => Date.parse(b.archived_at!) - Date.parse(a.archived_at!)),
+  };
+}

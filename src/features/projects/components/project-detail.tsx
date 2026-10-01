@@ -3,7 +3,7 @@ import type { Terms } from "@/lib/terms";
 import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
 import { DueBadge } from "./due-badge";
 import { ProgressBar } from "./progress-bar";
-import { MilestoneCreateForm, MilestoneEditor, ProjectEditForm, TaskQuickAdd } from "./project-forms";
+import { MilestoneCreateForm, MilestoneEditor, ProjectArchiveButton, ProjectEditForm, TaskQuickAdd } from "./project-forms";
 import { ProjectTaskRow } from "./project-task-row";
 import { MILESTONE_STATUS_LABEL, PROJECT_STATUS_LABEL } from "../domain/project.types";
 import type { ProjectOverview } from "../queries/project.queries";
@@ -64,6 +64,10 @@ export function ProjectDetail({
             <span className="rounded-sm border border-border px-1.5 text-xs text-muted-foreground">
               {PROJECT_STATUS_LABEL[project.status]}
             </span>
+            {project.archived_at && (
+              <span className="rounded-sm border border-border px-1.5 text-xs text-muted-foreground">아카이브됨</span>
+            )}
+            <ProjectArchiveButton projectId={project.id} archived={project.archived_at !== null} />
           </span>
         </div>
         {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}

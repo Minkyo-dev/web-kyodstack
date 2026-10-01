@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Archive, ArchiveRestore, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { createTaskAction } from "@/features/scheduler/actions/task.actions";
 import {
   createMilestoneAction,
   createProjectAction,
+  setProjectArchivedAction,
   updateMilestoneAction,
   updateProjectAction,
 } from "../actions/project.actions";
@@ -350,5 +351,25 @@ export function TaskQuickAdd({
         <Plus aria-hidden />
       </Button>
     </form>
+  );
+}
+
+/** Move the project into the archive folder or back (ADR 0024). Tasks and their links stay as they are. */
+export function ProjectArchiveButton({ projectId, archived }: { projectId: string; archived: boolean }) {
+  const { run, pending } = useActionRunner();
+  return (
+    <Button
+      size="xs"
+      variant="outline"
+      disabled={pending}
+      onClick={() =>
+        run(() => setProjectArchivedAction({ projectId, archived: !archived }), {
+          success: archived ? "아카이브에서 꺼냈습니다." : "아카이브로 옮겼습니다.",
+        })
+      }
+    >
+      {archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
+      {archived ? "아카이브에서 꺼내기" : "아카이브로 이동"}
+    </Button>
   );
 }

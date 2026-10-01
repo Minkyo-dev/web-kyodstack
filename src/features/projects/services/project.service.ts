@@ -6,6 +6,7 @@ import { resolveDirectionLink } from "@/features/direction/services/direction.se
 import type { Milestone, Project } from "../domain/project.types";
 import type {
   CreateMilestoneInput,
+  SetProjectArchivedInput,
   CreateProjectInput,
   UpdateMilestoneInput,
   UpdateProjectInput,
@@ -77,6 +78,20 @@ export async function updateProject(ctx: ActionContext, input: UpdateProjectInpu
       target_date: input.targetDate,
       mission_id: missionId,
     })
+    .eq("id", input.projectId)
+    .eq("user_id", ctx.user.id)
+    .select()
+    .maybeSingle();
+  if (error) throw fromDbError(error);
+  if (!data) throw new AppError("NOT_FOUND");
+  return data as Project;
+}
+
+/** Archive folder (ADR 0024): sets or clears archived_at; status and task links stay as they are. */
+export async function setProjectArchived(ctx: ActionContext, input: SetProjectArchivedInput): Promise<Project> {
+  const { data, error } = await ctx.supabase
+    .from("projects")
+    .update({ archived_at: input.archived ? new Date().toISOString() : null })
     .eq("id", input.projectId)
     .eq("user_id", ctx.user.id)
     .select()
