@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
 import { levelFor } from "@/features/gamification/utils/level";
+import { TITLES } from "@/features/gamification/utils/achievements";
 import { LevelLine } from "@/features/gamification/components/level-line";
 import { ProgressNotifier, type PlayerView } from "@/features/gamification/components/progress-notifier";
 
@@ -18,7 +19,13 @@ export default async function PrivateLayout({
   const user = await requireUserOrRedirect();
   const profile = await getPlayerProfile(await createClient(), user.id);
   const player: PlayerView | null = profile?.gamification_enabled
-    ? { ...levelFor(profile.total_xp), total: profile.total_xp, animations: profile.animations_enabled }
+    ? {
+        ...levelFor(profile.total_xp),
+        total: profile.total_xp,
+        animations: profile.animations_enabled,
+        achievementToasts: profile.achievement_toasts,
+        title: profile.equipped_title ? (TITLES[profile.equipped_title] ?? null) : null,
+      }
     : null;
 
   return (

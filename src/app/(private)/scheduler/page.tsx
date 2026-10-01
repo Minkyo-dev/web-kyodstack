@@ -25,6 +25,12 @@ import { z } from "zod";
 import { markMissedBlocks } from "@/features/scheduler/services/scheduling.service";
 import { listProjectOptions } from "@/features/projects/queries/project.queries";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
+import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
+import { listQuests } from "@/features/gamification/queries/quest.queries";
+import { ensureQuests } from "@/features/gamification/services/quest.service";
+import { toQuestViews, type QuestView } from "@/features/gamification/utils/quest-view";
+import { QuestPanel } from "@/features/gamification/components/quest-panel";
+import { log } from "@/lib/logger";
 import {
   addLocalDays,
   isLocalDateString,
@@ -110,6 +116,19 @@ export default async function SchedulerPage({
   const visibleTaskIds = [...new Set([...todayTasks.map((t) => t.id), ...blocks.map((b) => b.task_id)])];
   const planActual = await listTaskPlanActual(supabase, visibleTaskIds);
 
+  // Quests (E2): generated lazily here; a failure only hides the panel.
+  let quests: QuestView[] = [];
+  const profile = await getPlayerProfile(supabase, user.id);
+  if (profile?.gamification_enabled) {
+    try {
+      await ensureQuests({ user, supabase }, new Date());
+      const rows = await listQuests(supabase, user.id, { visibleOn: today });
+      quests = toQuestViews(rows, Object.fromEntries(domains.map((d) => [d.id, d.name])));
+    } catch (error) {
+      log({ action: "quests.ensure", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+    }
+  }
+
   return (
     <SchedulerWorkspace
       context={context}
@@ -133,6 +152,7 @@ export default async function SchedulerPage({
       nearBlocks={nearBlocks}
       projectOptions={projectOptions}
       recommendations={recommendations}
+      questPanel={quests.length ? <QuestPanel quests={quests} /> : null}
     />
   );
 }

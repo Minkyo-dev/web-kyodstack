@@ -50,6 +50,7 @@ export function TodayTaskPanel({
   upcomingTaskIds,
   onStartTask,
   onOpenTask,
+  questPanel,
 }: {
   tasks: Task[];
   templates: TaskTemplate[];
@@ -73,6 +74,8 @@ export function TodayTaskPanel({
   planActual: Record<string, TaskPlanActual>;
   /** Tasks with a planned block that hasn't ended yet. */
   upcomingTaskIds: Set<string>;
+  /** Rendered by the page (gamification); scheduler code never imports it. */
+  questPanel?: React.ReactNode;
   onStartTask: (task: Task) => void;
   onOpenTask: (taskId: string) => void;
 }) {
@@ -178,6 +181,7 @@ export function TodayTaskPanel({
       <TaskQuickCreate templates={templates} today={today} tags={tags} domains={domains} />
       <TemplateTypeBanner count={untypedTemplateCount} onManage={onManageClassification} />
       <TagFilter tags={usedTags} selected={tagFilter} />
+      {questPanel}
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         <TodaySections
