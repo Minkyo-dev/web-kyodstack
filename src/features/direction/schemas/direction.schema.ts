@@ -19,6 +19,15 @@ export const updateIdentitySchema = createIdentitySchema.extend({
   sortOrder,
 });
 export type UpdateIdentityInput = z.infer<typeof updateIdentitySchema>;
+/** The full new order of the active identities; each gets its index as sort_order (ties can't survive). */
+export const reorderIdentitiesSchema = z.object({
+  identityIds: z
+    .array(z.uuid())
+    .min(1)
+    .max(100)
+    .refine((ids) => new Set(ids).size === ids.length, "중복된 항목이 있습니다."),
+});
+export type ReorderIdentitiesInput = z.infer<typeof reorderIdentitiesSchema>;
 
 export const createMissionSchema = z.object({
   title: required(120, "이름을 입력해 주세요."),

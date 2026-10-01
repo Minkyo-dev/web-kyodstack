@@ -1,5 +1,6 @@
 "use client";
 
+import { useOptimistic } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,16 +28,7 @@ export function CriteriaList({ missionId, criteria, closed }: { missionId: strin
                 <span className="sr-only">{c.met_at ? " (달성)" : " (미달성)"}</span>
               </span>
               {c.kind === "check" ? (
-                <label className="flex items-center gap-1 text-xs">
-                  <input
-                    type="checkbox"
-                    aria-label={`${c.label} 달성`}
-                    checked={c.met_at !== null}
-                    disabled={pending || closed}
-                    onChange={(e) => run(() => setCriterionProgressAction({ criterionId: c.id, met: e.target.checked }))}
-                  />
-                  달성
-                </label>
+                <CheckToggle criterion={c} closed={closed} />
               ) : (
                 <form
                   className="flex items-center gap-1 text-xs tabular-nums"
@@ -115,5 +107,29 @@ export function CriteriaList({ missionId, criteria, closed }: { missionId: strin
         </form>
       )}
     </section>
+  );
+}
+
+/** Tick a check criterion; shows at once (optimistic) and settles after the action and revalidation. */
+function CheckToggle({ criterion: c, closed }: { criterion: MissionCriterion; closed: boolean }) {
+  const { run, pending } = useActionRunner();
+  const [met, setMet] = useOptimistic(c.met_at !== null);
+  return (
+    <label className="flex items-center gap-1 text-xs">
+      <input
+        type="checkbox"
+        aria-label={`${c.label} 달성`}
+        checked={met}
+        disabled={pending || closed}
+        onChange={(e) => {
+          const next = e.target.checked;
+          run(async () => {
+            setMet(next);
+            return setCriterionProgressAction({ criterionId: c.id, met: next });
+          });
+        }}
+      />
+      달성
+    </label>
   );
 }

@@ -35,6 +35,13 @@ test.describe("direction layer", () => {
       await idForm.getByLabel("이름").fill(`${E2E_PREFIX} English Speaker`);
       await idForm.getByRole("button", { name: "추가" }).click();
       await expect(page.getByRole("list", { name: "정체성 목록" })).toContainText("English Speaker");
+      // Second identity, then move it to the front: it becomes the class (first item).
+      await idForm.getByLabel("이름").fill(`${E2E_PREFIX} Builder`);
+      await idForm.getByRole("button", { name: "추가" }).click();
+      const ids = page.getByRole("list", { name: "정체성 목록" }).getByRole("listitem");
+      await expect(ids.last()).toContainText("Builder");
+      await page.getByRole("button", { name: `${E2E_PREFIX} Builder 앞으로` }).click();
+      await expect(ids.first()).toContainText("Builder");
 
       // Mission
       const missionForm = page.getByRole("form", { name: "새 목표" });
@@ -55,6 +62,13 @@ test.describe("direction layer", () => {
       await item.getByLabel("Mock interviews 현재값").fill("3");
       await item.getByRole("button", { name: "갱신" }).click();
       await expect(item).toContainText("(달성)");
+      // A check criterion ticks at once (optimistic) and stays ticked.
+      await crit.getByLabel("기준").fill("Pass exam");
+      await crit.getByRole("button", { name: "기준 추가" }).click();
+      const exam = detail.getByRole("listitem", { name: "기준 Pass exam" });
+      await exam.getByLabel("Pass exam 달성").check();
+      await expect(exam).toContainText("(달성)");
+      await expect(detail.getByRole("heading", { name: /성공 기준/ })).toContainText("2/2");
 
       // Path
       const setPath = detail.getByRole("form", { name: "전략 설정" });
@@ -116,6 +130,19 @@ test.describe("direction layer", () => {
       await expect
         .poll(async () => (await db.from("tasks").select("protocol_id").eq("title", task).single()).data?.protocol_id)
         .not.toBeNull();
+
+      // Close the mission through the settings form (save_mission update path).
+      await page.keyboard.press("Escape");
+      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: mission }).click();
+      const detail3 = page.getByRole("region", { name: "목표 상세" });
+      await detail3.getByText("목표 설정", { exact: true }).click();
+      const settings = detail3.getByRole("form", { name: "목표 설정" });
+      await settings.getByLabel("상태").selectOption("achieved");
+      await settings.getByRole("button", { name: "저장" }).click();
+      await expect
+        .poll(async () => (await db.from("missions").select("status, closed_at").eq("title", mission).single()).data)
+        .toMatchObject({ status: "achieved", closed_at: expect.any(String) });
     } finally {
       await db.from("player_profiles").update({ gamification_enabled: before?.gamification_enabled ?? false }).eq("user_id", uid);
       await cleanup(db);

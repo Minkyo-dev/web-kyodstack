@@ -7,6 +7,7 @@ import type {
   CreateIdentityInput,
   CreateMissionInput,
   CreateProtocolInput,
+  ReorderIdentitiesInput,
   SetCriterionProgressInput,
   SetPurposeInput,
   SwitchPathInput,
@@ -20,19 +21,9 @@ import type {
 const retiredError = (code?: string) =>
   code === "23514" ? new AppError("VALIDATION_ERROR", "교체된 전략은 수정할 수 없습니다.") : null;
 
-/** Archive the active purpose, then insert the new one. A concurrent call fails on the partial unique index. */
+/** Archive the active purpose and insert the new one in one transaction (`set_purpose`). */
 export async function setPurpose(ctx: ActionContext, input: SetPurposeInput): Promise<Purpose> {
-  const archived = await ctx.supabase
-    .from("purposes")
-    .update({ status: "archived" })
-    .eq("user_id", ctx.user.id)
-    .eq("status", "active");
-  if (archived.error) throw fromDbError(archived.error);
-  const { data, error } = await ctx.supabase
-    .from("purposes")
-    .insert({ user_id: ctx.user.id, statement: input.statement })
-    .select()
-    .single();
+  const { data, error } = await ctx.supabase.rpc("set_purpose", { p_statement: input.statement }).single();
   if (error) throw fromDbError(error);
   return data as Purpose;
 }
@@ -61,62 +52,53 @@ export async function updateIdentity(ctx: ActionContext, input: UpdateIdentityIn
   return data as Identity;
 }
 
-/** Replace a mission's identity links. The composite FKs reject other users' identities. */
-async function setMissionIdentities(ctx: ActionContext, missionId: string, identityIds: string[]) {
-  const del = await ctx.supabase.from("mission_identities").delete().eq("mission_id", missionId).eq("user_id", ctx.user.id);
-  if (del.error) throw fromDbError(del.error);
-  if (identityIds.length === 0) return;
-  const ins = await ctx.supabase
-    .from("mission_identities")
-    .insert([...new Set(identityIds)].map((identity_id) => ({ user_id: ctx.user.id, mission_id: missionId, identity_id })));
-  if (ins.error) throw fromDbError(ins.error);
+/** Rewrite sort_order as 0..n-1 in the given order; every id must be the caller's identity. */
+export async function reorderIdentities(ctx: ActionContext, input: ReorderIdentitiesInput): Promise<void> {
+  for (const [index, id] of input.identityIds.entries()) {
+    const { data, error } = await ctx.supabase
+      .from("identities")
+      .update({ sort_order: index })
+      .eq("id", id)
+      .eq("user_id", ctx.user.id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw fromDbError(error);
+    if (!data) throw new AppError("NOT_FOUND");
+  }
 }
 
-export async function createMission(ctx: ActionContext, input: CreateMissionInput): Promise<Mission> {
-  const purpose = await ctx.supabase
-    .from("purposes")
-    .select("id")
-    .eq("user_id", ctx.user.id)
-    .eq("status", "active")
-    .maybeSingle();
-  if (purpose.error) throw fromDbError(purpose.error);
+/**
+ * Mission row and its identity links in one transaction (`save_mission`): a foreign identity id fails the composite
+ * FK and nothing is written. Creating links the mission to the active purpose; closed_at follows the status.
+ */
+async function saveMission(
+  ctx: ActionContext,
+  missionId: string | null,
+  input: { title: string; outcome: string | null; deadline: string | null; status: string; identityIds: string[] },
+): Promise<Mission> {
   const { data, error } = await ctx.supabase
-    .from("missions")
-    .insert({
-      user_id: ctx.user.id,
-      purpose_id: purpose.data?.id ?? null,
-      title: input.title,
-      outcome: input.outcome,
-      deadline: input.deadline ?? null,
+    .rpc("save_mission", {
+      p_mission_id: missionId as string,
+      p_title: input.title,
+      p_outcome: input.outcome as string,
+      p_deadline: input.deadline as string,
+      p_status: input.status,
+      p_identity_ids: input.identityIds,
     })
-    .select()
     .single();
-  if (error) throw fromDbError(error);
-  await setMissionIdentities(ctx, data.id, input.identityIds);
+  if (error) {
+    if (error.code === "P0002") throw new AppError("NOT_FOUND");
+    throw fromDbError(error);
+  }
   return data as Mission;
 }
 
-export async function updateMission(ctx: ActionContext, input: UpdateMissionInput): Promise<Mission> {
-  const before = await ctx.supabase
-    .from("missions")
-    .select("status, closed_at")
-    .eq("id", input.missionId)
-    .eq("user_id", ctx.user.id)
-    .maybeSingle();
-  if (before.error) throw fromDbError(before.error);
-  if (!before.data) throw new AppError("NOT_FOUND");
-  const closedAt =
-    input.status === "active" ? null : before.data.status === input.status ? before.data.closed_at : new Date().toISOString();
-  const { data, error } = await ctx.supabase
-    .from("missions")
-    .update({ title: input.title, outcome: input.outcome, deadline: input.deadline, status: input.status, closed_at: closedAt })
-    .eq("id", input.missionId)
-    .eq("user_id", ctx.user.id)
-    .select()
-    .single();
-  if (error) throw fromDbError(error);
-  await setMissionIdentities(ctx, input.missionId, input.identityIds);
-  return data as Mission;
+export function createMission(ctx: ActionContext, input: CreateMissionInput): Promise<Mission> {
+  return saveMission(ctx, null, { ...input, deadline: input.deadline ?? null, status: "active" });
+}
+
+export function updateMission(ctx: ActionContext, input: UpdateMissionInput): Promise<Mission> {
+  return saveMission(ctx, input.missionId, input);
 }
 
 export async function upsertCriterion(ctx: ActionContext, input: UpsertCriterionInput): Promise<MissionCriterion> {

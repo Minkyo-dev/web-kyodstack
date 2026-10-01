@@ -122,32 +122,35 @@ export default async function SchedulerPage({
 
   // Plan vs actual only for tasks visible on this screen.
   const visibleTaskIds = [...new Set([...todayTasks.map((t) => t.id), ...blocks.map((b) => b.task_id)])];
-  const [planActual, proposals] = await Promise.all([
-    listTaskPlanActual(supabase, visibleTaskIds),
-    listOpenProposals(supabase, user.id, visibleTaskIds),
-  ]);
-
-  // Habits (G2): focus checks are recorded lazily here; a failure only hides the panel.
-  let habits: HabitToday[] = [];
-  try {
-    await syncFocusChecks({ user, supabase }, [today]);
-    habits = await listTodayHabits(supabase, user.id, today, timezone);
-  } catch (error) {
-    log({ action: "habits.today", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
-  }
-
-  // Quests (E2): generated lazily here; a failure only hides the panel.
-  let quests: QuestView[] = [];
-  const profile = await getPlayerProfile(supabase, user.id);
-  if (profile?.gamification_enabled) {
+  // Habits (G2) and quests (E2) are recorded/generated lazily here; a failure only hides that panel.
+  const loadHabits = async (): Promise<HabitToday[]> => {
+    try {
+      await syncFocusChecks({ user, supabase }, [today]);
+      return await listTodayHabits(supabase, user.id, today, timezone);
+    } catch (error) {
+      log({ action: "habits.today", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+      return [];
+    }
+  };
+  const loadQuests = async (): Promise<QuestView[]> => {
+    const profile = await getPlayerProfile(supabase, user.id);
+    if (!profile?.gamification_enabled) return [];
     try {
       await ensureQuests({ user, supabase }, new Date());
       const rows = await listQuests(supabase, user.id, { visibleOn: today });
-      quests = toQuestViews(rows, Object.fromEntries(domains.map((d) => [d.id, d.name])));
+      return toQuestViews(rows, Object.fromEntries(domains.map((d) => [d.id, d.name])));
     } catch (error) {
       log({ action: "quests.ensure", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+      return [];
     }
-  }
+  };
+  // Independent reads in parallel (spec §51).
+  const [planActual, proposals, habits, quests] = await Promise.all([
+    listTaskPlanActual(supabase, visibleTaskIds),
+    listOpenProposals(supabase, user.id, visibleTaskIds),
+    loadHabits(),
+    loadQuests(),
+  ]);
 
   return (
     <SchedulerWorkspace

@@ -2633,6 +2633,51 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_mission: {
+        Args: {
+          p_deadline: string
+          p_identity_ids: string[]
+          p_mission_id: string
+          p_outcome: string
+          p_status: string
+          p_title: string
+        }
+        Returns: {
+          closed_at: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          outcome: string | null
+          purpose_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "missions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_purpose: {
+        Args: { p_statement: string }
+        Returns: {
+          created_at: string
+          id: string
+          statement: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "purposes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_schedule_block_status: {
         Args: { p_block_id: string; p_status: string }
         Returns: {

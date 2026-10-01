@@ -10,6 +10,7 @@ import {
   createIdentitySchema,
   createMissionSchema,
   createProtocolSchema,
+  reorderIdentitiesSchema,
   criterionIdSchema,
   setCriterionProgressSchema,
   setHabitCheckSchema,
@@ -37,6 +38,9 @@ export async function createIdentityAction(input: unknown) {
 }
 export async function updateIdentityAction(input: unknown) {
   return runAction("direction.identity.update", updateIdentitySchema, input, async (d, ctx) => done(await direction.updateIdentity(ctx, d)));
+}
+export async function reorderIdentitiesAction(input: unknown) {
+  return runAction("direction.identity.reorder", reorderIdentitiesSchema, input, async (d, ctx) => done(await direction.reorderIdentities(ctx, d)));
 }
 export async function createMissionAction(input: unknown) {
   return runAction("direction.mission.create", createMissionSchema, input, async (d, ctx) => done(await direction.createMission(ctx, d)));

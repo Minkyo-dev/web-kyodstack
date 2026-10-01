@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { useTerms } from "@/hooks/use-terms";
 import { josa } from "@/lib/terms";
-import { createIdentityAction, setPurposeAction, updateIdentityAction } from "../actions/direction.actions";
+import { createIdentityAction, reorderIdentitiesAction, setPurposeAction, updateIdentityAction } from "../actions/direction.actions";
+import { moveItem } from "../domain/reorder";
 import type { Identity, Purpose } from "../domain/direction.types";
 
 export function DirectiveHeader({ purpose, identities }: { purpose: Purpose | null; identities: Identity[] }) {
@@ -19,16 +20,8 @@ export function DirectiveHeader({ purpose, identities }: { purpose: Purpose | nu
   const active = identities.filter((i) => i.status === "active");
   const archived = identities.filter((i) => i.status === "archived");
 
-  const move = (index: number, delta: -1 | 1) => {
-    const a = active[index];
-    const b = active[index + delta];
-    if (!a || !b) return;
-    run(async () => {
-      const first = await updateIdentityAction({ identityId: a.id, name: a.name, description: a.description, status: a.status, sortOrder: b.sort_order });
-      if (!first.ok) return first;
-      return updateIdentityAction({ identityId: b.id, name: b.name, description: b.description, status: b.status, sortOrder: a.sort_order });
-    });
-  };
+  const move = (index: number, delta: -1 | 1) =>
+    run(() => reorderIdentitiesAction({ identityIds: moveItem(active.map((i) => i.id), index, delta) }));
 
   return (
     <div className="space-y-4">

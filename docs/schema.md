@@ -139,6 +139,8 @@ DailyReview = `daily_reflections`.
 - `tasks.mission_id/protocol_id` (FK `(protocol_id, mission_id) → protocols`, protocol ⇒ mission),
   `projects.mission_id`. `task_plan_actual` appends `mission_id, protocol_id, effective_mission_id`.
 - Growth = effective mission set; maintenance otherwise (derived, not stored).
+- `set_purpose(statement)` and `save_mission(id|null, title, outcome, deadline, status, identity_ids[])` (invoker): the
+  purpose switch and the mission row + identity links are each one transaction; a foreign identity rolls the save back.
 
 ## Habits G2 (ADR 0021)
 - `habits(title, rule check|focus, target_minutes 5–600, weekdays smallint[] ⊆ 1..7, protocol_id, mission_id, status,
