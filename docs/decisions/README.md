@@ -34,3 +34,4 @@ Template:
 | 0014 | Stat engine: live stats, nightly snapshots, commitment rules | accepted |
 | 0015 | Today view, week summary, capacity notice | accepted |
 | 0016 | XP ledger, level and opt-in backfill | accepted |
+| 0017 | Quests, achievements, titles and quest terminology | accepted |

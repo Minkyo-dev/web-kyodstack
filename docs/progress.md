@@ -90,6 +90,14 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] "실제 작업 보기" toggle + ⚙ default setting; drop preview recommendation + "keep my estimate" toast
 - [x] E2E `calendar-planning.spec.ts`; `duration-learning.spec.ts` covers keep-my-estimate
 
+## Improvement E2 — quests, achievements, titles, terminology (docs/superpowers/specs/2026-09-30-quests-achievements-design.md)
+- [x] `quests`, `quest_objectives`, `user_achievements`, `user_titles`, `equipped_title`; `create_quest` / `swap_quest_objective`; quest XP ≤ 300 (SQL tests, ADR 0017)
+- [x] Pure quest rules `quest-v1` (daily/weekly/recovery, swap, 11 metrics) and achievement catalog `ach-v1`; terms + `josa`
+- [x] `ensureQuests` (page load + nightly), quest/achievement evaluation in `evaluateProgress`, swap/equip actions
+- [x] Quest panel in the scheduler, quest/achievement toasts, achievements and titles on the progress page, title under the level line
+- [x] Quest terminology across the private UI
+- [x] E2E `quests.spec.ts`
+
 ## Improvement E1 — XP, level, notifications (docs/superpowers/specs/2026-09-30-xp-level-design.md)
 - [x] `player_profiles`, `xp_events`, `award_xp` (invoker) with the cache trigger (SQL tests, ADR 0016)
 - [x] Pure XP rules `xp-v1`, level curve, practice level, day facts from sessions/completions/commitments

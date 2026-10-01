@@ -119,6 +119,16 @@ DailyReview = `daily_reflections`.
   previous_level)`. `xp_level(total)`: L → L+1 costs `100 + 50·L`.
 - Rules `xp-v1` live in `features/gamification/utils/xp-rules.ts` (ADR 0016).
 
+## Gamification E2 (ADR 0017)
+- `quests(user_id, type daily|weekly|recovery, status active|cleared|expired, title, period_start, period_end,
+  reward_xp, swap_used, spare jsonb, rules_version, cleared_at)`: unique per (user, type, period_start); at most one
+  active recovery quest (partial unique index).
+- `quest_objectives(quest_id, user_id, position, metric, params, target_value, current_value, completed_at)`: composite
+  FK to `quests(id, user_id)`; 11 metrics (E2 spec §2).
+- `user_achievements(user_id, key)`, `user_titles(user_id, key)`; `player_profiles.equipped_title` must be unlocked.
+- `create_quest(p_quest, p_objectives, p_user_id default null)` and `swap_quest_objective(p_objective_id, p_objective,
+  p_spare)` are security invoker. `xp_events.rule` adds `quest` (≤ 300 XP).
+
 ## Calendar planning (Improvement B, ADR 0012)
 - `schedule_blocks.status`: `planned | completed | skipped | cancelled | missed`. Only `mark_missed_blocks` sets
   `missed`. From `missed`, only `cancelled` is allowed (via `set_schedule_block_status` or `unschedule_block`), and

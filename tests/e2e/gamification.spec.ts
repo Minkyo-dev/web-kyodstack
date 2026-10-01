@@ -28,6 +28,7 @@ test.describe("gamification", () => {
       .select("gamification_enabled, animations_enabled, achievement_toasts, backfilled_at")
       .maybeSingle();
     const stamp = Date.now();
+    const start = new Date().toISOString();
     try {
       if (before?.gamification_enabled) await db.from("player_profiles").update({ gamification_enabled: false }).eq("user_id", uid);
 
@@ -77,6 +78,15 @@ test.describe("gamification", () => {
         .from("player_profiles")
         .update(before ?? { gamification_enabled: false, backfilled_at: null })
         .eq("user_id", uid);
+      // Enabling also generates quests and evaluates achievements (E2): remove what this test created.
+      const { data: quests } = await db.from("quests").select("id").gte("created_at", start);
+      const ids = (quests ?? []).map((q) => q.id);
+      if (ids.length) {
+        await db.from("xp_events").delete().eq("source_type", "quest").in("source_id", ids);
+        await db.from("quests").delete().in("id", ids);
+      }
+      await db.from("user_titles").delete().gte("unlocked_at", start);
+      await db.from("user_achievements").delete().gte("unlocked_at", start);
     }
   });
 });
