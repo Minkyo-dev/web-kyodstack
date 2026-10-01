@@ -3,7 +3,7 @@ import { evaluateDay, focusXp } from "@/features/gamification/utils/xp-rules";
 import { buildDayFacts } from "@/features/gamification/utils/xp-facts";
 import type { DayFacts, XpRaw } from "@/features/gamification/domain/xp.types";
 
-const day = (over: Partial<DayFacts> = {}): DayFacts => ({ date: "2026-09-29", sessions: [], completions: [], commitments: [], ...over });
+const day = (over: Partial<DayFacts> = {}): DayFacts => ({ date: "2026-09-29", sessions: [], completions: [], commitments: [], habitChecks: [], ...over });
 const session = (id: string, m: number, endedAt = "2026-09-29T15:00:00Z", source: "timer" | "manual" = "timer") => ({ id, source, endedAt, focusedMinutes: m });
 const id = (n: number) => `00000000-0000-4000-a000-${String(n).padStart(12, "0")}`;
 
@@ -78,6 +78,7 @@ const raw = (over: Partial<XpRaw> = {}): XpRaw => ({
   taskFocus: {},
   blocks: [],
   revisions: [],
+  habitChecks: [],
   ...over,
 });
 
@@ -113,5 +114,29 @@ describe("buildDayFacts", () => {
       sessions: [{ id: id(5), task_id: id(9), schedule_block_id: id(1), source: "timer", started_at: "2026-09-29T14:05:00Z", ended_at: "2026-09-29T14:50:00Z", pauses: [] }],
     }), ["2026-09-29"]);
     expect(facts[0].commitments).toEqual([{ blockId: id(1), resolvedAt: "2026-09-29T14:05:00Z", score: 0.9 }]);
+  });
+});
+
+describe("habit xp", () => {
+  const check = (n: number, at = `2026-09-29T1${n}:00:00Z`) => ({ id: id(100 + n), createdAt: at });
+  it("awards 10 per check, 30 per day", () => {
+    const ev = evaluateDay(day({ habitChecks: [check(1), check(2), check(3), check(4)] }), []);
+    expect(ev.map((e) => [e.rule, e.sourceType, e.xp])).toEqual([
+      ["habit", "habit_check", 10],
+      ["habit", "habit_check", 10],
+      ["habit", "habit_check", 10],
+    ]);
+  });
+  it("counts what the day already holds (re-checks after uncheck cannot exceed the cap)", () => {
+    const ev = evaluateDay(day({ habitChecks: [check(5)] }), [{ rule: "habit", sourceId: id(1), xp: 30 }]);
+    expect(ev).toEqual([]);
+  });
+  it("puts habit checks on their local date", () => {
+    const facts = buildDayFacts(
+      raw({ habitChecks: [{ id: id(7), local_date: "2026-09-30", created_at: "2026-10-01T01:00:00Z" }] }),
+      ["2026-09-29", "2026-09-30"],
+    );
+    expect(facts[0].habitChecks).toEqual([]);
+    expect(facts[1].habitChecks).toEqual([{ id: id(7), createdAt: "2026-10-01T01:00:00Z" }]);
   });
 });

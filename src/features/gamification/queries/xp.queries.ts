@@ -39,7 +39,7 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
   const end = localDayRange(to, timezone).end;
   const lookback = localDayRange(addLocalDays(from, -2, timezone), timezone).start;
 
-  const [sessions, blocks, completed] = await Promise.all([
+  const [sessions, blocks, completed, habitChecks] = await Promise.all([
     supabase
       .from("work_sessions")
       .select(`id, task_id, schedule_block_id, source, started_at, ended_at, ${PAUSES}`)
@@ -62,8 +62,15 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
       .gte("completed_at", start)
       .lt("completed_at", end)
       .limit(LIMIT),
+    supabase
+      .from("habit_checks")
+      .select("id, local_date, created_at")
+      .eq("user_id", userId)
+      .gte("local_date", from)
+      .lte("local_date", to)
+      .limit(LIMIT),
   ]);
-  for (const r of [sessions, blocks, completed]) if (r.error) throw fromDbError(r.error);
+  for (const r of [sessions, blocks, completed, habitChecks]) if (r.error) throw fromDbError(r.error);
 
   const revisions: XpRaw["revisions"] = [];
   for (const ids of chunks(blocks.data!.map((b) => b.id))) {
@@ -102,6 +109,7 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
     taskFocus,
     blocks: blocks.data!,
     revisions,
+    habitChecks: habitChecks.data!,
   };
 }
 

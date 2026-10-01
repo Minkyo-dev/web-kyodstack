@@ -6,7 +6,7 @@ import type { DayFacts, XpRaw } from "../domain/xp.types";
 /** Per-day facts for the XP rules. Kept commitments only: early skips/cancels are not "kept" (plan ruling). */
 export function buildDayFacts(raw: XpRaw, dates: string[]): DayFacts[] {
   const tz = raw.timezone;
-  const byDate = new Map<string, DayFacts>(dates.map((d) => [d, { date: d, sessions: [], completions: [], commitments: [] }]));
+  const byDate = new Map<string, DayFacts>(dates.map((d) => [d, { date: d, sessions: [], completions: [], commitments: [], habitChecks: [] }]));
 
   for (const s of raw.sessions) {
     if (!s.ended_at) continue;
@@ -38,5 +38,6 @@ export function buildDayFacts(raw: XpRaw, dates: string[]): DayFacts[] {
     const f = byDate.get(toLocalDate(c.resolvedAt, tz));
     if (f) f.commitments.push({ blockId: c.blockId, resolvedAt: c.resolvedAt, score: c.score });
   }
+  for (const c of raw.habitChecks) byDate.get(c.local_date)?.habitChecks.push({ id: c.id, createdAt: c.created_at });
   return dates.map((d) => byDate.get(d)!);
 }
