@@ -74,8 +74,9 @@ export async function loadStatInput(supabase: SupabaseServerClient, userId: stri
   const actual = new Map<string, number>();
   const firstStart = new Map<string, string>();
   const planBlocks = new Map<string, StatInput["calibration"][number]["planBlocks"]>();
+  const blocked = new Set<string>();
   for (const ids of chunks(doneIds)) {
-    const [pa, ss, bs] = await Promise.all([
+    const [pa, ss, bs, wl] = await Promise.all([
       supabase.from("task_plan_actual").select("task_id, actual_minutes").eq("user_id", userId).in("task_id", ids),
       supabase.from("work_sessions").select("task_id, started_at").eq("user_id", userId).in("task_id", ids).order("started_at"),
       supabase
@@ -83,8 +84,11 @@ export async function loadStatInput(supabase: SupabaseServerClient, userId: stri
         .select("task_id, starts_at, ends_at, status, created_at")
         .eq("user_id", userId)
         .in("task_id", ids),
+      // User-confirmed external blockers weight Calibration (F1, stats-v2).
+      supabase.from("work_logs").select("task_id").eq("user_id", userId).eq("confirmed_blocker", true).in("task_id", ids),
     ]);
-    for (const r of [pa, ss, bs]) if (r.error) throw fromDbError(r.error);
+    for (const r of [pa, ss, bs, wl]) if (r.error) throw fromDbError(r.error);
+    for (const r of wl.data!) blocked.add(r.task_id);
     for (const r of pa.data!) if (r.task_id) actual.set(r.task_id, Number(r.actual_minutes ?? 0));
     for (const r of ss.data!) if (!firstStart.has(r.task_id)) firstStart.set(r.task_id, r.started_at);
     for (const r of bs.data!) planBlocks.set(r.task_id, [...(planBlocks.get(r.task_id) ?? []), r]);
@@ -134,6 +138,7 @@ export async function loadStatInput(supabase: SupabaseServerClient, userId: stri
         firstSessionStart: firstStart.get(t.id) ?? null,
         actualMinutes: actual.get(t.id) ?? 0,
         planBlocks: planBlocks.get(t.id) ?? [],
+        blocker: blocked.has(t.id),
       })),
     domains: domains.data!,
     domainTotals,

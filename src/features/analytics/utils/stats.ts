@@ -7,12 +7,21 @@ import { focusedMinutesInWindow } from "@/features/scheduler/utils/focus";
 import { median } from "@/features/scheduler/utils/estimator";
 import { TASK_TYPES, type TaskType } from "@/features/classification/domain/classification.types";
 import { dailyCapacity } from "./capacity";
-import { STAT_MIN, STATS_VERSION, type StatInput, type Stats, type StatValue } from "../domain/stats.types";
+import { BLOCKER_WEIGHT, STAT_MIN, STATS_VERSION, type StatInput, type Stats, type StatValue } from "../domain/stats.types";
 
 const MIN = 60_000;
 const t = (iso: string) => new Date(iso).getTime();
 const round2 = (x: number) => Math.round(x * 100) / 100;
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+/** Weighted mean of scores (stats-v2): confirmed-blocker samples count BLOCKER_WEIGHT. */
+const weightedStat = (xs: { score: number; weight: number }[], need: number): StatValue => {
+  const w = xs.reduce((s, x) => s + x.weight, 0);
+  return {
+    value: xs.length >= need && w > 0 ? Math.round(xs.reduce((s, x) => s + x.score * x.weight, 0) / w) : null,
+    sampleCount: xs.length,
+    need,
+  };
+};
 const stat = (values: number[], need: number): StatValue => ({
   value: values.length >= need ? Math.round(mean(values)!) : null,
   sampleCount: values.length,
@@ -138,7 +147,7 @@ export function computeStats(input: StatInput): Stats {
   const planned = input.settings.planned_work_days;
 
   // Calibration
-  const calSamples: { type: string | null; score: number; ratio: number }[] = [];
+  const calSamples: { type: string | null; score: number; ratio: number; weight: number }[] = [];
   for (const c of input.calibration) {
     if (t(c.completed_at) < since28Ms || !(c.actualMinutes > 0)) continue;
     const before = c.firstSessionStart ? t(c.firstSessionStart) : Infinity;
@@ -147,7 +156,12 @@ export function computeStats(input: StatInput): Stats {
       .reduce((sum, b) => sum + (t(b.ends_at) - t(b.starts_at)) / MIN, 0);
     const P = P0 > 0 ? P0 : (c.estimate ?? 0);
     if (!(P > 0)) continue;
-    calSamples.push({ type: c.task_type, score: calibrationScore(P, c.actualMinutes), ratio: c.actualMinutes / P - 1 });
+    calSamples.push({
+      type: c.task_type,
+      score: calibrationScore(P, c.actualMinutes),
+      ratio: c.actualMinutes / P - 1,
+      weight: c.blocker ? BLOCKER_WEIGHT : 1,
+    });
   }
   const bias = median(calSamples.map((s) => s.ratio));
   const typicalError = median(calSamples.map((s) => Math.abs(s.ratio)));
@@ -156,7 +170,7 @@ export function computeStats(input: StatInput): Stats {
   for (const type of TASK_TYPES) {
     const xs = calSamples.filter((s) => s.type === type);
     if (xs.length === 0) continue;
-    const st = stat(xs.map((s) => s.score), STAT_MIN.calibrationByType);
+    const st = weightedStat(xs, STAT_MIN.calibrationByType);
     const b = median(xs.map((s) => s.ratio));
     byType[type as TaskType] = { ...st, bias: st.value !== null && b !== null ? round2(b) : null };
   }
@@ -245,9 +259,10 @@ export function computeStats(input: StatInput): Stats {
   return {
     version: STATS_VERSION,
     calibration: {
-      ...stat(calSamples.map((s) => s.score), STAT_MIN.calibration),
+      ...weightedStat(calSamples, STAT_MIN.calibration),
       bias: calOk && bias !== null ? round2(bias) : null,
       typicalError: calOk && typicalError !== null ? round2(typicalError) : null,
+      blockerCount: calSamples.filter((x) => x.weight < 1).length,
       byType,
     },
     reliability,

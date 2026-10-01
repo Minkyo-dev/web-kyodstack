@@ -67,7 +67,10 @@ export default async function ProgressPage() {
           <StatCard
             type="calibration"
             stat={stats.calibration}
-            detail={biasText(stats.calibration.bias, stats.calibration.typicalError)}
+            detail={
+              biasText(stats.calibration.bias, stats.calibration.typicalError) +
+              (stats.calibration.blockerCount > 0 ? ` · 외부 방해 ${stats.calibration.blockerCount}건은 가중치 0.3` : "")
+            }
             series={series("calibration")}
           />
           <StatCard

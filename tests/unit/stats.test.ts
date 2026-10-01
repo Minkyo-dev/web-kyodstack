@@ -82,6 +82,15 @@ describe("calibration", () => {
     // c: P = 60 (first block only), A = 60 → 100; all 100 → 100
     expect(s.calibration.value).toBe(100);
   });
+  it("a confirmed blocker weights the task 0.3 (stats-v2); without blockers the mean is unchanged", () => {
+    const cal = [...Array.from({ length: 7 }, (_, i) => sample(i, 60, 60)), sample(8, 60, 120)];
+    const plain = computeStats(base({ calibration: cal })).calibration;
+    expect(plain).toMatchObject({ value: 94, sampleCount: 8, blockerCount: 0 }); // (700 + 50) / 8
+    const blocked = computeStats(base({ calibration: cal.map((c) => (c.task_id === "t8" ? { ...c, blocker: true } : c)) })).calibration;
+    expect(blocked).toMatchObject({ value: 98, sampleCount: 8, blockerCount: 1 }); // (700 + 0.3·50) / 7.3
+    expect(blocked.byType.coding).toMatchObject({ value: 98, sampleCount: 8 });
+    expect(computeStats(base()).version).toBe("stats-v2");
+  });
   it("outside the 28-day window or without A is ignored", () => {
     const old = { ...sample(1, 60, 60), completed_at: L("2026-09-20", "12:00") };
     const none = { ...sample(2, 60, 0) };
