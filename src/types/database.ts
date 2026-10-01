@@ -333,6 +333,118 @@ export type Database = {
           },
         ]
       }
+      habit_checks: {
+        Row: {
+          created_at: string
+          habit_id: string
+          id: string
+          local_date: string
+          minutes: number | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id: string
+          id?: string
+          local_date: string
+          minutes?: number | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string
+          id?: string
+          local_date?: string
+          minutes?: number | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_checks_habit_id_user_id_fkey"
+            columns: ["habit_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "habit_checks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string
+          id: string
+          mission_id: string | null
+          protocol_id: string | null
+          rule: string
+          sort_order: number
+          status: string
+          target_minutes: number | null
+          title: string
+          updated_at: string
+          user_id: string
+          weekdays: number[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mission_id?: string | null
+          protocol_id?: string | null
+          rule: string
+          sort_order?: number
+          status?: string
+          target_minutes?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+          weekdays: number[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mission_id?: string | null
+          protocol_id?: string | null
+          rule?: string
+          sort_order?: number
+          status?: string
+          target_minutes?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habits_mission_id_user_id_fkey"
+            columns: ["mission_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "habits_protocol_id_mission_id_fkey"
+            columns: ["protocol_id", "mission_id"]
+            isOneToOne: false
+            referencedRelation: "protocols"
+            referencedColumns: ["id", "mission_id"]
+          },
+          {
+            foreignKeyName: "habits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       identities: {
         Row: {
           created_at: string
