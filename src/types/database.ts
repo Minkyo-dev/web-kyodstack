@@ -776,6 +776,7 @@ export type Database = {
           id: string
           period_end: string
           period_start: string
+          reason: string | null
           reward_xp: number
           rules_version: string
           spare: Json
@@ -792,6 +793,7 @@ export type Database = {
           id?: string
           period_end: string
           period_start: string
+          reason?: string | null
           reward_xp: number
           rules_version: string
           spare?: Json
@@ -808,6 +810,7 @@ export type Database = {
           id?: string
           period_end?: string
           period_start?: string
+          reason?: string | null
           reward_xp?: number
           rules_version?: string
           spare?: Json
@@ -1016,6 +1019,8 @@ export type Database = {
           commit_lead_minutes: number
           created_at: string
           default_break_minutes: number
+          insight_hour: number
+          insight_weekday: number | null
           max_focus_block_minutes: number
           min_block_minutes: number
           min_meaningful_minutes: number
@@ -1034,6 +1039,8 @@ export type Database = {
           commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
+          insight_hour?: number
+          insight_weekday?: number | null
           max_focus_block_minutes?: number
           min_block_minutes?: number
           min_meaningful_minutes?: number
@@ -1052,6 +1059,8 @@ export type Database = {
           commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
+          insight_hour?: number
+          insight_weekday?: number | null
           max_focus_block_minutes?: number
           min_block_minutes?: number
           min_meaningful_minutes?: number
@@ -1142,6 +1151,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stat_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_insights: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          input: Json
+          kind: string
+          model: string | null
+          period_end: string
+          period_start: string
+          prompt_version: string | null
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          input: Json
+          kind: string
+          model?: string | null
+          period_end: string
+          period_start: string
+          prompt_version?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          input?: Json
+          kind?: string
+          model?: string | null
+          period_end?: string
+          period_start?: string
+          prompt_version?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_insights_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

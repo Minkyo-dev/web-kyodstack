@@ -32,6 +32,8 @@ export type SchedulerSettings = Pick<
   | "planned_work_days"
   | "min_meaningful_minutes"
   | "commit_lead_minutes"
+  | "insight_weekday"
+  | "insight_hour"
 >;
 
 export type SchedulerContext = {
