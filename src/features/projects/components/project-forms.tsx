@@ -25,6 +25,7 @@ import {
   type Project,
 } from "../domain/project.types";
 import { useTerms } from "@/hooks/use-terms";
+import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
 import { josa } from "@/lib/terms";
 
 const selectClass =
@@ -87,7 +88,15 @@ export function ProjectCreateForm() {
   );
 }
 
-export function ProjectEditForm({ project }: { project: Project }) {
+export function ProjectEditForm({
+  project,
+  missionOptions,
+  mission,
+}: {
+  project: Project;
+  missionOptions: MissionOption[];
+  mission: DirectionRef | null;
+}) {
   const terms = useTerms();
   const { run, pending } = useActionRunner();
   return (
@@ -107,7 +116,7 @@ export function ProjectEditForm({ project }: { project: Project }) {
               priority: Number(fd.get("priority")),
               startDate: orNull(str(fd, "startDate")),
               targetDate: orNull(str(fd, "targetDate")),
-              missionId: project.mission_id,
+              missionId: orNull(str(fd, "missionId")),
             }),
           { success: "저장했습니다." },
         );
@@ -142,6 +151,17 @@ export function ProjectEditForm({ project }: { project: Project }) {
           <DatePicker id="project-target" name="targetDate" clearable defaultValue={project.target_date} />
         </Field>
       </div>
+      <Field label={terms.mission} htmlFor="project-mission">
+        <select id="project-mission" name="missionId" defaultValue={project.mission_id ?? ""} className={selectClass}>
+          <option value="">없음</option>
+          {mission && !missionOptions.some((m) => m.id === mission.id) && <option value={mission.id}>{mission.title}</option>}
+          {missionOptions.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.title}
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field label="설명" htmlFor="project-description">
         <Textarea
           id="project-description"

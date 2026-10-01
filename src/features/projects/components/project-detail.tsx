@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { Terms } from "@/lib/terms";
+import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
 import { DueBadge } from "./due-badge";
 import { ProgressBar } from "./progress-bar";
 import { MilestoneCreateForm, MilestoneEditor, ProjectEditForm, TaskQuickAdd } from "./project-forms";
@@ -20,12 +22,16 @@ export function ProjectDetail({
   recommendations,
   ctx,
   terms,
+  missionOptions,
+  mission,
 }: {
   project: ProjectOverview;
   planActual: Record<string, TaskPlanActual>;
   recommendations: PendingRecommendation[];
   ctx: { today: string; settings: SchedulerSettings; groups: DurationGroup[]; domains: DomainRef[] };
   terms: Terms;
+  missionOptions: MissionOption[];
+  mission: DirectionRef | null;
 }) {
   const closed = project.status === "completed" || project.status === "cancelled";
   const labels = groupLabels(ctx.domains);
@@ -43,6 +49,14 @@ export function ProjectDetail({
   return (
     <div className="space-y-6">
       <header className="space-y-3">
+        {mission && (
+          <p className="text-xs text-muted-foreground">
+            <Link href={`/scheduler/directive?mission=${mission.id}#mission-detail`} className="hover:underline">
+              {mission.title}
+            </Link>
+            {mission.status !== "active" && ` (${mission.status.toUpperCase()})`} › {project.name}
+          </p>
+        )}
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-2xl font-semibold">{project.name}</h2>
           <span className="flex items-center gap-3">
@@ -112,7 +126,7 @@ export function ProjectDetail({
         <summary className="cursor-pointer text-sm font-medium">{terms.project} 설정</summary>
         <div className="mt-4">
           {/* Remount per project so the uncontrolled fields show this project's values. */}
-          <ProjectEditForm key={project.id} project={project} />
+          <ProjectEditForm key={project.id} project={project} missionOptions={missionOptions} mission={mission} />
         </div>
       </details>
     </div>

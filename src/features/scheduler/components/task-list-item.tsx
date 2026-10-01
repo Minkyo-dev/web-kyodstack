@@ -33,6 +33,7 @@ export function TaskListItem({
   onOpen: () => void;
 }) {
   const { run, pending } = useActionRunner();
+  const mission = task.mission ?? task.project?.mission ?? null; // Growth chip (ADR 0020)
   const done = task.status === "completed";
   const overdue = !done && task.target_date !== null && task.target_date < today;
   const draggable = estimate !== null;
@@ -99,6 +100,11 @@ export function TaskListItem({
             <span className="text-foreground/80">
               {task.project.name}
               {task.milestone && ` › ${task.milestone.name}`}
+            </span>
+          )}
+          {mission && (
+            <span title={mission.title} className="rounded-sm border border-border px-1 text-foreground/80">
+              {mission.title.slice(0, 12)}
             </span>
           )}
           {task.task_type && <span>{TASK_TYPE_LABEL[task.task_type]}</span>}

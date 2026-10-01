@@ -15,6 +15,7 @@ import { getProjectOverview, listProjectOverviews } from "@/features/projects/qu
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
 import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
 import { josa, termsFor } from "@/lib/terms";
+import { getMissionRef, listMissionOptions } from "@/features/direction/queries/direction.queries";
 
 export const metadata: Metadata = { title: "프로젝트", robots: { index: false } };
 
@@ -44,6 +45,10 @@ export default async function ProjectsPage({
   const recommendations = selected
     ? await listPendingRecommendations(supabase, { projectId: selected.overview.id })
     : [];
+  const [missionOptions, projectMission] = await Promise.all([
+    listMissionOptions(supabase, user.id),
+    selected?.overview.mission_id ? getMissionRef(supabase, user.id, selected.overview.mission_id) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row">
@@ -105,6 +110,8 @@ export default async function ProjectsPage({
             recommendations={recommendations}
             ctx={ctx}
             terms={terms}
+            missionOptions={missionOptions}
+            mission={projectMission}
           />
         ) : (
           <p className="py-16 text-center text-sm text-muted-foreground">

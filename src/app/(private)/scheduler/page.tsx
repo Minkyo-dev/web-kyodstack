@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireUserOrRedirect } from "@/lib/auth";
+import { listMissionOptions } from "@/features/direction/queries/direction.queries";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulerWorkspace } from "@/features/scheduler/components/scheduler-workspace";
 import { WEEK_FETCH_BUFFER_DAYS } from "@/features/scheduler/domain/scheduler.constants";
@@ -94,6 +95,7 @@ export default async function SchedulerPage({
     nearBlocks,
     projectOptions,
     recommendations,
+    missionOptions,
   ] = await Promise.all([
     listTodayTasks(supabase, today, todayRange.start),
     listBlocksInRange(supabase, rangeStart, rangeEnd),
@@ -111,6 +113,7 @@ export default async function SchedulerPage({
     listBlocksInRange(supabase, todayRange.start, tomorrowRange.end),
     listProjectOptions(supabase),
     listPendingRecommendations(supabase, { date: today }),
+    listMissionOptions(supabase, user.id),
   ]);
 
   // Plan vs actual only for tasks visible on this screen.
@@ -155,6 +158,7 @@ export default async function SchedulerPage({
       weekCompleted={weekCompleted}
       nearBlocks={nearBlocks}
       projectOptions={projectOptions}
+      missionOptions={missionOptions}
       recommendations={recommendations}
       proposals={proposals}
       questPanel={quests.length ? <QuestPanel quests={quests} /> : null}

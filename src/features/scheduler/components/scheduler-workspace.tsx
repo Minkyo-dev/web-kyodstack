@@ -13,6 +13,7 @@ import type { DurationGroup } from "../utils/estimator";
 import type { DomainRef, TagRef } from "@/features/classification/domain/classification.types";
 import { groupLabels } from "@/features/classification/utils/labels";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
+import type { MissionOption } from "@/features/direction/domain/direction.types";
 import type { PendingRecommendation } from "@/features/ai/queries/ai.queries";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { useNow } from "@/hooks/use-now";
@@ -70,6 +71,7 @@ export type SchedulerWorkspaceProps = {
   /** Today's and tomorrow's blocks, for the capacity notice. */
   nearBlocks: CalendarBlock[];
   projectOptions: ProjectOption[];
+  missionOptions: MissionOption[];
   recommendations: PendingRecommendation[];
   /** Open AI proposals by task id (F1). */
   proposals: Record<string, Proposal[]>;
@@ -79,7 +81,7 @@ export type SchedulerWorkspaceProps = {
 
 export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { context, today, todayRange, week, todayTasks, blocks, templates } = props;
-  const { sessions, activeSession, reflection, planActual, durationGroups, domains, tags, projectOptions, recommendations } =
+  const { sessions, activeSession, reflection, planActual, durationGroups, domains, tags, projectOptions, missionOptions, recommendations } =
     props;
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const labels = useMemo(() => groupLabels(domains), [domains]);
@@ -281,6 +283,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         tags={tags}
         domains={domains}
         projectOptions={projectOptions}
+        missionOptions={missionOptions}
         proposals={selectedTask ? (props.proposals[selectedTask.id] ?? []) : []}
         onStartTask={startTask}
         templates={templates}

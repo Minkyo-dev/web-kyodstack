@@ -36,6 +36,9 @@ import { readScore, ScoreInput } from "./score-input";
 import { estimateDuration, type DurationGroup, type GroupLabels } from "../utils/estimator";
 import { DurationInsight } from "./duration-insight";
 import type { ProjectOption } from "@/features/projects/domain/project.types";
+import type { MissionOption } from "@/features/direction/domain/direction.types";
+import { DirectionBreadcrumb } from "@/features/direction/components/direction-breadcrumb";
+import { DirectionPicker, parseDirection } from "@/features/direction/components/direction-picker";
 import type { CalendarBlock } from "../domain/schedule.types";
 import type { SchedulerContext, Task, TaskTemplate } from "../domain/task.types";
 import { formatMinutes } from "../utils/duration";
@@ -59,6 +62,7 @@ type SessionProps = {
   tags: TagRef[];
   domains: DomainRef[];
   projectOptions: ProjectOption[];
+  missionOptions: MissionOption[];
   /** Open AI proposals of the task (F1). */
   proposals: Proposal[];
   /** Start this task; with another timer running this opens the switch dialog. */
@@ -76,6 +80,7 @@ export function TaskDetailDrawer({
   tags,
   domains,
   projectOptions,
+  missionOptions,
   proposals,
   onStartTask,
   templates,
@@ -106,6 +111,7 @@ export function TaskDetailDrawer({
             tags={tags}
             domains={domains}
             projectOptions={projectOptions}
+            missionOptions={missionOptions}
             proposals={proposals}
             onStartTask={onStartTask}
             templates={templates}
@@ -130,6 +136,7 @@ function TaskDetail({
   tags,
   domains,
   projectOptions,
+  missionOptions,
   proposals,
   onStartTask,
   templates,
@@ -166,6 +173,7 @@ function TaskDetail({
           상태: {TASK_STATUS_LABEL[task.status]}
           {task.template && ` · ${task.template.name}`}
         </SheetDescription>
+        <DirectionBreadcrumb task={task} />
       </SheetHeader>
 
       <div className="space-y-6 px-4 pb-6">
@@ -213,8 +221,7 @@ function TaskDetail({
                   templateName: String(fd.get("template") ?? "").trim() || null,
                   projectId: String(fd.get("projectId") ?? "") || null,
                   milestoneId: String(fd.get("milestoneId") ?? "") || null,
-                  missionId: task.mission_id,
-                  protocolId: task.protocol_id,
+                  ...parseDirection(String(fd.get("direction") ?? "")),
                   taskType: String(fd.get("taskType") ?? "") || null,
                   domainId: String(fd.get("domainId") ?? "") || null,
                   // Tags are edited live by the TagEditor below; keep the current set here.
@@ -287,6 +294,7 @@ function TaskDetail({
             </div>
           </div>
           <ProjectPicker task={task} options={projectOptions} />
+          <DirectionPicker key={task.id} task={task} options={missionOptions} />
           <Field label="메모" htmlFor="task-description">
             <Textarea
               id="task-description"
