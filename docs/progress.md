@@ -212,6 +212,11 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       `finance-card-payment.spec.ts`
 - [x] ADR 0035: refunds in the add form and the bulk grid (expense categories), "환불 기록" on an expense's detail
       (prefilled). Tests: schema in `tests/unit/finance.test.ts`, `finance-bulk.test.ts`, E2E `finance-refund.spec.ts`
+- [x] Planner menu: 스케줄러 · 정체성 · 프로젝트 · 주간 회고 · 추적 as tabs under one sidebar entry
+- [x] ADR 0036: planner labels follow Atomic Habits (신념 · 결과 목표 · 시스템 · 실행 의도 · 오늘의 1%; quest mode
+      CORE BELIEF · OUTCOME · SYSTEM · INTENTION · 1% QUEST), page help rewritten
+- [x] Planner 매뉴얼 tab (`/scheduler/manual`): principles, 30-minute setup, daily/weekly/monthly routines, the four
+      laws mapped to features, per-tab features, troubleshooting. E2E `manual.spec.ts`
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

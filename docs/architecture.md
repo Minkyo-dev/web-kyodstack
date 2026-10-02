@@ -27,6 +27,7 @@ Authorization comes from RLS. The proxy redirect is only a UX convenience.
 | `/scheduler/projects` | (private) | project list with progress |
 | `/scheduler/projects/[id]` | (private) | milestones, tasks, progress, settings, AI suggestions |
 | `/scheduler/review?week=` | (private) | deterministic weekly metrics + AI interpretation |
+| `/scheduler/manual` | (private) | static user manual (`features/manual`); all `/scheduler/*` pages share the "플래너" tab bar (`scheduler/layout.tsx`) |
 | `POST /api/ai/weekly-review`, `POST /api/ai/daily-recommendations` | route handlers | generation (auth via cookie, `runRoute`) |
 | `/finance?mode=monthly\|yearly&year=&month=` | (private) | household finance dashboard (ADR 0025) with "재정 현황" balances (ADR 0032); without a household the finance layout shows onboarding |
 | `/finance/calendar?month=yyyy-MM&date=yyyy-MM-dd` | (private) | daily totals grid + Day Drawer (date is a shallow URL update) + day panel: totals, the day's transactions, entry grid (ADR 0028) + "자산 흐름" net-worth chart and account table (ADR 0032) |
