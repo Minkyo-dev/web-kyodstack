@@ -32,6 +32,7 @@ import { WorkSummaryDialog } from "./work-summary-dialog";
 import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
+import type { Brief } from "@/features/assistant/domain/brief";
 import { WeekNavigation } from "./week-navigation";
 import { CalendarViewToggle, MonthNavigation } from "./month-navigation";
 import type { LocalMonth } from "../utils/month";
@@ -87,6 +88,8 @@ export type SchedulerWorkspaceProps = {
   questPanel?: React.ReactNode;
   /** Habit panel slot composed by the page (G2). */
   habitPanel?: React.ReactNode;
+  /** Daily brief (assistant P1, ADR 0039); null hides the card. */
+  brief?: Brief | null;
   /** Month view (?view=month); null = week view. */
   monthView?: LocalMonth | null;
 };
@@ -100,6 +103,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const { tagFilter, classifiedTemplates } = props;
   const [classifyOpen, setClassifyOpen] = useState(false);
   const [standardsOpen, setStandardsOpen] = useState(false);
+  const [reflecting, setReflecting] = useState(false);
 
   // Any task visible anywhere on screen can be opened in the drawer.
   const tasksById = useMemo(() => {
@@ -217,6 +221,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
           onStartTask={startTask}
           questPanel={props.questPanel}
           habitPanel={props.habitPanel}
+          brief={props.brief ?? null}
+          onCheckIn={() => setReflecting(true)}
           onOpenTask={setSelectedTaskId}
         />
         <section
@@ -311,6 +317,8 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         todayRange={todayRange}
         today={today}
         reflection={reflection}
+        reflecting={reflecting}
+        onReflectingChange={setReflecting}
       />
 
       <TaskDetailDrawer

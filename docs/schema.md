@@ -270,3 +270,10 @@ Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, u
 - A session is > 0 and ≤ 16h, and never ends in the future (1-minute skew allowed).
 - Manual sessions may not overlap any other session of the user, including the running one.
 - Stopping never completes the task (spec §22). Completion stays an explicit action.
+
+## Assistant P1 (ADR 0039)
+- `daily_reflections.win` (≤ 280), `.blocker` (time|energy|interruption|overplanned|unclear|none),
+  `.next_task_id` → `tasks(id, user_id)` `on delete set null (next_task_id)`: the evening check-in.
+- `assistant_briefs(user_id, local_date, line ≤ 120, model, prompt_version)`, unique per user per local day: the cached
+  AI coach line only (the brief itself is computed live). Own select/insert/delete; no update.
+- `scheduler_settings.evening_hour` (12–23, default 18): when the brief switches to the evening check-in.

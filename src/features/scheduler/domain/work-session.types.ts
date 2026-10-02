@@ -26,7 +26,7 @@ export type SessionWithTask = WorkSession & {
 
 export type DailyReflection = Pick<
   Tables<"daily_reflections">,
-  "reflection_date" | "mood_score" | "focus_score" | "energy_score" | "note"
+  "reflection_date" | "mood_score" | "focus_score" | "energy_score" | "note" | "win" | "blocker" | "next_task_id"
 >;
 
 export type TaskPlanActual = {

@@ -33,6 +33,10 @@ import { ensureQuests } from "@/features/gamification/services/quest.service";
 import { toQuestViews, type QuestView } from "@/features/gamification/utils/quest-view";
 import { QuestPanel } from "@/features/gamification/components/quest-panel";
 import { log } from "@/lib/logger";
+import { after } from "next/server";
+import { buildBrief, toBriefTasks, type Brief } from "@/features/assistant/domain/brief";
+import { loadBriefExtras } from "@/features/assistant/queries/brief.queries";
+import { ensureBriefLine } from "@/features/assistant/services/brief-line.service";
 import { isMonthKey, localMonth } from "@/features/scheduler/utils/month";
 import { HabitPanel } from "@/features/direction/components/habit-panel";
 import { listTodayHabits } from "@/features/direction/queries/habit.queries";
@@ -44,6 +48,8 @@ import {
   localDayRange,
   localWeek,
   todayLocalDate,
+  toLocalDate,
+  toLocalTime,
 } from "@/features/scheduler/utils/timezone";
 
 export const metadata: Metadata = { title: "스케줄러", robots: { index: false } };
@@ -148,13 +154,51 @@ export default async function SchedulerPage({
       return [];
     }
   };
+  // Brief extras (assistant P1): a failure only hides the brief.
+  const loadExtras = async () => {
+    try {
+      return await loadBriefExtras(supabase, user.id, today, timezone);
+    } catch (error) {
+      log({ action: "assistant.brief", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+      return null;
+    }
+  };
   // Independent reads in parallel (spec §51).
-  const [planActual, proposals, habits, quests] = await Promise.all([
+  const [planActual, proposals, habits, quests, extras] = await Promise.all([
     listTaskPlanActual(supabase, visibleTaskIds),
     listOpenProposals(supabase, user.id, visibleTaskIds),
     loadHabits(),
     loadQuests(),
+    loadExtras(),
   ]);
+
+  // Daily brief (ADR 0039): computed live; only the coach line is cached and generated after the response.
+  let brief: Brief | null = null;
+  if (extras) {
+    const now = new Date();
+    const plannedMinutes = nearBlocks
+      .filter((b) => b.status === "planned" && b.starts_at >= todayRange.start && b.starts_at < todayRange.end)
+      .reduce((sum, b) => sum + (Date.parse(b.ends_at) - Date.parse(b.starts_at)) / 60_000, 0);
+    brief = buildBrief({
+      today,
+      hour: Number(toLocalTime(now, timezone).slice(0, 2)),
+      eveningHour: settings.evening_hour,
+      tasks: toBriefTasks(todayTasks, nearBlocks, todayRange, (iso) => toLocalDate(iso, timezone)),
+      habits: { due: habits.length, done: habits.filter((h) => h.done).length, missedYesterday: extras.missedYesterday },
+      capacity: { plannedMinutes, capacityMinutes: capacity },
+      nextStep: extras.nextStep,
+      yesterday: extras.yesterday,
+      checkIn: {
+        done: reflection !== null,
+        nextTaskTitle: reflection?.next_task_id ? (todayTasks.find((t) => t.id === reflection.next_task_id)?.title ?? null) : null,
+      },
+      line: extras.line,
+    });
+    if (!extras.line) {
+      const forLine = brief;
+      after(() => ensureBriefLine({ user, supabase }, forLine, today, timezone));
+    }
+  }
 
   return (
     <SchedulerWorkspace
@@ -184,6 +228,7 @@ export default async function SchedulerPage({
       proposals={proposals}
       questPanel={quests.length ? <QuestPanel quests={quests} /> : null}
       habitPanel={habits.length ? <HabitPanel habits={habits} /> : null}
+      brief={brief}
     />
   );
 }

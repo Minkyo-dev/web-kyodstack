@@ -56,3 +56,4 @@ Template:
 | 0036 | Planner terminology follows Atomic Habits | superseded by 0037 (labels) |
 | 0037 | Work vocabulary for structure, Solo Leveling for tracking (성취 로그) | accepted (labels amended by 0038) |
 | 0038 | 습관 tab: 변화 instead of 목표, guided habit builder | accepted |
+| 0039 | Assistant P1: daily rhythm (morning brief, evening check-in) | accepted |

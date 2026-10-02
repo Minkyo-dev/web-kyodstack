@@ -185,6 +185,44 @@ export type Database = {
           },
         ]
       }
+      assistant_briefs: {
+        Row: {
+          created_at: string
+          id: string
+          line: string
+          local_date: string
+          model: string | null
+          prompt_version: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line: string
+          local_date: string
+          model?: string | null
+          prompt_version: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line?: string
+          local_date?: string
+          model?: string | null
+          prompt_version?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_briefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -259,39 +297,62 @@ export type Database = {
       }
       daily_reflections: {
         Row: {
+          blocker: string | null
           created_at: string
           energy_score: number | null
           focus_score: number | null
           id: string
           mood_score: number | null
+          next_task_id: string | null
           note: string | null
           reflection_date: string
           updated_at: string
           user_id: string
+          win: string | null
         }
         Insert: {
+          blocker?: string | null
           created_at?: string
           energy_score?: number | null
           focus_score?: number | null
           id?: string
           mood_score?: number | null
+          next_task_id?: string | null
           note?: string | null
           reflection_date: string
           updated_at?: string
           user_id: string
+          win?: string | null
         }
         Update: {
+          blocker?: string | null
           created_at?: string
           energy_score?: number | null
           focus_score?: number | null
           id?: string
           mood_score?: number | null
+          next_task_id?: string | null
           note?: string | null
           reflection_date?: string
           updated_at?: string
           user_id?: string
+          win?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "daily_reflections_next_task_fkey"
+            columns: ["next_task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_plan_actual"
+            referencedColumns: ["task_id", "user_id"]
+          },
+          {
+            foreignKeyName: "daily_reflections_next_task_fkey"
+            columns: ["next_task_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id", "user_id"]
+          },
           {
             foreignKeyName: "daily_reflections_user_id_fkey"
             columns: ["user_id"]
@@ -1966,6 +2027,7 @@ export type Database = {
           commit_lead_minutes: number
           created_at: string
           default_break_minutes: number
+          evening_hour: number
           insight_hour: number
           insight_weekday: number | null
           max_focus_block_minutes: number
@@ -1986,6 +2048,7 @@ export type Database = {
           commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
+          evening_hour?: number
           insight_hour?: number
           insight_weekday?: number | null
           max_focus_block_minutes?: number
@@ -2006,6 +2069,7 @@ export type Database = {
           commit_lead_minutes?: number
           created_at?: string
           default_break_minutes?: number
+          evening_hour?: number
           insight_hour?: number
           insight_weekday?: number | null
           max_focus_block_minutes?: number

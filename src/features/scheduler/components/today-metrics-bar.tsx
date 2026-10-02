@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNow } from "@/hooks/use-now";
@@ -17,6 +16,8 @@ export function TodayMetricsBar({
   todayRange,
   today,
   reflection,
+  reflecting,
+  onReflectingChange,
 }: {
   tasks: Task[];
   blocks: CalendarBlock[];
@@ -24,10 +25,12 @@ export function TodayMetricsBar({
   todayRange: { start: string; end: string };
   today: string;
   reflection: DailyReflection | null;
+  /** Open state lives in the workspace so the brief card can open the check-in too. */
+  reflecting: boolean;
+  onReflectingChange: (open: boolean) => void;
 }) {
   const hasRunning = sessions.some((s) => s.ended_at === null);
   const now = useNow(30_000, hasRunning);
-  const [reflecting, setReflecting] = useState(false);
 
   const summary = computeDaySummary({ blocks, sessions, range: todayRange, now });
   const completed = tasks.filter((t) => t.status === "completed").length;
@@ -39,7 +42,7 @@ export function TodayMetricsBar({
     >
       <Metric label="집중" value={summary.averageFocus?.toFixed(1) ?? "—"} />
       <Metric label="완료" value={`${completed} / ${tasks.length}`} />
-      <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setReflecting(true)}>
+      <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onReflectingChange(true)}>
         <NotebookPen aria-hidden />
         {reflection ? "회고 수정" : "하루 마무리"}
       </Button>
@@ -49,8 +52,9 @@ export function TodayMetricsBar({
         summary={summary}
         completed={completed}
         total={tasks.length}
+        tasks={tasks}
         reflection={reflection}
-        onClose={() => setReflecting(false)}
+        onClose={() => onReflectingChange(false)}
       />
     </footer>
   );

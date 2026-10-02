@@ -123,7 +123,9 @@ test.describe("direction layer", () => {
 
       // Switch the process: old one goes to history, its rules are archived, the task keeps its link
       await nav().click();
-      await page.getByRole("link", { name: mission }).click();
+      // The scheduler's brief can link to the same 변화; wait for the 습관 page before picking its card.
+      await expect(page).toHaveURL(/\/scheduler\/directive/);
+      await page.getByRole("region", { name: "변화 목록" }).getByRole("link", { name: mission }).click();
       const detail2 = page.getByRole("region", { name: "변화 상세" });
       await detail2.getByRole("button", { name: "프로세스 교체" }).click();
       const swap = detail2.getByRole("form", { name: "프로세스 교체" });
@@ -151,7 +153,9 @@ test.describe("direction layer", () => {
       // Close the change through its settings (save_mission update path).
       await page.keyboard.press("Escape");
       await nav().click();
-      await page.getByRole("link", { name: mission }).click();
+      // The scheduler's brief can link to the same 변화; wait for the 습관 page before picking its card.
+      await expect(page).toHaveURL(/\/scheduler\/directive/);
+      await page.getByRole("region", { name: "변화 목록" }).getByRole("link", { name: mission }).click();
       const detail3 = page.getByRole("region", { name: "변화 상세" });
       await detail3.getByRole("button", { name: "변화 설정" }).click();
       const settings = detail3.getByRole("form", { name: "변화 설정" });

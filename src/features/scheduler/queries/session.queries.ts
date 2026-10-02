@@ -55,7 +55,7 @@ export async function getDailyReflection(
 ): Promise<DailyReflection | null> {
   const { data, error } = await supabase
     .from("daily_reflections")
-    .select("reflection_date, mood_score, focus_score, energy_score, note")
+    .select("reflection_date, mood_score, focus_score, energy_score, note, win, blocker, next_task_id")
     .eq("reflection_date", date)
     .maybeSingle();
   if (error) throw fromDbError(error);

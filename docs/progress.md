@@ -232,6 +232,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       (`composeRule`), habits added from a rule, stand-alone 다른 습관. Removed directive-header, mission-forms,
       habit-section, protocol-list. Tests: `habit-plan.test.ts`; E2E `directive.spec.ts` (wizard flow) and
       `habits.spec.ts` rewritten
+- [x] Assistant umbrella (`docs/superpowers/specs/2026-10-02-assistant-architecture.md`, P1–P5)
+- [x] Assistant P1 (ADR 0039): brief card on the scheduler (phase by local hour; 오늘의 한 가지 by fixed rules;
+      habits + missed-yesterday; over-capacity; next 변화 step; yesterday's win/blocker; optional AI coach line
+      cached in `assistant_briefs`, generated via `after()`, ≤ 3 attempts/day). Evening check-in adds win, blocker,
+      tomorrow's one thing (`daily_reflections.win/blocker/next_task_id`). Migration `assistant_p1`, SQL test
+      `assistant.sql`, unit `brief.test.ts`, E2E `assistant-brief.spec.ts`
+- [ ] Assistant P2: proposal inbox + weekly coaching
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

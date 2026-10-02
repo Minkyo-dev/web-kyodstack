@@ -129,7 +129,8 @@ export function PlannerManual() {
           <Steps
             items={[
               <>
-                <TabLink href="/scheduler">스케줄러</TabLink>를 열고 오늘 해당하는 {josa(t.habits, "을/를")} 확인합니다.
+                <TabLink href="/scheduler">스케줄러</TabLink>를 열면 맨 위 <b>아침 브리핑</b>이 오늘의 한 가지, 오늘의{" "}
+                {t.habits}(어제 놓친 것 포함), 작업량, 다음 {t.mission} 단계를 한 번에 보여 줍니다. 오늘의 한 가지는 ▶로 바로 시작합니다.
               </>,
               <>
                 입력창에 {josa(t.task, "을/를")} 적습니다. <Code>보고서 초안 #글쓰기 @업무</Code>처럼 <Code>#태그</Code>와 <Code>@영역</Code>을
@@ -163,7 +164,10 @@ export function PlannerManual() {
               먼저 멈춰야 실제 시간에 반영됩니다.
             </li>
             <li>체크형 {josa(t.habits, "을/를")} 표시합니다. 체크는 오늘 것만 할 수 있습니다.</li>
-            <li>내일의 첫 일정 하나만 미리 캘린더에 올려 두면 아침 시작이 쉬워집니다.</li>
+            <li>
+              저녁이 되면 브리핑이 <b>저녁 체크인</b>으로 바뀝니다. 오늘 잘한 한 가지, 가장 막힌 점, <b>내일 가장 먼저 할 한 가지</b>를 고르면
+              다음 날 아침 브리핑의 ‘오늘의 한 가지’로 나옵니다.
+            </li>
           </ul>
         </Section>
 

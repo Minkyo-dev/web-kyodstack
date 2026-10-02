@@ -1,5 +1,7 @@
 "use client";
 
+import { BriefCard } from "@/features/assistant/components/brief-card";
+import type { Brief } from "@/features/assistant/domain/brief";
 import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +55,8 @@ export function TodayTaskPanel({
   onOpenTask,
   questPanel,
   habitPanel,
+  brief,
+  onCheckIn,
 }: {
   tasks: Task[];
   templates: TaskTemplate[];
@@ -82,6 +86,9 @@ export function TodayTaskPanel({
   habitPanel?: React.ReactNode;
   onStartTask: (task: Task) => void;
   onOpenTask: (taskId: string) => void;
+  /** Daily brief (ADR 0039) at the top of the panel. */
+  brief: Brief | null;
+  onCheckIn: () => void;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -185,6 +192,17 @@ export function TodayTaskPanel({
       <TaskQuickCreate templates={templates} today={today} tags={tags} domains={domains} />
       <TemplateTypeBanner count={untypedTemplateCount} onManage={onManageClassification} />
       <TagFilter tags={usedTags} selected={tagFilter} />
+      {brief && (
+        <BriefCard
+          brief={brief}
+          onStart={(id) => {
+            const task = tasks.find((t) => t.id === id);
+            if (task) onStartTask(task);
+          }}
+          onOpen={onOpenTask}
+          onCheckIn={onCheckIn}
+        />
+      )}
       {habitPanel}
       {questPanel}
 

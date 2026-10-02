@@ -38,6 +38,7 @@ export type SchedulerSettings = Pick<
   | "commit_lead_minutes"
   | "insight_weekday"
   | "insight_hour"
+  | "evening_hour"
 >;
 
 export type SchedulerContext = {
