@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelFor, mergeLevelUp, practiceLevel } from "@/features/gamification/utils/level";
+import { levelFor, mergeLevelUp, practiceLevel, rankFor } from "@/features/gamification/utils/level";
 
 describe("levelFor", () => {
   it("level 1 needs 150, level 2 needs 200", () => {
@@ -31,5 +31,11 @@ describe("mergeLevelUp", () => {
     expect(mergeLevelUp(null, { from: 5, to: 6 })).toEqual({ from: 5, to: 6 });
     expect(mergeLevelUp({ from: 5, to: 6 }, { from: 6, to: 7 })).toEqual({ from: 5, to: 7 });
     expect(mergeLevelUp({ from: 5, to: 6 }, null)).toEqual({ from: 5, to: 6 });
+  });
+});
+
+describe("rankFor", () => {
+  it("one rank per 10 levels, E to S", () => {
+    expect([1, 9, 10, 19, 20, 30, 40, 49, 50, 99].map(rankFor)).toEqual(["E", "E", "D", "D", "C", "B", "A", "A", "S", "S"]);
   });
 });

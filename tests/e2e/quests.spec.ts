@@ -9,11 +9,11 @@ const at = (date: string, hhmm: string) => {
   return new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)), h + 12 - tzHour, m)).toISOString();
 };
 
-test.describe("quests, achievements, titles, terminology", () => {
+test.describe("quests, achievements, titles, status window", () => {
   test.beforeAll(async () => cleanup(await dbAsUser()));
   test.afterAll(async () => cleanup(await dbAsUser()));
 
-  test("daily quest → swap once → clear; FIRST STEP → equip BUILDER; quest terminology", async ({ page }) => {
+  test("daily quest → swap once → clear; FIRST STEP → equip BUILDER; status window and log", async ({ page }) => {
     // The enable backfill can be slow on a busy dev server; cleanup waits for it (see finally).
     test.setTimeout(240_000);
     let enabling = false;
@@ -22,7 +22,7 @@ test.describe("quests, achievements, titles, terminology", () => {
     const start = new Date().toISOString();
     const { data: before } = await db
       .from("player_profiles")
-      .select("gamification_enabled, quest_terminology, equipped_title, backfilled_at")
+      .select("gamification_enabled, equipped_title, backfilled_at")
       .maybeSingle();
     const stamp = Date.now();
     try {
@@ -44,7 +44,7 @@ test.describe("quests, achievements, titles, terminology", () => {
       // Daily quest panel; swap one objective once.
       await page.goto("/scheduler");
       const panel = page.getByRole("region", { name: "퀘스트" });
-      await expect(panel).toContainText(/1% QUEST|오늘의 1%/); // G2 relabel; depends on the terminology setting
+      await expect(panel).toContainText(/DAILY QUEST|일일 퀘스트/); // ADR 0037 label
       await panel.getByRole("button", { name: /교체$/ }).first().click();
       await expect(page.getByText("목표를 바꿨습니다.")).toBeVisible();
       await expect(panel.getByRole("button", { name: /교체$/ })).toHaveCount(0);
@@ -72,13 +72,17 @@ test.describe("quests, achievements, titles, terminology", () => {
       await expect(page.getByText("칭호를 장착했습니다.")).toBeVisible();
       await expect(page.locator("aside").getByText("BUILDER")).toBeVisible();
 
-      // Quest terminology across the UI.
+      // ADR 0037: Solo Leveling words live in the status window and the log; the structure keeps work terms.
+      const status = page.getByRole("region", { name: "상태창" });
+      await expect(status).toContainText(/[EDCBAS]-RANK/);
+      const log = page.getByRole("list", { name: "성취 로그" });
+      await expect(log.getByRole("listitem").filter({ hasText: "ACHIEVEMENT" }).filter({ hasText: "FIRST STEP" })).toBeVisible();
+      await expect(log.getByRole("listitem").filter({ hasText: "DAILY QUEST CLEAR" })).not.toHaveCount(0);
       await page.getByRole("button", { name: "게임 요소 설정" }).click();
-      await page.getByRole("checkbox", { name: /^퀘스트 용어/ }).check();
-      await page.getByRole("button", { name: "저장" }).click();
-      await expect(page.getByRole("link", { name: "메인 퀘스트" })).toBeVisible();
+      await expect(page.getByRole("checkbox", { name: /^퀘스트 용어/ })).toHaveCount(0);
+      await page.keyboard.press("Escape");
       await page.goto("/scheduler");
-      await expect(page.getByPlaceholder("퀘스트 추가 (#태그 @영역)")).toBeVisible();
+      await expect(page.getByPlaceholder("할 일 추가 (#태그 @영역)")).toBeVisible();
     } finally {
       // If the server is still finishing the backfill, its writes would land after cleanup: wait for it first.
       if (enabling) {
@@ -89,7 +93,7 @@ test.describe("quests, achievements, titles, terminology", () => {
       }
       await db
         .from("player_profiles")
-        .update(before ?? { gamification_enabled: false, quest_terminology: false, equipped_title: null, backfilled_at: null })
+        .update(before ?? { gamification_enabled: false, equipped_title: null, backfilled_at: null })
         .eq("user_id", uid);
       const { data: quests } = await db.from("quests").select("id").gte("created_at", start);
       const ids = (quests ?? []).map((q) => q.id);

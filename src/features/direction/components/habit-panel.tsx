@@ -2,17 +2,16 @@
 
 import { useOptimistic } from "react";
 import { useActionRunner } from "@/hooks/use-action-runner";
-import { useTerms } from "@/hooks/use-terms";
 import { setHabitCheckAction } from "../actions/direction.actions";
 import type { HabitToday } from "../domain/direction.types";
+import { TERMS } from "@/lib/terms";
 
-/** Today's habits (DAILY QUESTS) above the system quests. Symbols + text, never color alone. */
+/** Today's habits (습관) above the daily quests. Symbols + text, never color alone. */
 export function HabitPanel({ habits }: { habits: HabitToday[] }) {
-  const terms = useTerms();
   return (
-    <section aria-label={terms.habits} className="mx-4 mb-2 rounded-md border border-border text-xs">
+    <section aria-label={TERMS.habits} className="mx-4 mb-2 rounded-md border border-border text-xs">
       <p className="flex items-center px-3 py-2 font-mono tracking-wider">
-        {terms.habits}
+        {TERMS.habits}
         <span className="ml-auto text-muted-foreground tabular-nums">
           {habits.filter((h) => h.done).length}/{habits.length}
         </span>
@@ -28,11 +27,10 @@ export function HabitPanel({ habits }: { habits: HabitToday[] }) {
 
 /** One habit; a tick shows at once (optimistic) and settles when the action and revalidation finish. */
 function HabitRow({ habit: h }: { habit: HabitToday }) {
-  const terms = useTerms();
   const { run, pending } = useActionRunner();
   const [done, setDone] = useOptimistic(h.done);
   return (
-    <li aria-label={`${terms.habit} ${h.title}`} className="flex items-center gap-1.5">
+    <li aria-label={`${TERMS.habit} ${h.title}`} className="flex items-center gap-1.5">
       <span aria-hidden>{done ? "●" : "○"}</span>
       <span className="sr-only">{done ? "완료" : "미완료"}</span>
       <span className={done ? "text-muted-foreground" : undefined}>{h.title}</span>

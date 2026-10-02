@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { objectiveText, toQuestViews } from "@/features/gamification/utils/quest-view";
-import { PLAIN_TERMS, QUEST_TERMS } from "@/lib/terms";
 
 const o = (metric: string, current: number, target: number, params = {}) => ({ id: metric, position: 1, metric, params, target_value: target, current_value: current, completed_at: current >= target ? "2026-09-30T15:00:00Z" : null });
 
@@ -10,8 +9,7 @@ describe("objectiveText", () => {
       o("focus_minutes", 45, 90) as never, o("complete_planned_tasks", 1, 2) as never, o("domain_minutes", 30, 30, { domainId: "d" }) as never,
     ] }], { d: "영어" });
     expect(v.canSwap).toBe(true);
-    expect(v.objectives.map((x) => objectiveText(x, PLAIN_TERMS))).toEqual(["집중 45m / 1h 30m", "계획한 할 일 완료 1/2", "영어 연습 30m / 30m"]);
-    expect(objectiveText(v.objectives[1], QUEST_TERMS)).toBe("계획한 퀘스트 완료 1/2");
+    expect(v.objectives.map((x) => objectiveText(x))).toEqual(["집중 45m / 1h 30m", "계획한 할 일 완료 1/2", "영어 연습 30m / 30m"]);
     expect(v.objectives[2].done).toBe(true);
   });
   it("cannot swap once used or without spare", () => {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Terms } from "@/lib/terms";
+import { TERMS } from "@/lib/terms";
 import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
 import { DueBadge } from "./due-badge";
 import { ProgressBar } from "./progress-bar";
@@ -21,7 +21,6 @@ export function ProjectDetail({
   planActual,
   recommendations,
   ctx,
-  terms,
   missionOptions,
   mission,
 }: {
@@ -29,7 +28,6 @@ export function ProjectDetail({
   planActual: Record<string, TaskPlanActual>;
   recommendations: PendingRecommendation[];
   ctx: { today: string; settings: SchedulerSettings; groups: DurationGroup[]; domains: DomainRef[] };
-  terms: Terms;
   missionOptions: MissionOption[];
   mission: DirectionRef | null;
 }) {
@@ -71,7 +69,7 @@ export function ProjectDetail({
           </span>
         </div>
         {project.description && <p className="text-sm text-muted-foreground">{project.description}</p>}
-        <ProgressBar progress={project.progress} label={`${terms.project} 진행률`} />
+        <ProgressBar progress={project.progress} label={`${TERMS.project} 진행률`} />
       </header>
 
       <section aria-labelledby="milestones-heading" className="space-y-3">
@@ -79,7 +77,7 @@ export function ProjectDetail({
           마일스톤
         </h3>
         {project.milestones.length === 0 && (
-          <p className="text-sm text-muted-foreground">마일스톤으로 목표를 단계별로 나눠 보세요.</p>
+          <p className="text-sm text-muted-foreground">마일스톤으로 프로젝트를 단계별로 나눠 보세요.</p>
         )}
         <ol className="space-y-3">
           {project.milestones.map((m) => {
@@ -110,7 +108,7 @@ export function ProjectDetail({
 
       <section aria-labelledby="loose-heading" className="space-y-2">
         <h3 id="loose-heading" className="text-lg font-semibold">
-          마일스톤 없는 {terms.task}
+          마일스톤 없는 {TERMS.task}
         </h3>
         <div className="rounded-lg border border-border">
           <ul className="divide-y divide-border">{rows(project.looseTasks)}</ul>
@@ -122,12 +120,12 @@ export function ProjectDetail({
       <div className="rounded-lg border border-border p-4">
         <AiRecommendationList
           items={recommendations}
-          emptyText={`스케줄러의 'AI 추천'에서 추천을 받으면 이 ${terms.project} 관련 제안이 여기에 표시됩니다.`}
+          emptyText={`스케줄러의 'AI 추천'에서 추천을 받으면 이 ${TERMS.project} 관련 제안이 여기에 표시됩니다.`}
         />
       </div>
 
       <details className="rounded-lg border border-border p-4">
-        <summary className="cursor-pointer text-sm font-medium">{terms.project} 설정</summary>
+        <summary className="cursor-pointer text-sm font-medium">{TERMS.project} 설정</summary>
         <div className="mt-4">
           {/* Remount per project so the uncontrolled fields show this project's values. */}
           <ProjectEditForm key={project.id} project={project} missionOptions={missionOptions} mission={mission} />

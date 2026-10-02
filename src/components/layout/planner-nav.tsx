@@ -3,18 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useTerms } from "@/hooks/use-terms";
+import { TERMS } from "@/lib/terms";
 
 /** Planner sections. Compact tabs under /scheduler; the private sidebar shows a single "플래너" entry. */
 export function PlannerNav() {
   const pathname = usePathname();
-  const terms = useTerms();
   const tabs = [
     { href: "/scheduler", label: "스케줄러", exact: true },
-    { href: "/scheduler/directive", label: terms.directiveNav, exact: false },
-    { href: "/scheduler/projects", label: terms.project, exact: false },
+    { href: "/scheduler/directive", label: TERMS.directiveNav, exact: false },
+    { href: "/scheduler/projects", label: TERMS.project, exact: false },
     { href: "/scheduler/review", label: "주간 회고", exact: false },
-    { href: "/scheduler/progress", label: "추적", exact: false },
+    { href: "/scheduler/progress", label: "성장", exact: false },
     { href: "/scheduler/manual", label: "매뉴얼", exact: false },
   ];
 

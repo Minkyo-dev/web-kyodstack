@@ -5,7 +5,9 @@ import { runAction } from "@/lib/action";
 import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as direction from "../services/direction.service";
 import * as habits from "../services/habit.service";
+import { createChangePlan } from "../services/change-plan.service";
 import {
+  createChangePlanSchema,
   createHabitSchema,
   createIdentitySchema,
   createMissionSchema,
@@ -45,8 +47,14 @@ export async function reorderIdentitiesAction(input: unknown) {
 export async function createMissionAction(input: unknown) {
   return runAction("direction.mission.create", createMissionSchema, input, async (d, ctx) => done(await direction.createMission(ctx, d)));
 }
+/** New-change wizard (ADR 0038): returns the change so the page can open its blueprint. */
+export async function createChangePlanAction(input: unknown) {
+  return runAction("direction.plan.create", createChangePlanSchema, input, async (d, ctx) => done(await createChangePlan(ctx, d)));
+}
 export async function updateMissionAction(input: unknown) {
-  return runAction("direction.mission.update", updateMissionSchema, input, async (d, ctx) => done(await direction.updateMission(ctx, d)));
+  return runAction("direction.mission.update", updateMissionSchema, input, async (d, ctx) => done(await direction.updateMission(ctx, d)), {
+    progress: (ctx) => evaluateProgress(ctx),
+  });
 }
 export async function upsertCriterionAction(input: unknown) {
   return runAction("direction.criterion.upsert", upsertCriterionSchema, input, async (d, ctx) => done(await direction.upsertCriterion(ctx, d)));

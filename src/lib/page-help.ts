@@ -1,16 +1,16 @@
-import { josa, type Terms } from "@/lib/terms";
+import { josa, TERMS as t } from "@/lib/terms";
 
 /** Help shown behind the (?) icon next to each private page's title: what the page is and how to use it. */
 export const PAGE_HELP_KEYS = ["scheduler", "directive", "projects", "review", "progress", "finance"] as const;
 export type PageHelpKey = (typeof PAGE_HELP_KEYS)[number];
 export type PageHelp = { title: string; concept: string; howTo: string[] };
 
-export function pageHelp(key: PageHelpKey, t: Terms): PageHelp {
+export function pageHelp(key: PageHelpKey): PageHelp {
   switch (key) {
     case "scheduler":
       return {
         title: "스케줄러",
-        concept: `${josa(t.task, "은/는")} '무엇을 할지', 일정 블록은 '언제·어디서 하기로 했는지'(실행 의도), 작업 세션은 '실제로 언제 했는지'입니다. 셋은 따로 기록되어 계획과 실제를 비교할 수 있고, 실제로 한 작업 하나하나가 되고 싶은 정체성에 던지는 한 표가 됩니다.`,
+        concept: `${josa(t.task, "은/는")} '무엇을 할지', 일정 블록은 '언제 하기로 했는지', 작업 세션은 '실제로 언제 했는지'입니다. 셋은 따로 기록되어 계획과 실제를 비교할 수 있습니다. 끝낸 ${t.task} 하나하나가 ${t.project}·${josa(t.milestone, "을/를")} 앞으로 밀고, 성장 탭의 성취 로그에 쌓입니다.`,
         howTo: [
           `왼쪽 입력창에 ${josa(t.task, "을/를")} 추가합니다. #태그, @영역을 함께 적을 수 있습니다. 시작하기 어렵다면 2분 안에 끝낼 수 있는 크기로 쪼갭니다.`,
           `${josa(t.task, "을/를")} 캘린더로 끌어 놓으면 일정 블록이 생깁니다. 시간을 정해 두면 '언제 할지' 고민할 필요가 없어집니다. 블록은 끌어서 옮기거나 길이를 바꿀 수 있습니다.`,
@@ -23,22 +23,22 @@ export function pageHelp(key: PageHelpKey, t: Terms): PageHelp {
     case "directive":
       return {
         title: t.directiveNav,
-        concept: `아토믹 해빗의 순서대로, 결과보다 정체성에서 시작합니다. ${t.directive}(무엇을 믿는지) → ${t.identity}(어떤 사람이 되고 싶은지) → ${t.mission}(얻고 싶은 결과) → ${t.path}(결과를 만드는 반복 과정) → ${t.protocol}(언제·어디서·무엇을 할지) → ${t.habit}(매일 반복하는 작은 행동)으로 이어집니다. 목표가 방향을 정하고, 시스템이 실제로 앞으로 나아가게 합니다.`,
+        concept: `아토믹 해빗 방식으로 습관을 설계하는 곳입니다. ${t.identity}('나는 ~하는 사람') → ${t.mission}(반복해서 내가 되고 싶은 모습) → ${t.criteria}(어떻게 확인할지) → ${t.path}(반복할 방식) → ${t.protocol}(언제·어디서·무엇을) → ${t.habit}(매일 체크하는 작은 행동) 순서입니다. ${josa(t.project, "은/는")} 끝나는 일, ${josa(t.mission, "은/는")} 계속 반복하는 일이라는 점이 다릅니다.`,
         howTo: [
-          `${josa(t.directive, "을/를")} 한 문장으로 적고, '나는 ~한 사람이다' 형태로 ${josa(t.identity, "을/를")} 추가합니다. 첫 번째 ${josa(t.identity, "이/가")} ${t.className}입니다.`,
-          `${josa(t.mission, "을/를")} 만들고 성공 기준(체크 또는 숫자)을 정합니다. 진행률은 이 기준으로 계산됩니다.`,
-          `${josa(t.path, "을/를")} 설정하고 그 아래 ${josa(t.protocol, "을/를")} 'X할 때, Y에서 Z를 한다'처럼 구체적으로 추가합니다. ${josa(t.path, "을/를")} 교체하면 이전 것은 이력으로 남습니다.`,
-          `${josa(t.habit, "은/는")} 요일과 규칙(체크 또는 집중 시간)으로 만들고, ${josa(t.protocol, "과/와")} 연결할 수 있습니다. 처음엔 2분이면 끝날 만큼 작게 시작합니다.`,
-          `${t.task}·${josa(t.project, "을/를")} ${t.mission}에 연결하면 ${t.growth} 작업으로, 연결하지 않으면 ${t.maintenance} 작업으로 집계됩니다.`,
+          `맨 위에 ${josa(t.directive, "을/를")} 한 문장으로 적고 ${josa(t.identity, "을/를")} 추가합니다. 첫 번째 ${josa(t.identity, "이/가")} ${t.className}입니다.`,
+          `'새 ${t.mission}'를 누르면 ${t.mission} → ${t.criteria} → ${t.path} → ${t.protocol} 순서로 안내합니다. 첫 단계만 필수이고 나머지는 건너뛰어도 됩니다.`,
+          `오른쪽 습관 설계도는 다섯 단계로 나뉘고, 각 단계에 완료 · 다음 단계 · 비어 있음이 표시됩니다. 빈 단계는 그 자리에서 바로 채웁니다.`,
+          `${josa(t.protocol, "은/는")} '언제(신호) · 어디서 · 무엇을'을 나눠 적으면 문장으로 만들어집니다. ${josa(t.habit, "은/는")} 그 규칙을 골라 요일을 정하고, 타이머로 집중하면 자동 체크되게 할 수도 있습니다.`,
+          `${t.mission}에 속하지 않는 생활 ${josa(t.habit, "은/는")} 왼쪽 아래 '다른 ${t.habit}'에 둡니다. 끝내야 하는 일은 ${josa(t.project, "으로/로")} 만들어 ${t.mission}에 연결하면 ${t.growth} 작업으로 집계됩니다.`,
         ],
       };
     case "projects":
       return {
         title: t.project,
-        concept: `${josa(t.project, "은/는")} 기한이 있는 ${t.task} 묶음입니다. 마일스톤으로 단계를 나누고, 진행률은 완료한 ${t.task} 수로 계산됩니다. ${t.mission}에 연결하면 그 결과를 향한 작업으로 집계됩니다.`,
+        concept: `${josa(t.project, "은/는")} 기한이 있는 ${t.task} 묶음, ${josa(t.milestone, "은/는")} 그 안의 중간 지점입니다. 진행률은 완료한 ${t.task} 수로 계산됩니다. ${t.mission}에 연결하면 그 결과를 향한 작업으로 집계되고, ${t.milestone}·${t.project}를 완료하면 성취 로그에 남습니다.`,
         howTo: [
           `왼쪽에서 ${josa(t.project, "을/를")} 만들고 선택하면 오른쪽에 상세가 열립니다.`,
-          `마일스톤을 추가하고 각 단계에 ${josa(t.task, "을/를")} 바로 추가합니다. 다음 행동이 바로 보일 만큼 작게 나눌수록 시작하기 쉽습니다.`,
+          `${josa(t.milestone, "을/를")} 추가하고 각 단계에 ${josa(t.task, "을/를")} 바로 추가합니다. 다음 행동이 바로 보일 만큼 작게 나눌수록 시작하기 쉽습니다.`,
           `편집에서 상태·기간을 바꾸고 ${t.mission}에 연결할 수 있습니다.`,
           `더 이상 쓰지 않는 ${josa(t.project, "은/는")} '아카이브로 이동'으로 목록 아래 아카이브 폴더에 넣습니다. 언제든 꺼낼 수 있고, 연결된 ${josa(t.task, "은/는")} 그대로 남습니다.`,
         ],
@@ -46,7 +46,7 @@ export function pageHelp(key: PageHelpKey, t: Terms): PageHelp {
     case "review":
       return {
         title: "주간 회고",
-        concept: "한 주의 계획과 실제를 숫자로 돌아보며 시스템을 1%씩 다듬는 곳입니다. 숫자는 기록에서 계산되고, AI는 그 숫자를 해석만 합니다.",
+        concept: `한 주의 계획과 실제를 숫자로 돌아보며 ${josa(t.path, "을/를")} 1%씩 다듬는 곳입니다. 숫자는 기록에서 계산되고, AI는 그 숫자를 해석만 합니다.`,
         howTo: [
           "화살표로 지난 주를 오가며 계획 대비 실제 시간, 완료, 일정 변경을 확인합니다.",
           "'AI 해석'을 만들면 잘한 점, 개선할 점, 다음 주 제안이 나옵니다.",
@@ -55,13 +55,14 @@ export function pageHelp(key: PageHelpKey, t: Terms): PageHelp {
       };
     case "progress":
       return {
-        title: "추적",
-        concept: `실제 기록으로 계산한 행동 지표와 ${t.mission} 현황을 추적하는 곳입니다. 눈에 보이는 진전이 습관을 만족스럽게 만듭니다. 점수는 사람을 평가하지 않고, 기록된 행동만 설명합니다.`,
+        title: "성장",
+        concept: `지금까지 이룬 것을 계속 쌓아 보여 주는 상태창입니다. 레벨·랭크·퀘스트·업적·칭호는 기록된 활동에서 계산되고, 성취 로그에는 ${t.milestone}·${t.project} 완료, ${t.mission} 달성, ${t.habit} 연속 기록이 시간순으로 남습니다. 점수는 사람을 평가하지 않고, 기록된 행동만 설명합니다.`,
         howTo: [
-          "행동 지표(예상 정확도·약속 지킴·꾸준함·회복력)는 기록이 충분해야 표시됩니다. 결과가 바로 보이지 않아도 작은 개선은 쌓이고 있습니다.",
+          "게임 요소를 켜면 지금까지의 기록으로 시작 레벨을 계산합니다. 레벨이 오를수록 랭크가 E에서 S로 올라갑니다. XP는 능력이 아니라 활동량입니다.",
+          `일일·주간 퀘스트는 기록에서 자동으로 만들어집니다. 업적을 달성하면 칭호가 열리고 하나를 장착할 수 있습니다.`,
           `${t.mission} 현황에서 진행률, 이번 주 ${t.mission} 연결 시간, ${t.habit} 달성, ${t.identity}에 던진 표(근거)를 봅니다.`,
+          "행동 지표(예상 정확도·약속 지킴·꾸준함·회복력)는 기록이 충분해야 표시됩니다.",
           `막힌 ${josa(t.mission, "이/가")} 있으면 SYSTEM QUESTION이 어느 단계를 먼저 볼지 묻습니다. 선택지는 해당 화면으로 이동만 합니다.`,
-          "게임 요소(레벨·퀘스트)는 원할 때 켤 수 있고, 꺼도 기록은 유지됩니다.",
         ],
       };
     case "finance":

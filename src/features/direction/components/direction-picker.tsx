@@ -1,10 +1,10 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import { useTerms } from "@/hooks/use-terms";
 import type { BreadcrumbInput } from "../domain/breadcrumb";
 import type { MissionOption } from "../domain/direction.types";
 import { nativeSelectClass } from "@/components/ui/native-select";
+import { TERMS } from "@/lib/terms";
 
 const selectClass = `${nativeSelectClass} w-full`;
 
@@ -22,7 +22,6 @@ export function DirectionPicker({
   task: BreadcrumbInput & { mission_id: string | null; protocol_id: string | null };
   options: MissionOption[];
 }) {
-  const terms = useTerms();
   const all = options.map((m) => ({ ...m, protocols: [...m.protocols] }));
   if (task.mission && !all.some((m) => m.id === task.mission!.id)) {
     all.push({ id: task.mission.id, title: task.mission.title, protocols: [] });
@@ -34,7 +33,7 @@ export function DirectionPicker({
   const current = task.protocol_id ? `p:${task.protocol_id}` : task.mission_id ? `m:${task.mission_id}` : "";
   return (
     <div className="space-y-1">
-      <Label htmlFor="task-direction" className="text-xs text-muted-foreground">{`${terms.mission} / ${terms.protocol}`}</Label>
+      <Label htmlFor="task-direction" className="text-xs text-muted-foreground">{`${TERMS.mission} / ${TERMS.protocol}`}</Label>
       <select id="task-direction" name="direction" defaultValue={current} className={selectClass}>
         <option value="">연결 안 함</option>
         {all.map((m) => (

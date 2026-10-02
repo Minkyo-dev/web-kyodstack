@@ -217,6 +217,21 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       CORE BELIEF · OUTCOME · SYSTEM · INTENTION · 1% QUEST), page help rewritten
 - [x] Planner 매뉴얼 tab (`/scheduler/manual`): principles, 30-minute setup, daily/weekly/monthly routines, the four
       laws mapped to features, per-tab features, troubleshooting. E2E `manual.spec.ts`
+- [x] ADR 0037: one work vocabulary for the structure (비전 · 역할 · 목표 · 핵심 결과 · 프로세스 · 실행 규칙 · 프로젝트 ·
+      마일스톤 · 할 일 · 루틴), Solo Leveling only for tracking. Quest terminology toggle removed (`TERMS` constant).
+      Tabs 스케줄러 · 목표 · 프로젝트 · 주간 회고 · 성장 · 매뉴얼. 성장 = 상태창 (level, E–S rank, title, XP, quests) →
+      성취 로그 (derived: milestone/project completion, goal achieved, routine streak 7/30/100, quest clears,
+      achievements, level-ups) → 업적 (ach-v2 work achievements) / 칭호 → 목표 현황 → stats. Migration
+      `completed_at` (projects, milestones; trigger-stamped) + SQL test `completed_at.sql`. Progress is evaluated after
+      project / milestone / goal updates. Tests: `achievement-log.test.ts`, level/achievements/terms/page-help updates,
+      E2E `achievement-log.spec.ts` and relabelled specs; manual and page help rewritten
+- [x] ADR 0038: tab 목표 → 습관; mission label 목표 → 변화 (a change you repeat, vs a project that ends), criteria →
+      달성 기준, habit → 습관. The page is rebuilt: identity board (vision, roles with inline rename), 변화 cards with
+      "설계 n/5 단계", a four-step new-change wizard (`createChangePlanAction` → existing services in order), the
+      five-step blueprint (변화 · 달성 기준 · 프로세스 · 실행 규칙 · 습관, text status per step), the rule sentence builder
+      (`composeRule`), habits added from a rule, stand-alone 다른 습관. Removed directive-header, mission-forms,
+      habit-section, protocol-list. Tests: `habit-plan.test.ts`; E2E `directive.spec.ts` (wizard flow) and
+      `habits.spec.ts` rewritten
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

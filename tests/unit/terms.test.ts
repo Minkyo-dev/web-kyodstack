@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { josa, PLAIN_TERMS, QUEST_TERMS, termsFor } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 
 describe("josa", () => {
   it("follows the final consonant", () => {
@@ -17,10 +17,10 @@ describe("josa", () => {
 });
 
 describe("terms", () => {
-  it("switches the nouns", () => {
-    expect(termsFor(false)).toBe(PLAIN_TERMS);
-    expect(termsFor(true)).toBe(QUEST_TERMS);
-    expect(PLAIN_TERMS).toMatchObject({ task: "할 일", project: "프로젝트", mission: "결과 목표", path: "시스템", protocol: "실행 의도", habit: "습관", systemQuest: "오늘의 1%" });
-    expect(QUEST_TERMS).toMatchObject({ task: "퀘스트", project: "메인 퀘스트", directive: "CORE BELIEF", mission: "OUTCOME", habits: "DAILY QUESTS", systemQuest: "1% QUEST" });
+  it("names the structure in work terms (ADR 0037)", () => {
+    expect(TERMS).toMatchObject({
+      task: "할 일", project: "프로젝트", milestone: "마일스톤", directive: "비전", directiveNav: "습관", identity: "역할",
+      mission: "변화", criteria: "달성 기준", path: "프로세스", protocol: "실행 규칙", habit: "습관", systemQuest: "일일 퀘스트",
+    });
   });
 });

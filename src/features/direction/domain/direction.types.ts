@@ -28,7 +28,14 @@ export type DirectionRef = { id: string; title: string; status: string };
 /** Picker option: an active mission with the active protocols of its active path. */
 export type MissionOption = { id: string; title: string; protocols: { id: string; title: string }[] };
 
-export type MissionSummary = Mission & { identityIds: string[]; criteriaMet: number; criteriaTotal: number };
+export type MissionSummary = Mission & {
+  identityIds: string[];
+  criteriaMet: number;
+  criteriaTotal: number;
+  /** Blueprint progress (ADR 0038). */
+  hasPath: boolean;
+  ruleCount: number;
+};
 
 export type DirectiveView = { purpose: Purpose | null; identities: Identity[]; missions: MissionSummary[] };
 

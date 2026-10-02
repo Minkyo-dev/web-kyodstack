@@ -16,21 +16,26 @@ import type {
 } from "../domain/direction.types";
 
 export async function loadDirective(supabase: SupabaseServerClient, userId: string): Promise<DirectiveView> {
-  const [purpose, identities, missions, links, criteria] = await Promise.all([
+  const [purpose, identities, missions, links, criteria, paths, protocols] = await Promise.all([
     supabase.from("purposes").select("*").eq("user_id", userId).eq("status", "active").maybeSingle(),
     supabase.from("identities").select("*").eq("user_id", userId).order("sort_order").order("created_at"),
     supabase.from("missions").select("*").eq("user_id", userId).order("deadline", { nullsFirst: false }).order("created_at"),
     supabase.from("mission_identities").select("mission_id, identity_id").eq("user_id", userId),
     supabase.from("mission_criteria").select("mission_id, met_at").eq("user_id", userId),
+    supabase.from("paths").select("id, mission_id").eq("user_id", userId).eq("status", "active"),
+    supabase.from("protocols").select("path_id").eq("user_id", userId).eq("status", "active"),
   ]);
-  for (const r of [purpose, identities, missions, links, criteria]) if (r.error) throw fromDbError(r.error);
+  for (const r of [purpose, identities, missions, links, criteria, paths, protocols]) if (r.error) throw fromDbError(r.error);
   const summaries: MissionSummary[] = (missions.data as Mission[]).map((m) => {
     const own = criteria.data!.filter((c) => c.mission_id === m.id);
+    const path = paths.data!.find((p) => p.mission_id === m.id) ?? null;
     return {
       ...m,
       identityIds: links.data!.filter((l) => l.mission_id === m.id).map((l) => l.identity_id),
       criteriaMet: own.filter((c) => c.met_at !== null).length,
       criteriaTotal: own.length,
+      hasPath: path !== null,
+      ruleCount: path ? protocols.data!.filter((p) => p.path_id === path.id).length : 0,
     };
   });
   return {

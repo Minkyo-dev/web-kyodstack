@@ -80,7 +80,7 @@ async function resolveDirection(
 ) {
   const direction = await resolveDirectionLink(ctx, input, current);
   if (missionConflict(direction.mission_id, await getProjectMissionId(ctx, projectId))) {
-    throw new AppError("VALIDATION_ERROR", "프로젝트가 다른 결과 목표에 연결되어 있습니다.");
+    throw new AppError("VALIDATION_ERROR", "프로젝트가 다른 변화에 연결되어 있습니다.");
   }
   return direction;
 }

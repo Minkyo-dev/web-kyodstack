@@ -1,5 +1,5 @@
 import { formatMinutes } from "@/features/scheduler/utils/duration";
-import type { Terms } from "@/lib/terms";
+import { TERMS } from "@/lib/terms";
 import type { QuestMetric, QuestType } from "../domain/quest.types";
 import type { QuestRow } from "../queries/quest.queries";
 
@@ -40,12 +40,12 @@ export function toQuestViews(rows: QuestRow[], domainNames: Record<string, strin
   }));
 }
 
-export function objectiveText(o: ObjectiveView, terms: Terms): string {
+export function objectiveText(o: ObjectiveView): string {
   const m = (x: number) => formatMinutes(x);
   switch (o.metric) {
     case "focus_minutes": return `집중 ${m(o.current)} / ${m(o.target)}`;
-    case "complete_planned_tasks": return `계획한 ${terms.task} 완료 ${o.current}/${o.target}`;
-    case "complete_tasks": return `${terms.task} 완료 ${o.current}/${o.target}`;
+    case "complete_planned_tasks": return `계획한 ${TERMS.task} 완료 ${o.current}/${o.target}`;
+    case "complete_tasks": return `${TERMS.task} 완료 ${o.current}/${o.target}`;
     case "domain_minutes": return `${o.domainName} 연습 ${m(o.current)} / ${m(o.target)}`;
     case "domain_sessions": return `${o.domainName} 세션 ${o.current}/${o.target}`;
     case "kept_commitments": return `약속 블록 지키기 ${o.current}/${o.target}`;

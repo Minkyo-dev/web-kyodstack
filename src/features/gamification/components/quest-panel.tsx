@@ -4,10 +4,10 @@ import { useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronRight, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useActionRunner } from "@/hooks/use-action-runner";
-import { useTerms } from "@/hooks/use-terms";
 import { QUEST_META } from "../domain/quest.types";
 import { swapQuestObjectiveAction } from "../actions/quest.actions";
 import { objectiveText, type QuestView } from "../utils/quest-view";
+import { TERMS } from "@/lib/terms";
 
 const KEY = "kyod.quests.collapsed";
 const listeners = new Set<() => void>();
@@ -25,7 +25,6 @@ const subscribe = (cb: () => void) => {
 
 /** Quests above the Today sections (E2 spec §5). Symbols + text, never color alone. */
 export function QuestPanel({ quests }: { quests: QuestView[] }) {
-  const terms = useTerms();
   const { run, pending } = useActionRunner();
   // Server and first client render: expanded; then the stored preference.
   const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
@@ -38,8 +37,8 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
     }
     listeners.forEach((l) => l());
   };
-  // Habits are the DAILY QUESTS now (G2); the metric daily quest is the SYSTEM QUEST.
-  const label = (type: QuestView["type"]) => (type === "daily" ? terms.systemQuest : QUEST_META[type].label);
+  // Habits are 습관 (ADR 0038); the metric daily quest is the DAILY QUEST.
+  const label = (type: QuestView["type"]) => (type === "daily" ? TERMS.systemQuest : QUEST_META[type].label);
   const daily = quests.find((q) => q.type === "daily");
   const others = quests.filter((q) => q.type !== "daily");
 
@@ -47,7 +46,7 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
     <section aria-label="퀘스트" className="mx-4 mb-2 rounded-md border border-border text-xs">
       <button type="button" onClick={toggle} aria-expanded={!collapsed} className="flex w-full items-center gap-1.5 px-3 py-2 font-mono tracking-wider">
         {collapsed ? <ChevronRight className="size-3.5" aria-hidden /> : <ChevronDown className="size-3.5" aria-hidden />}
-        {terms.systemQuests}
+        {TERMS.systemQuests}
         <span className="ml-auto text-muted-foreground">
           {quests.filter((q) => q.status === "cleared").length}/{quests.length} CLEARED
         </span>
@@ -93,10 +92,10 @@ export function QuestPanel({ quests }: { quests: QuestView[] }) {
               <span aria-hidden>{o.done ? "☑" : "☐"}</span>
               <span className="min-w-0 flex-1 tabular-nums">
                 <span className="sr-only">{o.done ? "완료: " : "진행 중: "}</span>
-                {objectiveText(o, terms)}
+                {objectiveText(o)}
               </span>
               {quest.canSwap && !o.done && (
-                <Button size="xs" variant="ghost" disabled={pending} aria-label={`${objectiveText(o, terms)} 교체`}
+                <Button size="xs" variant="ghost" disabled={pending} aria-label={`${objectiveText(o)} 교체`}
                   onClick={() => run(() => swapQuestObjectiveAction({ objectiveId: o.id }), { success: "목표를 바꿨습니다." })}>
                   <Repeat aria-hidden /> 교체
                 </Button>

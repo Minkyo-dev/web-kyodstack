@@ -5,7 +5,9 @@ import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { commitments } from "@/features/analytics/utils/stats";
 import { focusStats } from "@/features/scheduler/utils/focus";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
+import { routineStreaks } from "@/features/direction/domain/habits";
 import { ACHIEVEMENTS, newlyUnlocked, TITLES, type AchievementFacts } from "../utils/achievements";
+import { loadWorkRecords } from "../queries/achievement-log.queries";
 
 const LIMIT = 10000;
 const PAUSES = "pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(paused_at, resumed_at)";
@@ -23,12 +25,13 @@ export async function listUnlocked(supabase: SupabaseServerClient, userId: strin
 /** Lifetime facts. Only loaded when something is still locked. */
 export async function loadAchievementFacts(supabase: SupabaseServerClient, userId: string, now: Date): Promise<AchievementFacts> {
   const { settings } = await getSchedulerContext(supabase, userId);
-  const [sessions, plan, blocks, revisions, quests] = await Promise.all([
+  const [sessions, plan, blocks, revisions, quests, work] = await Promise.all([
     supabase.from("work_sessions").select(`id, task_id, schedule_block_id, source, started_at, ended_at, ${PAUSES}`).eq("user_id", userId).limit(LIMIT),
     supabase.from("task_plan_actual").select("user_estimated_minutes, actual_minutes, status").eq("user_id", userId).eq("status", "completed").limit(LIMIT),
     supabase.from("schedule_blocks").select("id, task_id, starts_at, ends_at, status, created_at, updated_at").eq("user_id", userId).limit(LIMIT),
     supabase.from("schedule_block_revisions").select("schedule_block_id, change_type, previous_starts_at, new_starts_at, created_at").eq("user_id", userId).limit(LIMIT),
     supabase.from("quests").select("type").eq("user_id", userId).eq("status", "cleared"),
+    loadWorkRecords(supabase, userId),
   ]);
   for (const r of [sessions, plan, blocks, revisions, quests]) if (r.error) throw fromDbError(r.error);
   const s = sessions.data!.map((x) => ({ ...x, pauses: x.pauses ?? [], focus_score: null }));
@@ -47,6 +50,10 @@ export async function loadAchievementFacts(supabase: SupabaseServerClient, userI
     perfectCommitments: perfect,
     weeklyCleared: quests.data!.filter((q) => q.type === "weekly").length,
     recoveryCleared: quests.data!.filter((q) => q.type === "recovery").length,
+    milestonesCompleted: work.milestones.length,
+    projectsCompleted: work.projects.length,
+    goalsAchieved: work.goals.length,
+    bestRoutineStreak: Math.max(0, ...work.routines.map((r) => routineStreaks(r.weekdays, r.checks).best)),
   };
 }
 

@@ -1,6 +1,6 @@
 # 0036 — Planner terminology follows Atomic Habits
 
-- Status: accepted
+- Status: superseded by ADR 0037 (labels and the quest toggle; the Atomic Habits concepts stay)
 - Date: 2026-10-01
 - Supersedes: the labels in ADR 0017 (quest terms), ADR 0020 §2 (UI names) and ADR 0021 §6 (SYSTEM QUEST label)
 

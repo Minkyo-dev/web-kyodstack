@@ -6,19 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActionRunner } from "@/hooks/use-action-runner";
+import { TERMS } from "@/lib/terms";
 import { deleteCriterionAction, setCriterionProgressAction, upsertCriterionAction } from "../actions/direction.actions";
 import type { MissionCriterion } from "../domain/direction.types";
 import { nativeSelectClass } from "@/components/ui/native-select";
+import type { StepState } from "../domain/plan";
+import { Example, StepShell } from "./blueprint-ui";
 
 const selectClass = nativeSelectClass;
 
-export function CriteriaList({ missionId, criteria, closed }: { missionId: string; criteria: MissionCriterion[]; closed: boolean }) {
+/** Blueprint step 2: how you know the change happened. Progress is computed from these. */
+export function CriteriaList({
+  missionId,
+  criteria,
+  closed,
+  n,
+  state,
+}: {
+  missionId: string;
+  criteria: MissionCriterion[];
+  closed: boolean;
+  n: number;
+  state: StepState;
+}) {
   const { run, pending } = useActionRunner();
   return (
-    <section aria-label="성공 기준" className="space-y-2">
-      <h3 className="text-sm font-semibold">
-        성공 기준 <span className="text-xs font-normal text-muted-foreground">{criteria.filter((c) => c.met_at).length}/{criteria.length} 달성</span>
-      </h3>
+    <StepShell
+      n={n}
+      title={TERMS.criteria}
+      question="변화가 일어났다고 말할 수 있는 신호는 무엇인가요? 진행률은 이 기준으로 계산됩니다."
+      state={state}
+      action={criteria.length > 0 && <span className="text-xs text-muted-foreground tabular-nums">{criteria.filter((c) => c.met_at).length}/{criteria.length} 달성</span>}
+    >
       {criteria.length > 0 && (
         <ul className="divide-y divide-border rounded-md border border-border">
           {criteria.map((c) => (
@@ -86,7 +105,7 @@ export function CriteriaList({ missionId, criteria, closed }: { missionId: strin
           }}
         >
           <div className="min-w-48 flex-1 space-y-1">
-            <Label htmlFor="criterion-label" className="text-xs text-muted-foreground">기준</Label>
+            <Label htmlFor="criterion-label" className="text-xs text-muted-foreground">새 기준</Label>
             <Input id="criterion-label" name="label" required maxLength={120} className="h-8" />
           </div>
           <div className="space-y-1">
@@ -105,9 +124,14 @@ export function CriteriaList({ missionId, criteria, closed }: { missionId: strin
             <Input id="criterion-unit" name="unit" maxLength={12} className="h-8 w-16" />
           </div>
           <Button type="submit" size="sm" variant="outline" disabled={pending}>기준 추가</Button>
+          {criteria.length === 0 && (
+            <p className="w-full text-[11px]">
+              <Example>영어 회의 3번 진행 (숫자 3, 단위 번), 발표 녹화 공개 (체크)</Example>
+            </p>
+          )}
         </form>
       )}
-    </section>
+    </StepShell>
   );
 }
 

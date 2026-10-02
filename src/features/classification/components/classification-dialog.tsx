@@ -17,8 +17,8 @@ import {
 import { TAG_COLORS, type DomainRef, type TagColor, type TagRef } from "../domain/classification.types";
 import type { TemplateWithClassification } from "../queries/classification.queries";
 import { DomainSelect, TypeSelect } from "./classification-fields";
-import { useTerms } from "@/hooks/use-terms";
 import { nativeSelectClass } from "@/components/ui/native-select";
+import { TERMS } from "@/lib/terms";
 
 const COLOR_LABEL: Record<TagColor, string> = {
   gray: "회색",
@@ -46,7 +46,6 @@ export function ClassificationDialog({
   domains: DomainRef[];
   templates: TemplateWithClassification[];
 }) {
-  const terms = useTerms();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
@@ -60,7 +59,7 @@ export function ClassificationDialog({
             <TabsTrigger value="templates">템플릿</TabsTrigger>
           </TabsList>
           <TabsContent value="tags" className="space-y-2 pt-3">
-            {tags.length === 0 && <p className="text-sm text-muted-foreground">아직 태그가 없습니다. {terms.task}에 #태그를 붙여 보세요.</p>}
+            {tags.length === 0 && <p className="text-sm text-muted-foreground">아직 태그가 없습니다. {TERMS.task}에 #태그를 붙여 보세요.</p>}
             {tags.map((t) => (
               <TagRow key={t.id} tag={t} />
             ))}
@@ -243,7 +242,6 @@ function TemplateRow({
   tags: TagRef[];
   domains: DomainRef[];
 }) {
-  const terms = useTerms();
   const { run, pending } = useActionRunner();
   const [tagIds, setTagIds] = useState(template.tags.map((t) => t.id));
   return (
@@ -322,7 +320,7 @@ function TemplateRow({
       <div className="flex items-center justify-between gap-2">
         <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <input type="checkbox" name="apply" defaultChecked />
-          값이 비어 있는 {terms.task} {template.emptyTaskCount}개에도 적용
+          값이 비어 있는 {TERMS.task} {template.emptyTaskCount}개에도 적용
         </label>
         <Button type="submit" size="sm" disabled={pending}>
           저장

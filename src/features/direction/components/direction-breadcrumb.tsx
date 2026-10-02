@@ -1,15 +1,14 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { useTerms } from "@/hooks/use-terms";
 import { buildBreadcrumb, type BreadcrumbInput } from "../domain/breadcrumb";
+import { TERMS } from "@/lib/terms";
 
 /** "Why am I doing this?" — Mission › Path › Protocol, or a MAINTENANCE label. */
 export function DirectionBreadcrumb({ task }: { task: BreadcrumbInput }) {
-  const terms = useTerms();
   const b = buildBreadcrumb(task);
   if (b.kind === "maintenance") {
-    return <p className="text-[11px] font-semibold tracking-widest text-muted-foreground">{terms.maintenance}</p>;
+    return <p className="text-[11px] font-semibold tracking-widest text-muted-foreground">{TERMS.maintenance}</p>;
   }
   return (
     <nav aria-label="연결 경로" className="text-xs text-muted-foreground">

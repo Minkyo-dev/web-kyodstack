@@ -7,7 +7,7 @@ const PAGES = [
   { path: "/scheduler/directive", label: /도움말$/ },
   { path: "/scheduler/projects", label: /도움말$/ },
   { path: "/scheduler/review", label: "주간 회고 도움말" },
-  { path: "/scheduler/progress", label: "추적 도움말" },
+  { path: "/scheduler/progress", label: "성장 도움말" },
 ];
 
 test("each page explains itself behind a help icon", async ({ page }) => {

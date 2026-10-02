@@ -16,8 +16,7 @@ import { loadProjectContext } from "@/features/projects/queries/context";
 import { getProjectOverview, listProjectOverviews, type ProjectOverview } from "@/features/projects/queries/project.queries";
 import { splitArchived } from "@/features/projects/utils/progress";
 import { listPendingRecommendations } from "@/features/ai/queries/ai.queries";
-import { getPlayerProfile } from "@/features/gamification/queries/xp.queries";
-import { josa, termsFor } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 import { getMissionRef, listMissionOptions } from "@/features/direction/queries/direction.queries";
 
 export const metadata: Metadata = { title: "프로젝트", robots: { index: false } };
@@ -30,8 +29,6 @@ export default async function ProjectsPage({
 }) {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
-  const profile = await getPlayerProfile(supabase, user.id);
-  const terms = termsFor(!!profile?.gamification_enabled && !!profile.quest_terminology);
   const { project: projectParam } = await searchParams;
   const ctx = await loadProjectContext(supabase, user.id);
   const projects = await listProjectOverviews(supabase, ctx);
@@ -94,7 +91,7 @@ export default async function ProjectsPage({
         <div className="space-y-3 border-b border-border p-4">
           <div className="flex items-center gap-1">
             <h1 id="projects-heading" className="text-lg font-semibold">
-              {terms.project}
+              {TERMS.project}
             </h1>
             <PageHelp page="projects" />
           </div>
@@ -102,11 +99,11 @@ export default async function ProjectsPage({
         </div>
         {projects.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            {`아직 ${josa(terms.project, "이/가")} 없습니다. 기한이 있는 작업 묶음을 ${josa(terms.project, "으로/로")} 만들어 보세요.`}
+            {`아직 ${josa(TERMS.project, "이/가")} 없습니다. 기한이 있는 작업 묶음을 ${josa(TERMS.project, "으로/로")} 만들어 보세요.`}
           </p>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <ul className="divide-y divide-border" aria-label={`${terms.project} 목록`}>
+            <ul className="divide-y divide-border" aria-label={`${TERMS.project} 목록`}>
               {current.map(item)}
             </ul>
             {archived.length > 0 && (
@@ -115,7 +112,7 @@ export default async function ProjectsPage({
                   <Archive className="size-3.5" aria-hidden />
                   아카이브 ({archived.length})
                 </summary>
-                <ul className="divide-y divide-border" aria-label={`아카이브된 ${terms.project}`}>
+                <ul className="divide-y divide-border" aria-label={`아카이브된 ${TERMS.project}`}>
                   {archived.map(item)}
                 </ul>
               </details>
@@ -124,21 +121,20 @@ export default async function ProjectsPage({
         )}
       </aside>
 
-      <section id="project-detail" aria-label={`${terms.project} 상세`} className="min-w-0 flex-1 overflow-y-auto p-6">
+      <section id="project-detail" aria-label={`${TERMS.project} 상세`} className="min-w-0 flex-1 overflow-y-auto p-6">
         {selected ? (
           <ProjectDetail
             project={selected.overview}
             planActual={selected.planActual}
             recommendations={recommendations}
             ctx={ctx}
-            terms={terms}
             missionOptions={missionOptions}
             mission={projectMission}
           />
         ) : (
           <p className="py-16 text-center text-sm text-muted-foreground">
-            {selectedId ? `${josa(terms.project, "을/를")} 찾을 수 없습니다. ` : ""}
-            {`왼쪽에서 ${josa(terms.project, "을/를")} 선택하거나 새로 만드세요.`}
+            {selectedId ? `${josa(TERMS.project, "을/를")} 찾을 수 없습니다. ` : ""}
+            {`왼쪽에서 ${josa(TERMS.project, "을/를")} 선택하거나 새로 만드세요.`}
           </p>
         )}
       </section>

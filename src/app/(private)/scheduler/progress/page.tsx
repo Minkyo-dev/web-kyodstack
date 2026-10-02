@@ -19,17 +19,22 @@ import { TitleList } from "@/features/gamification/components/title-list";
 import { listUnlocked, loadAchievementFacts } from "@/features/gamification/services/achievement.service";
 import { listQuests } from "@/features/gamification/queries/quest.queries";
 import { toQuestViews } from "@/features/gamification/utils/quest-view";
-import { termsFor } from "@/lib/terms";
 import { ensureAnalysis, latestAnalysis } from "@/features/ai/services/analysis.service";
 import { SystemAnalysisCard } from "@/features/ai/components/system-analysis-card";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
 import { loadDirectionStatus, type DirectionStatus as Status } from "@/features/direction/queries/status.queries";
 import { DirectionStatus } from "@/features/direction/components/direction-status";
 import { log } from "@/lib/logger";
+import { AchievementLog } from "@/features/gamification/components/achievement-log";
+import { loadTrackingRecords, loadWorkRecords } from "@/features/gamification/queries/achievement-log.queries";
+import { buildAchievementLog } from "@/features/gamification/utils/achievement-log";
 
-export const metadata: Metadata = { title: "추적", robots: { index: false } };
+export const metadata: Metadata = { title: "성장", robots: { index: false } };
 
-/** Live stats (always current) with 8-week trends from nightly snapshots (D2 spec §3). */
+/**
+ * 성장: the Solo Leveling status window (ADR 0037 §6) — status, achievement log, achievements and titles first,
+ * then goal status and the live stats with 8-week trends from nightly snapshots (D2 spec §3).
+ */
 export default async function ProgressPage() {
   const user = await requireUserOrRedirect();
   const supabase = await createClient();
@@ -49,7 +54,11 @@ export default async function ProgressPage() {
     ? await xpByRuleSince(supabase, user.id, addLocalDays(today, -6, input.timezone))
     : null;
   const on = !!profile?.gamification_enabled;
-  const terms = termsFor(on && !!profile?.quest_terminology);
+  const [work, tracking] = await Promise.all([
+    loadWorkRecords(supabase, user.id),
+    on ? loadTrackingRecords(supabase, user.id) : Promise.resolve(null),
+  ]);
+  const logEntries = buildAchievementLog(work, tracking, input.timezone);
   const [unlocked, achievementFacts, questRows] = on
     ? await Promise.all([
         listUnlocked(supabase, user.id),
@@ -70,7 +79,7 @@ export default async function ProgressPage() {
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">추적</h1>
+          <h1 className="text-2xl font-semibold">성장</h1>
           <PageHelp page="progress" />
         </div>
         <WorkStandardsDialog settings={input.settings} />
@@ -82,7 +91,15 @@ export default async function ProgressPage() {
         <EnableCard />
       )}
 
-      {direction && <DirectionStatus status={direction} terms={terms} />}
+      <AchievementLog entries={logEntries} tracking={on} />
+      {on && unlocked && achievementFacts && (
+        <>
+          <AchievementsSection facts={achievementFacts} unlocked={unlocked.achievements} timezone={input.timezone} />
+          <TitleList titles={unlocked.titles} equipped={profile?.equipped_title ?? null} />
+        </>
+      )}
+
+      {direction && <DirectionStatus status={direction} />}
 
       <section aria-labelledby="stats-heading" className="space-y-3">
         <h2 id="stats-heading" className="text-lg font-semibold">
@@ -126,14 +143,8 @@ export default async function ProgressPage() {
         />
       </section>
 
-      <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} terms={terms} />
-      <DomainBars domains={stats.domains} practice={on} terms={terms} />
-      {on && unlocked && achievementFacts && (
-        <>
-          <AchievementsSection facts={achievementFacts} unlocked={unlocked.achievements} timezone={input.timezone} />
-          <TitleList titles={unlocked.titles} equipped={profile?.equipped_title ?? null} />
-        </>
-      )}
+      <PatternList patterns={stats.patterns} calibrationBias={stats.calibration.bias} />
+      <DomainBars domains={stats.domains} practice={on} />
     </div>
   );
 }

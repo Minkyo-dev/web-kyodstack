@@ -11,8 +11,7 @@ import type { ActionResult } from "@/lib/errors";
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { acceptAiRecommendationAction, rejectAiRecommendationAction } from "../actions/recommendation.actions";
 import type { PendingRecommendation } from "../queries/ai.queries";
-import { useTerms } from "@/hooks/use-terms";
-import { josa } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 
 type RunResult =
   | { status: "created"; count: number; capacityMinutes: number }
@@ -79,7 +78,6 @@ export function AiRecommendationList({
 
 function AiRecommendationItem({ rec }: { rec: PendingRecommendation }) {
   const { run, pending } = useActionRunner();
-  const terms = useTerms();
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -119,7 +117,7 @@ function AiRecommendationItem({ rec }: { rec: PendingRecommendation }) {
                   title: String(fd.get("title") ?? ""),
                   estimatedMinutes: est ? Number(est) : undefined,
                 }),
-              { success: `${josa(terms.task, "으로/로")} 추가했습니다.` },
+              { success: `${josa(TERMS.task, "으로/로")} 추가했습니다.` },
             );
           }}
         >
@@ -155,7 +153,7 @@ function AiRecommendationItem({ rec }: { rec: PendingRecommendation }) {
             size="xs"
             disabled={pending}
             onClick={() =>
-              run(() => acceptAiRecommendationAction({ recommendationId: rec.id }), { success: `${josa(terms.task, "으로/로")} 추가했습니다.` })
+              run(() => acceptAiRecommendationAction({ recommendationId: rec.id }), { success: `${josa(TERMS.task, "으로/로")} 추가했습니다.` })
             }
           >
             수락

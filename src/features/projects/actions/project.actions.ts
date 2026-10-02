@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import * as projects from "../services/project.service";
 import {
   createMilestoneSchema,
@@ -25,6 +26,7 @@ export async function createProjectAction(input: unknown) {
 export async function updateProjectAction(input: unknown) {
   return runAction("project.update", updateProjectSchema, input, async (data, ctx) =>
     done(await projects.updateProject(ctx, data)),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }
 
@@ -43,5 +45,6 @@ export async function createMilestoneAction(input: unknown) {
 export async function updateMilestoneAction(input: unknown) {
   return runAction("milestone.update", updateMilestoneSchema, input, async (data, ctx) =>
     done(await projects.updateMilestone(ctx, data)),
+    { progress: (ctx) => evaluateProgress(ctx) },
   );
 }

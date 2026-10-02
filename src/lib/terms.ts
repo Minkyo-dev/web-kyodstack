@@ -1,62 +1,36 @@
 /**
- * Quest terminology (E2 spec §4, G umbrella §2): a label layer only. Code and DB use domain names.
- * Labels follow Atomic Habits (ADR 0036): belief/identity → outcome → system → implementation intention → habit.
+ * Planner labels (ADR 0037, 0038): one work vocabulary for the structure; Solo Leveling words are kept for tracking only.
+ * A label layer only — code and DB use the domain names. The Atomic Habits idea under each label is in the comments.
  */
-export type Terms = {
-  task: string;
-  project: string;
-  directive: string;
-  directiveNav: string;
-  identity: string;
-  className: string;
-  mission: string;
-  path: string;
-  protocol: string;
-  growth: string;
-  maintenance: string;
-  habit: string;
-  habits: string;
-  systemQuest: string;
-  systemQuests: string;
-};
-export const PLAIN_TERMS: Terms = {
+export const TERMS = {
   task: "할 일",
   project: "프로젝트",
-  directive: "신념",
-  directiveNav: "정체성",
-  identity: "정체성",
-  className: "핵심 정체성",
-  mission: "결과 목표",
-  path: "시스템",
-  protocol: "실행 의도",
+  milestone: "마일스톤",
+  /** purpose — belief: why you work */
+  directive: "비전",
+  /** the directive page tab (ADR 0038) */
+  directiveNav: "습관",
+  /** identity — identity-based habits: "나는 ~하는 사람" */
+  identity: "역할",
+  className: "주 역할",
+  /** mission — outcome; "a change you keep doing", never a deliverable (that is a project) — ADR 0038 */
+  mission: "변화",
+  /** mission criteria — how you know the change happened */
+  criteria: "달성 기준",
+  /** path — system: the repeated process that produces the result */
+  path: "프로세스",
+  /** protocol — implementation intention (when · where · what) */
+  protocol: "실행 규칙",
   growth: "성장",
   maintenance: "유지",
+  /** habit — a small repeated action */
   habit: "습관",
   habits: "습관",
-  systemQuest: "오늘의 1%",
-  systemQuests: "오늘의 1%",
-};
-export const QUEST_TERMS: Terms = {
-  task: "퀘스트",
-  project: "메인 퀘스트",
-  directive: "CORE BELIEF",
-  directiveNav: "IDENTITY",
-  identity: "IDENTITY",
-  className: "CORE IDENTITY",
-  mission: "OUTCOME",
-  path: "SYSTEM",
-  protocol: "INTENTION",
-  growth: "GROWTH",
-  maintenance: "MAINTENANCE",
-  habit: "DAILY QUEST",
-  habits: "DAILY QUESTS",
-  systemQuest: "1% QUEST",
-  systemQuests: "1% QUESTS",
-};
-
-export function termsFor(questTerminology: boolean): Terms {
-  return questTerminology ? QUEST_TERMS : PLAIN_TERMS;
-}
+  /** the rule-generated daily quest (tracking layer) */
+  systemQuest: "일일 퀘스트",
+  systemQuests: "일일 퀘스트",
+} as const;
+export type Terms = typeof TERMS;
 
 type Pair = "을/를" | "이/가" | "은/는" | "과/와" | "으로/로";
 

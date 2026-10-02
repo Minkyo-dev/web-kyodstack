@@ -1,6 +1,6 @@
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import type { Stats } from "../domain/stats.types";
-import { josa, type Terms } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 import { biasText } from "./stat-card";
 
 function Row({ term, value, missing }: { term: string; value: string | null; missing: string }) {
@@ -16,11 +16,9 @@ function Row({ term, value, missing }: { term: string; value: string | null; mis
 export function PatternList({
   patterns,
   calibrationBias,
-  terms,
 }: {
   patterns: Stats["patterns"];
   calibrationBias: number | null;
-  terms: Terms;
 }) {
   const p = patterns;
   return (
@@ -38,7 +36,7 @@ export function PatternList({
           value={p.dailyCapacityMinutes !== null ? formatMinutes(p.dailyCapacityMinutes) : null}
           missing="의미 있게 일한 근무일이 없습니다"
         />
-        <Row term="계획 편향" value={calibrationBias !== null ? biasText(calibrationBias, null) : null} missing={`완료한 ${josa(terms.task, "이/가")} 더 필요합니다`} />
+        <Row term="계획 편향" value={calibrationBias !== null ? biasText(calibrationBias, null) : null} missing={`완료한 ${josa(TERMS.task, "이/가")} 더 필요합니다`} />
         <Row
           term="잘 지켜지는 시간대"
           value={p.reliableWindow ? `${p.reliableWindow.start}–${p.reliableWindow.end}` : null}

@@ -53,4 +53,6 @@ Template:
 | 0033 | Monthly category budgets | accepted |
 | 0034 | Credit card payment day | accepted |
 | 0035 | Recording refunds | accepted |
-| 0036 | Planner terminology follows Atomic Habits | accepted |
+| 0036 | Planner terminology follows Atomic Habits | superseded by 0037 (labels) |
+| 0037 | Work vocabulary for structure, Solo Leveling for tracking (성취 로그) | accepted (labels amended by 0038) |
+| 0038 | 습관 tab: 변화 instead of 목표, guided habit builder | accepted |

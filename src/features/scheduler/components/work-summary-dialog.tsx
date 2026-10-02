@@ -22,8 +22,7 @@ import { formatMinutes } from "../utils/duration";
 import { describeDifference, focusStats, remainingMinutes } from "../utils/focus";
 import { localDateTimeToIso, toLocalDate, toLocalTime, todayLocalDate } from "../utils/timezone";
 import { readScore, ScoreInput } from "./score-input";
-import { useTerms } from "@/hooks/use-terms";
-import { josa } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 
 /**
  * Finish a focus session (requirements §14): facts first, optional ratings, then the user
@@ -47,7 +46,6 @@ export function WorkSummaryDialog({
   onDone: () => void;
 }) {
   const { run, pending } = useActionRunner();
-  const terms = useTerms();
   const formRef = useRef<HTMLFormElement>(null);
   if (!session) return null;
 
@@ -73,7 +71,7 @@ export function WorkSummaryDialog({
           completeTask,
         }),
       {
-        success: completeTask ? `${josa(terms.task, "을/를")} 완료했습니다.` : undefined,
+        success: completeTask ? `${josa(TERMS.task, "을/를")} 완료했습니다.` : undefined,
         onSuccess: () => {
           if (!completeTask) {
             const left = remainingMinutes(estimateMinutes, priorActualMinutes + focusedMin);
@@ -191,7 +189,7 @@ export function WorkSummaryDialog({
               나중에 계속
             </Button>
             <Button type="submit" value="complete" disabled={pending}>
-              {terms.task} 완료
+              {TERMS.task} 완료
             </Button>
           </DialogFooter>
         </form>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Terms } from "@/lib/terms";
+import { TERMS } from "@/lib/terms";
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { DueBadge } from "@/features/projects/components/due-badge";
 import { STATUS_TEXT } from "../domain/status-text";
@@ -53,19 +53,19 @@ function MissionCard({ m, today, weekStart }: { m: MissionStatusView; today: str
 }
 
 /** ACTIVE MISSION · SELECTED PATH · THIS WEEK · identity evidence (G3, ADR 0022). Numbers first, no judgment. */
-export function DirectionStatus({ status, terms }: { status: Status; terms: Terms }) {
+export function DirectionStatus({ status }: { status: Status }) {
   const { week } = status;
   const path = status.missions[0]?.path ?? null;
   const ratio = week.activeMinutes > 0 ? Math.round((week.alignedMinutes / week.activeMinutes) * 100) : 0;
   return (
-    <section aria-label={`${terms.mission} 현황`} className="space-y-4">
+    <section aria-label={`${TERMS.mission} 현황`} className="space-y-4">
       <div className="space-y-2">
-        <h2 className="text-xs font-semibold tracking-widest text-muted-foreground">{terms.mission}</h2>
+        <h2 className="text-xs font-semibold tracking-widest text-muted-foreground">{TERMS.mission}</h2>
         {status.missions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {STATUS_TEXT.noMission}{" "}
-            <Link href="/scheduler/directive" className="underline-offset-2 hover:underline">
-              {terms.directiveNav}
+            <Link href="/scheduler/directive" className="underline underline-offset-2">
+              {`${TERMS.mission} 만들기`}
             </Link>
           </p>
         ) : (
@@ -79,7 +79,7 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
 
       {path && (
         <div className="space-y-1 border-t border-border pt-3">
-          <h2 className="text-xs font-semibold tracking-widest text-muted-foreground">{terms.path}</h2>
+          <h2 className="text-xs font-semibold tracking-widest text-muted-foreground">{TERMS.path}</h2>
           <p className="font-medium">{path.title}</p>
           <p className="line-clamp-1 text-sm text-muted-foreground">{path.approach}</p>
         </div>
@@ -93,7 +93,7 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
             <dd className="tabular-nums">{formatMinutes(week.activeMinutes)}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">{`${terms.mission} 연결 시간`}</dt>
+            <dt className="text-xs text-muted-foreground">{`${TERMS.mission} 연결 시간`}</dt>
             {week.activeMinutes < MIN_ACTIVE_MINUTES ? (
               <dd className="text-muted-foreground">{STATUS_TEXT.collecting}</dd>
             ) : (
@@ -106,14 +106,14 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
             )}
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">{`완료한 ${terms.task}`}</dt>
+            <dt className="text-xs text-muted-foreground">{`완료한 ${TERMS.task}`}</dt>
             <dd className="tabular-nums">
               {week.tasksDone}/{week.tasksTotal}
             </dd>
           </div>
           {week.habitsScheduled > 0 && (
             <div>
-              <dt className="text-xs text-muted-foreground">{terms.habits}</dt>
+              <dt className="text-xs text-muted-foreground">{TERMS.habits}</dt>
               <dd className="tabular-nums">
                 {week.habitsDone}/{week.habitsScheduled} ({Math.round((week.habitsDone / week.habitsScheduled) * 100)}%)
               </dd>
@@ -121,13 +121,13 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
           )}
         </dl>
         {status.identities.length > 0 && (
-          <ul aria-label={`${terms.identity}에 던진 표`} className="space-y-1 text-sm">
+          <ul aria-label={`${TERMS.identity}에 던진 표`} className="space-y-1 text-sm">
             {status.identities.map((i) => (
               <li key={i.id} className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-medium">{i.name}</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   세션 {i.sessions}
-                  {i.scheduled > 0 && ` · ${terms.habit} ${i.done}/${i.scheduled}`}
+                  {i.scheduled > 0 && ` · ${TERMS.habit} ${i.done}/${i.scheduled}`}
                 </span>
                 {i.sentence && <span className="text-xs">{i.sentence}</span>}
               </li>

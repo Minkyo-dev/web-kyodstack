@@ -2,7 +2,6 @@
 
 import { CircleHelp } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useTerms } from "@/hooks/use-terms";
 import { pageHelp, type PageHelpKey } from "@/lib/page-help";
 
 /**
@@ -10,8 +9,7 @@ import { pageHelp, type PageHelpKey } from "@/lib/page-help";
  * and how to use it, in the active terminology.
  */
 export function PageHelp({ page }: { page: PageHelpKey }) {
-  const terms = useTerms();
-  const help = pageHelp(page, terms);
+  const help = pageHelp(page);
   return (
     <Popover>
       <PopoverTrigger

@@ -51,8 +51,8 @@ import { ClassificationProposal } from "@/features/ai/components/classification-
 import { settleEditedProposalsAction } from "@/features/ai/actions/classification.actions";
 import type { Proposal, ProposalView } from "@/features/ai/utils/classify";
 import { WorklogInterpretation } from "@/features/ai/components/worklog-interpretation";
-import { useTerms } from "@/hooks/use-terms";
 import { nativeSelectClass } from "@/components/ui/native-select";
+import { TERMS } from "@/lib/terms";
 
 type SessionProps = {
   sessions: SessionWithTask[];
@@ -657,7 +657,6 @@ function ManualSessionForm({ taskId, timezone, today }: { taskId: string; timezo
 /** Project + milestone selects. Milestones are filtered to the chosen project (spec §44). */
 function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[] }) {
   const [projectId, setProjectId] = useState(task.project_id ?? "");
-  const terms = useTerms();
   // Keep the current link selectable even if that project/milestone is closed now.
   const all = [...options];
   if (task.project && !all.some((p) => p.id === task.project!.id)) {
@@ -671,7 +670,7 @@ function ProjectPicker({ task, options }: { task: Task; options: ProjectOption[]
   const selectClass = `${nativeSelectClass} w-full`;
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Field label={terms.project} htmlFor="task-project">
+      <Field label={TERMS.project} htmlFor="task-project">
         <select
           id="task-project"
           name="projectId"

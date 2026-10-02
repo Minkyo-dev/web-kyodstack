@@ -50,6 +50,9 @@ This file lists only the **differences and additions** relative to the spec, plu
   NO ACTION is checked at statement end, so an account deletion still cascades.
 - `task_plan_actual` now also exposes `project_id` and `milestone_id`.
 - `projects.archived_at` (ADR 0024): archive folder, independent of `status`; archived projects leave the pickers.
+- `projects.completed_at` / `milestones.completed_at` (ADR 0037): stamped by the `private.stamp_completed_at` trigger on
+  the first move into `completed`, kept while completed, cleared when status leaves it (client values are ignored).
+  Backfilled from `updated_at`. Feeds the 성취 로그 and the ach-v2 work achievements.
 - Remaining estimate (v1) = Σ over open tasks of max(personal estimate − actual minutes so far, 0).
 
 ## weekly_reviews / ai_recommendations (Phase 5)
@@ -113,7 +116,8 @@ DailyReview = `daily_reflections`.
 ## Gamification E1 (ADR 0016)
 - `player_profiles(user_id pk, level, total_xp, gamification_enabled, quest_terminology, animations_enabled,
   achievement_toasts, backfilled_at)`: `level`/`total_xp` are a cache of the ledger, written only by the
-  `xp_events` trigger; users update settings columns and `backfilled_at` only.
+  `xp_events` trigger; users update settings columns and `backfilled_at` only. `quest_terminology` is ignored since
+  ADR 0037 (the toggle is gone; the column stays until a cleanup migration).
 - `xp_events(user_id, rule focus|completion|commitment, source_type, source_id, local_date, xp 1–120, metadata)`:
   unique per (user, rule, source). Users select/insert/delete own rows, never update.
 - `award_xp(p_events jsonb, p_user_id uuid default null)`: idempotent insert; returns `(total_xp, level,

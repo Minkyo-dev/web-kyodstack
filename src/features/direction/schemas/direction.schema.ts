@@ -119,7 +119,7 @@ const habitFields = z.object({
 });
 const habitRule = (v: { rule: HabitRule; targetMinutes: number | null; protocolId: string | null }) =>
   v.rule === "check" ? v.targetMinutes === null : v.targetMinutes !== null && v.protocolId !== null;
-const habitRuleError = { message: "집중 시간 규칙에는 실행 의도와 목표 시간이 필요합니다.", path: ["rule"] };
+const habitRuleError = { message: "집중 시간 규칙에는 실행 규칙과 목표 시간이 필요합니다.", path: ["rule"] };
 export const createHabitSchema = habitFields.refine(habitRule, habitRuleError);
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 export const updateHabitSchema = habitFields
@@ -128,3 +128,28 @@ export const updateHabitSchema = habitFields
 export type UpdateHabitInput = z.infer<typeof updateHabitSchema>;
 export const setHabitCheckSchema = z.object({ habitId: z.uuid(), done: z.boolean() });
 export type SetHabitCheckInput = z.infer<typeof setHabitCheckSchema>;
+
+/** New-change wizard (ADR 0038 §3): the change plus optional criteria, process, one rule and one habit for it. */
+const criterionDraft = z
+  .object({
+    label: required(120),
+    kind: z.enum(CRITERION_KINDS),
+    targetValue: z.coerce.number().positive().max(1e9).nullable(),
+    unit: optionalText(12),
+  })
+  .refine((v) => (v.kind === "check" ? v.targetValue === null : v.targetValue !== null), {
+    message: "숫자 기준에는 목표값이 필요합니다.",
+    path: ["targetValue"],
+  });
+export const createChangePlanSchema = z
+  .object({
+    change: createMissionSchema,
+    criteria: z.array(criterionDraft).max(8).default([]),
+    path: switchPathSchema.omit({ missionId: true }).nullable().default(null),
+    rule: createProtocolSchema.omit({ pathId: true }).nullable().default(null),
+    habit: habitFields.omit({ protocolId: true }).nullable().default(null),
+  })
+  .refine((v) => v.rule === null || v.path !== null, { message: "실행 규칙에는 프로세스가 필요합니다.", path: ["rule"] })
+  .refine((v) => v.habit === null || v.rule !== null, { message: "습관에는 실행 규칙이 필요합니다.", path: ["habit"] })
+  .refine((v) => v.habit === null || habitRule({ ...v.habit, protocolId: "linked" }), { ...habitRuleError, path: ["habit"] });
+export type CreateChangePlanInput = z.infer<typeof createChangePlanSchema>;

@@ -52,7 +52,7 @@ test.describe("SYSTEM analysis and AI quests", () => {
       await db.from("player_profiles").update({ gamification_enabled: true }).eq("user_id", uid);
       await page.goto("/scheduler");
       const panel = page.getByRole("region", { name: "퀘스트" });
-      await expect(panel).toContainText(/1% QUEST|오늘의 1%/); // G2 relabel; depends on the terminology setting
+      await expect(panel).toContainText(/DAILY QUEST|일일 퀘스트/); // ADR 0037 label
       await db.from("quests").update({ generated_by: "ai", reason: "오늘 계획에 맞춘 목표예요" }).eq("type", "daily").gte("created_at", start);
       await page.reload();
       await expect(panel).toContainText("SYSTEM 추천 · 오늘 계획에 맞춘 목표예요");

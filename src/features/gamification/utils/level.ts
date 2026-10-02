@@ -21,3 +21,10 @@ export function mergeLevelUp(current: LevelUp, next: LevelUp): LevelUp {
   if (!current) return next;
   return { from: current.from, to: Math.max(current.to, next.to) };
 }
+
+export const RANKS = ["E", "D", "C", "B", "A", "S"] as const;
+export type Rank = (typeof RANKS)[number];
+/** Hunter rank from the level (ADR 0037 §9): E 1–9, D 10–19, … A 40–49, S 50+. Activity, not ability. */
+export function rankFor(level: number): Rank {
+  return RANKS[Math.min(RANKS.length - 1, Math.max(0, Math.floor(level / 10)))];
+}

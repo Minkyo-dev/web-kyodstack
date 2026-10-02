@@ -25,9 +25,8 @@ import {
   type Milestone,
   type Project,
 } from "../domain/project.types";
-import { useTerms } from "@/hooks/use-terms";
 import type { DirectionRef, MissionOption } from "@/features/direction/domain/direction.types";
-import { josa } from "@/lib/terms";
+import { josa, TERMS } from "@/lib/terms";
 import { nativeSelectClass, nativeSelectSmClass } from "@/components/ui/native-select";
 
 const selectClass = `${nativeSelectClass} w-full`;
@@ -47,7 +46,6 @@ function Field({ label, htmlFor, children }: { label: string; htmlFor: string; c
 }
 
 export function ProjectCreateForm() {
-  const terms = useTerms();
   const router = useRouter();
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
@@ -56,13 +54,13 @@ export function ProjectCreateForm() {
   return (
     <form
       ref={ref}
-      aria-label={`새 ${terms.project}`}
+      aria-label={`새 ${TERMS.project}`}
       className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         run(() => createProjectAction({ name: str(fd, "name"), targetDate: orNull(str(fd, "targetDate")) }), {
-          success: `${josa(terms.project, "을/를")} 만들었습니다.`,
+          success: `${josa(TERMS.project, "을/를")} 만들었습니다.`,
           onSuccess: (project) => {
             ref.current?.reset();
             setResetKey((k) => k + 1);
@@ -72,7 +70,7 @@ export function ProjectCreateForm() {
         });
       }}
     >
-      <Field label={`${terms.project} 이름`} htmlFor="new-project-name">
+      <Field label={`${TERMS.project} 이름`} htmlFor="new-project-name">
         <Input id="new-project-name" name="name" required maxLength={120} autoComplete="off" />
       </Field>
       {/* Name gets its own row: the form lives in a narrow side pane. */}
@@ -98,11 +96,10 @@ export function ProjectEditForm({
   missionOptions: MissionOption[];
   mission: DirectionRef | null;
 }) {
-  const terms = useTerms();
   const { run, pending } = useActionRunner();
   return (
     <form
-      aria-label={`${terms.project} 편집`}
+      aria-label={`${TERMS.project} 편집`}
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
@@ -152,7 +149,7 @@ export function ProjectEditForm({
           <DatePicker id="project-target" name="targetDate" clearable defaultValue={project.target_date} />
         </Field>
       </div>
-      <Field label={terms.mission} htmlFor="project-mission">
+      <Field label={TERMS.mission} htmlFor="project-mission">
         <select id="project-mission" name="missionId" defaultValue={project.mission_id ?? ""} className={selectClass}>
           <option value="">없음</option>
           {mission && !missionOptions.some((m) => m.id === mission.id) && <option value={mission.id}>{mission.title}</option>}
@@ -305,14 +302,13 @@ export function TaskQuickAdd({
   milestoneId: string | null;
   label: string;
 }) {
-  const terms = useTerms();
   const { run, pending } = useActionRunner();
   const ref = useRef<HTMLFormElement>(null);
   const id = milestoneId ?? `project-${projectId}`;
   return (
     <form
       ref={ref}
-      aria-label={`${label}에 ${terms.task} 추가`}
+      aria-label={`${label}에 ${TERMS.task} 추가`}
       className="flex gap-1.5 px-3 py-2"
       onSubmit={(e) => {
         e.preventDefault();
@@ -331,9 +327,9 @@ export function TaskQuickAdd({
       }}
     >
       <label htmlFor={`qa-title-${id}`} className="sr-only">
-        {label} {terms.task}
+        {label} {TERMS.task}
       </label>
-      <Input id={`qa-title-${id}`} name="title" placeholder={`${terms.task} 추가`} required maxLength={200} autoComplete="off" />
+      <Input id={`qa-title-${id}`} name="title" placeholder={`${TERMS.task} 추가`} required maxLength={200} autoComplete="off" />
       <label htmlFor={`qa-est-${id}`} className="sr-only">
         예상 시간(분)
       </label>
@@ -347,7 +343,7 @@ export function TaskQuickAdd({
         placeholder="분"
         className="w-20"
       />
-      <Button type="submit" size="icon" variant="outline" disabled={pending} aria-label={`${label}에 ${terms.task} 추가`}>
+      <Button type="submit" size="icon" variant="outline" disabled={pending} aria-label={`${label}에 ${TERMS.task} 추가`}>
         <Plus aria-hidden />
       </Button>
     </form>

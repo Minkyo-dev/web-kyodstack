@@ -7,7 +7,7 @@ export const QUEST_METRICS = [
 export type QuestMetric = (typeof QUEST_METRICS)[number];
 export type QuestType = "daily" | "weekly" | "recovery";
 export const QUEST_META: Record<QuestType, { title: string; reward: number; label: string }> = {
-  daily: { title: "모멘텀 쌓기", reward: 50, label: "1% QUEST" },
+  daily: { title: "모멘텀 쌓기", reward: 50, label: "DAILY QUEST" },
   weekly: { title: "모멘텀 유지", reward: 300, label: "WEEKLY QUEST" },
   recovery: { title: "다시 시작", reward: 40, label: "RECOVERY QUEST" },
 };

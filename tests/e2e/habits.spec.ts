@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { cleanup, dbAsUser, E2E_PREFIX, login } from "./helpers";
 
-// G2: habit on the directive page → DAILY QUESTS on the today screen → check / uncheck → archive.
+// G2 / ADR 0038: a stand-alone habit (다른 습관) → 습관 on the today screen → check / uncheck → archive.
 test.describe("habits", () => {
   test.beforeAll(async () => cleanup(await dbAsUser()));
   test.afterAll(async () => cleanup(await dbAsUser()));
@@ -16,14 +16,15 @@ test.describe("habits", () => {
       const title = `${E2E_PREFIX} Stretch ${Date.now()}`;
       await login(page);
 
-      await page.getByRole("link", { name: "정체성" }).click();
-      const form = page.getByRole("form", { name: "새 습관" });
+      await page.getByRole("navigation", { name: "플래너" }).getByRole("link", { name: "습관", exact: true }).click();
+      const other = page.getByRole("region", { name: "다른 습관" });
+      const form = other.getByRole("form", { name: "새 습관" });
       await form.getByLabel("이름").fill(title);
-      for (const d of ["토", "일"]) await form.getByLabel(d, { exact: true }).check();
-      await form.getByRole("button", { name: "추가" }).click();
-      const item = page.getByRole("listitem", { name: `습관 ${title}` });
+      for (const d of ["토", "일"]) await form.getByText(d, { exact: true }).click();
+      await form.getByRole("button", { name: "습관 추가" }).click();
+      const item = other.getByRole("listitem", { name: `습관 ${title}` });
       await expect(item).toContainText("매일");
-      await expect(item).toContainText("체크");
+      await expect(item).toContainText("직접 체크");
 
       await page.getByRole("link", { name: "스케줄러" }).click();
       const panel = page.getByRole("region", { name: "습관" });
@@ -41,7 +42,7 @@ test.describe("habits", () => {
       await expect(row).toContainText("미완료");
       await expect.poll(async () => (await db.from("habit_checks").select("id").eq("habit_id", habitId)).data?.length).toBe(0);
 
-      await page.getByRole("link", { name: "정체성" }).click();
+      await page.getByRole("navigation", { name: "플래너" }).getByRole("link", { name: "습관", exact: true }).click();
       await page.getByRole("listitem", { name: `습관 ${title}` }).getByRole("button", { name: "보관" }).click();
       await expect(page.getByRole("listitem", { name: `습관 ${title}` })).toHaveCount(0);
       await page.getByRole("link", { name: "스케줄러" }).click();

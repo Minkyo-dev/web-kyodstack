@@ -1,7 +1,7 @@
 import { XP_RULE_LABEL, XP_RULES, type XpRule } from "../domain/xp.types";
 import { QUEST_META } from "../domain/quest.types";
 import { TITLES } from "../utils/achievements";
-import { levelFor } from "../utils/level";
+import { levelFor, rankFor } from "../utils/level";
 import type { QuestView } from "../utils/quest-view";
 import { GamificationSettingsDialog } from "./gamification-settings-dialog";
 import type { PlayerProfile } from "../queries/xp.queries";
@@ -19,12 +19,15 @@ export function PlayerSection({
   return (
     <section aria-labelledby="player-heading" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="player-heading" className="text-lg font-semibold">플레이어</h2>
+        <h2 id="player-heading" className="text-lg font-semibold">상태창</h2>
         <GamificationSettingsDialog profile={profile} />
       </div>
       <div className="max-w-lg space-y-1">
         <p className="flex items-baseline gap-3">
           <span className="font-mono text-2xl font-semibold">Lv.{lv.level}</span>
+          <span className="rounded-sm border border-border px-1.5 font-mono text-xs tracking-widest" aria-label={`랭크 ${rankFor(lv.level)}`}>
+            {rankFor(lv.level)}-RANK
+          </span>
           <span className="text-sm text-muted-foreground tabular-nums">{lv.into} / {lv.need} XP · 누적 {profile.total_xp} XP</span>
         </p>
         {profile.equipped_title && (
