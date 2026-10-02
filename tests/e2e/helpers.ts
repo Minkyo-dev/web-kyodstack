@@ -93,6 +93,8 @@ export async function cleanup(db: SupabaseClient) {
   }
   // Coaching proposals (ADR 0040) about [e2e] rules/habits/changes carry the name in their title.
   await db.from("assistant_proposals").delete().like("title", `%${E2E_PREFIX}%`);
+  // Chat messages (ADR 0042): cleanup only ever runs as the dedicated .test user, so its whole conversation can go.
+  await db.from("assistant_messages").delete().gte("created_at", "2000-01-01");
   // Direction layer (G1). Tasks and projects are gone already, so children can go first.
   const { data: e2eMissions } = await db.from("missions").select("id").like("title", `${E2E_PREFIX}%`);
   const missionIds = (e2eMissions ?? []).map((m) => m.id);

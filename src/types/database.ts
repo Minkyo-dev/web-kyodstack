@@ -223,6 +223,41 @@ export type Database = {
           },
         ]
       }
+      assistant_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          proposal_ids: string[]
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          proposal_ids?: string[]
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          proposal_ids?: string[]
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_proposals: {
         Row: {
           created_at: string
@@ -1362,6 +1397,88 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          dedupe_key: string
+          id: string
+          kind: string
+          local_date: string
+          sent_at: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          dedupe_key: string
+          id?: string
+          kind: string
+          local_date: string
+          sent_at?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          local_date?: string
+          sent_at?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_prefs: {
+        Row: {
+          block_soon: boolean
+          change_quiet: boolean
+          checkin: boolean
+          daily_cap: number
+          habit_missed: boolean
+          quiet_end: number
+          quiet_start: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_soon?: boolean
+          change_quiet?: boolean
+          checkin?: boolean
+          daily_cap?: number
+          habit_missed?: boolean
+          quiet_end?: number
+          quiet_start?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          block_soon?: boolean
+          change_quiet?: boolean
+          checkin?: boolean
+          daily_cap?: number
+          habit_missed?: boolean
+          quiet_end?: number
+          quiet_start?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paths: {
         Row: {
           approach: string
@@ -1777,6 +1894,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "purposes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_success_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_success_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_success_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

@@ -244,7 +244,17 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       Migration `assistant_proposals`, SQL `assistant.sql`, unit `coach.test.ts`, E2E `assistant-coaching.spec.ts`
 - [x] ADR 0041: Gemini (`@google/genai`, `gemini-3.8-flash`, fallback `gemini-3.5-flash-lite` on 429/503) is the
       default AI provider; Anthropic stays selectable
-- [ ] Assistant P3: chat assistant
+- [x] Assistant P3 (ADR 0042): 비서 chat on every planner tab — one grounded Gemini call per message
+      (`chat-context-v1` snapshot: today, habits, changes, projects, week, coaching focus, last 10 messages);
+      replies are plain text; writes only as `create_task` proposals (normalised, applied via `createTask`).
+      Migration `assistant_chat`, SQL `assistant.sql`, unit `chat.test.ts`, E2E `assistant-chat.spec.ts`
+- [x] Assistant P4 (ADR 0043): web push — PWA manifest + `public/sw.js`, VAPID via `web-push`, scheduler ⚙ → 알림
+      (this device on/off, kinds, quiet hours, daily cap, test push). Rules `notify-v1`: block in ≤ 15 min, evening
+      check-in, missed habits, quiet change (14 days). `/api/internal/jobs/notifications` every 5 min via Supabase
+      Cron + pg_net (Vault secrets `notify_job_url`, `notify_job_secret`); log-first dedupe. Migrations
+      `assistant_notifications`, `pg_net_extensions_schema`; SQL `notifications.sql`; unit `notify.test.ts`; E2E
+      `notifications.spec.ts`
+- [ ] Assistant P5: learning log, deadline forecast, time-slot suggestions
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

@@ -96,7 +96,7 @@ export function buildBrief(input: BriefInput): Brief {
     overCapacity: capacityMinutes !== null && plannedMinutes > capacityMinutes ? { plannedMinutes, capacityMinutes } : null,
     nextStep: input.nextStep,
     yesterday:
-      input.yesterday && (input.yesterday.blocker || input.yesterday.win) && phase !== "evening"
+      input.yesterday && (input.yesterday.blocker || input.yesterday.win)
         ? { blocker: input.yesterday.blocker ? BLOCKER_LABEL[input.yesterday.blocker] : null, win: input.yesterday.win }
         : null,
     checkIn: { show: phase === "evening" || input.checkIn.done, done: input.checkIn.done, nextTaskTitle: input.checkIn.nextTaskTitle },

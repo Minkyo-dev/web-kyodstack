@@ -59,3 +59,5 @@ Template:
 | 0039 | Assistant P1: daily rhythm (morning brief, evening check-in) | accepted |
 | 0040 | Assistant P2: one proposal inbox and weekly coaching | accepted |
 | 0041 | Gemini (Google AI Studio) is the default AI provider | accepted |
+| 0042 | Assistant P3: chat as one grounded call per message | accepted |
+| 0043 | Assistant P4: rule-based web push notifications | accepted |

@@ -26,6 +26,9 @@ export function BriefCard({
   onCheckIn: () => void;
 }) {
   const Icon = PHASE_ICON[brief.phase];
+  const empty =
+    !brief.line && !brief.oneThing && !brief.habits && !brief.overCapacity && !brief.nextStep && !brief.weeklyFocus && !brief.yesterday && !brief.checkIn.show;
+  if (empty) return null;
   return (
     <details open aria-label={brief.title} className="group mx-3 mb-2 rounded-lg border border-border bg-muted/30">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-semibold">
@@ -116,7 +119,7 @@ export function BriefCard({
                 <p className="min-w-0 flex-1 text-xs">
                   체크인 완료{brief.checkIn.nextTaskTitle ? ` · 내일의 한 가지: ${brief.checkIn.nextTaskTitle}` : ""}
                 </p>
-                <Button size="xs" variant="ghost" onClick={onCheckIn}>
+                <Button size="xs" variant="ghost" aria-label="체크인 수정" onClick={onCheckIn}>
                   수정
                 </Button>
               </>
@@ -124,7 +127,8 @@ export function BriefCard({
               <>
                 <Moon className="size-4 shrink-0" aria-hidden />
                 <p className="min-w-0 flex-1 text-xs">오늘을 정리하고 내일의 한 가지를 정해 두세요.</p>
-                <Button size="xs" onClick={onCheckIn}>
+                {/* Its own name: the footer keeps the only "하루 마무리" button on the page. */}
+                <Button size="xs" aria-label="체크인 시작" onClick={onCheckIn}>
                   하루 마무리
                 </Button>
               </>

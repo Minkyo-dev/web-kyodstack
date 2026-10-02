@@ -7,7 +7,9 @@ import { localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { updateProtocol } from "@/features/direction/services/direction.service";
 import { updateHabit } from "@/features/direction/services/habit.service";
 import type { HabitRule } from "@/features/direction/domain/direction.types";
-import { COACH_VERSION, coachProposals, HabitDaysPayload, ReviewPayload, RuleMinutesPayload } from "../domain/coach";
+import { createTask } from "@/features/scheduler/services/task.service";
+import { COACH_KINDS, COACH_VERSION, coachProposals, HabitDaysPayload, ReviewPayload, RuleMinutesPayload } from "../domain/coach";
+import { CreateTaskPayload } from "../domain/chat";
 import { loadCoachInput } from "../queries/coach.queries";
 
 async function currentWeek(ctx: ActionContext, now: Date) {
@@ -22,7 +24,13 @@ async function currentWeek(ctx: ActionContext, now: Date) {
  */
 export async function ensureWeeklyCoaching(ctx: ActionContext, now = new Date()): Promise<string> {
   const { today, timezone, weekStart } = await currentWeek(ctx, now);
-  const existing = await ctx.supabase.from("assistant_proposals").select("id", { count: "exact", head: true }).eq("user_id", ctx.user.id).eq("week_start", weekStart);
+  // Only the coach's own kinds count: a chat proposal earlier in the week must not block coaching (ADR 0042 §3).
+  const existing = await ctx.supabase
+    .from("assistant_proposals")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", ctx.user.id)
+    .eq("week_start", weekStart)
+    .in("kind", [...COACH_KINDS]);
   if (existing.error) throw fromDbError(existing.error);
   if ((existing.count ?? 0) > 0) return weekStart;
   const drafts = coachProposals(await loadCoachInput(ctx.supabase, ctx.user.id, today, timezone, now));
@@ -131,6 +139,15 @@ export async function applyProposal(ctx: ActionContext, proposalId: string, now 
     const habit = await loadHabit(ctx, pl.habitId);
     if (!habit || habit.status !== "active" || !(sameDays(habit.weekdays, pl.from) || sameDays(habit.weekdays, pl.to))) return stale(ctx, proposalId);
     if (!sameDays(habit.weekdays, pl.to)) await updateHabit(ctx, habitUpdate(habit, { weekdays: pl.to }));
+  } else if (p.kind === "create_task") {
+    // Chat proposal (ADR 0042): the task service validates the title, date and the change link.
+    const pl = CreateTaskPayload.parse(p.payload);
+    await createTask(ctx, {
+      title: pl.title,
+      targetDate: pl.targetDate ?? undefined,
+      userEstimatedMinutes: pl.estimateMinutes ?? undefined,
+      missionId: pl.missionId,
+    });
   } else {
     href = ReviewPayload.parse(p.payload).href;
   }

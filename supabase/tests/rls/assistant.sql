@@ -1,4 +1,4 @@
--- ADR 0039/0040: assistant_briefs and assistant_proposals are own-only (no update); a reflection's next task must be the owner's and is cleared
+-- ADR 0039/0040/0042: assistant_briefs, assistant_proposals and assistant_messages are own-only (no update); a reflection's next task must be the owner's and is cleared
 -- when that task is deleted.
 begin;
 insert into auth.users (id, email, aud, role) values
@@ -79,6 +79,38 @@ do $$ declare n int; begin
       values ('00000000-0000-4000-a000-00000000000b', '2026-09-28', 'review', 'x', 'x', 'x', '{}', 'coach-v1');
     assert false, 'A cannot insert for B';
   exception when insufficient_privilege then null; end;
+end $$;
+
+-- ADR 0042: chat messages are own-only with no update; create_task is the only new proposal kind.
+reset role;
+insert into public.assistant_messages (user_id, role, content) values ('00000000-0000-4000-a000-00000000000b', 'user', 'B says hi');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000000a","role":"authenticated"}', true);
+do $$ declare n int; begin
+  assert (select count(*) from public.assistant_messages) = 0, 'A cannot read B messages';
+  insert into public.assistant_messages (user_id, role, content) values ('00000000-0000-4000-a000-00000000000a', 'user', 'hi');
+  begin
+    update public.assistant_messages set content = 'edited';
+    assert false, 'messages have no update';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.assistant_messages (user_id, role, content) values ('00000000-0000-4000-a000-00000000000a', 'system', 'x');
+    assert false, 'role check';
+  exception when check_violation then null; end;
+  begin
+    insert into public.assistant_messages (user_id, role, content) values ('00000000-0000-4000-a000-00000000000b', 'user', 'x');
+    assert false, 'A cannot insert for B';
+  exception when insufficient_privilege then null; end;
+  delete from public.assistant_messages;
+  get diagnostics n = row_count;
+  assert n = 1, 'A deletes only own messages';
+  insert into public.assistant_proposals (user_id, week_start, kind, target_key, title, reason, payload, rules_version)
+    values ('00000000-0000-4000-a000-00000000000a', '2026-09-28', 'create_task', 'chat:x:0', 'T', 'R', '{}', 'chat-v1');
+  begin
+    insert into public.assistant_proposals (user_id, week_start, kind, target_key, title, reason, payload, rules_version)
+      values ('00000000-0000-4000-a000-00000000000a', '2026-09-28', 'delete_everything', 'k', 'T', 'R', '{}', 'chat-v1');
+    assert false, 'unknown kind';
+  exception when check_violation then null; end;
 end $$;
 
 select set_config('request.jwt.claims', '{"sub":"","role":"anon"}', true);

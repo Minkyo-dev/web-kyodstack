@@ -16,6 +16,10 @@ const serverSchema = z.object({
   AI_API_KEY: z.string().min(1).optional(),
   AI_MODEL: z.string().min(1).optional(),
   INTERNAL_JOB_SECRET: z.string().min(16).optional(),
+  /** Web push keys and contact (ADR 0043). The public key reaches the browser through the settings action. */
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().min(1).optional(),
   /** Vercel Cron sends "Authorization: Bearer $CRON_SECRET"; either secret authorizes jobs. */
   CRON_SECRET: z.string().min(16).optional(),
 });

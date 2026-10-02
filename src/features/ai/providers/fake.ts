@@ -19,6 +19,13 @@ export class FakeProvider implements AiProvider {
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
   brief_line: () => ({ line: "오늘의 한 가지부터 25분만 시작해 봐요." }),
+  assistant_chat: (prompt) => {
+    const wantsTask = /잡아|추가|만들어/.test(prompt.slice(prompt.lastIndexOf("OWNER NOW:")));
+    return {
+      reply: wantsTask ? "할 일 제안을 만들었어요. 아래 카드에서 적용할 수 있어요." : "오늘은 가장 위의 할 일부터 25분만 시작해 봐요.",
+      proposals: wantsTask ? [{ kind: "create_task", title: "보고서 초안 쓰기", targetDate: null, estimateMinutes: 120, changeId: null, why: "요청하신 작업이에요" }] : [],
+    };
+  },
   quest_picker: (prompt) => {
     const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { candidates: { key: string }[] };
     return { picks: input.candidates.slice(0, 3).map((c) => c.key), title: "집중의 날", reason: "오늘 계획에 맞춘 목표예요" };

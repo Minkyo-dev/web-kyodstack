@@ -17,10 +17,13 @@ export function SchedulerSettingsMenu({
   showActualDefault,
   onManageClassification,
   onOpenWorkStandards,
+  onOpenNotifications,
 }: {
   showActualDefault: boolean;
   onManageClassification: () => void;
   onOpenWorkStandards: () => void;
+  /** Web push settings (ADR 0043). */
+  onOpenNotifications: () => void;
 }) {
   const { run } = useActionRunner();
   return (
@@ -45,6 +48,7 @@ export function SchedulerSettingsMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onOpenWorkStandards}>작업 기준</DropdownMenuItem>
         <DropdownMenuItem onClick={onManageClassification}>분류 관리</DropdownMenuItem>
+        <DropdownMenuItem onClick={onOpenNotifications}>알림</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

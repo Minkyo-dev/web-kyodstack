@@ -32,7 +32,9 @@ Rows (each row has text and an icon, never colour alone; empty rows are hidden):
    중요한 일을 내일로 옮겨 보세요". It reuses `dailyCapacity` and the existing capacity notice.
 5. **다음 변화 단계**: the first active 변화 whose blueprint is not complete, as "‘영어’ — 다음 단계: 실행 규칙", with a
    link to that 변화.
-6. **Check-in**: from the evening hour, a [하루 마무리] button opens the extended dialog. After saving, the row
+6. **Check-in**: from the evening hour, a [하루 마무리] button opens the extended dialog. Its accessible name is
+   "체크인 시작", so the footer keeps the page's only "하루 마무리" button. Yesterday's win and blocker show at any
+   hour. After saving, the row
    reads "체크인 완료 · 내일의 한 가지: …".
 
 ## 3. Evening check-in (extends `daily_reflections`)

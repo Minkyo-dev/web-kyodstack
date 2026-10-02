@@ -283,3 +283,16 @@ Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, u
   reason ≤ 300, payload, evidence, focus, status proposed|applied|dismissed, rules_version, decided_at)`.
   Unique `(user_id, week_start, kind, target_key)`; one focus per user and week (partial unique index). Own
   select/insert/delete; update granted on `status`, `decided_at` only (payload is write-once).
+
+## Assistant P3 (ADR 0042)
+- `assistant_messages(user_id, role user|assistant, content 1–4000, proposal_ids uuid[], created_at)`: own
+  select/insert/delete, no update. `assistant_proposals.kind` adds `create_task` (chat, `rules_version chat-v1`).
+
+## Assistant P4 (ADR 0043)
+- `push_subscriptions(user_id, endpoint unique, p256dh, auth, user_agent, last_success_at)`: own select/insert/delete.
+- `notification_prefs(user_id pk, block_soon, habit_missed, checkin, change_quiet, quiet_start, quiet_end 0–23,
+  daily_cap 1–10)`: own select/insert/update.
+- `notification_log(user_id, kind, dedupe_key, local_date, title, sent_at)`, unique `(user_id, dedupe_key)`: only
+  the service role inserts (log-first idempotency); own select/delete.
+- Cron `assistant-notify` (`*/5 * * * *`) → `private.notify_tick()` → `net.http_post` to the Vault URL with the
+  Vault secret; a no-op until both secrets exist.

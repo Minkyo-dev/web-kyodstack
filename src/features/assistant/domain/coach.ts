@@ -18,7 +18,9 @@ const DAY_RATE = 0.5;
 const MAX_PROPOSALS = 3;
 export const DISMISS_QUIET_DAYS = 28;
 
-export const PROPOSAL_KINDS = ["rule_minutes", "habit_days", "review"] as const;
+export const PROPOSAL_KINDS = ["rule_minutes", "habit_days", "review", "create_task"] as const;
+/** Kinds the weekly coaching writes (chat writes `create_task`, ADR 0042). */
+export const COACH_KINDS = ["rule_minutes", "habit_days", "review"] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 
 export const RuleMinutesPayload = z.object({
@@ -187,4 +189,5 @@ export const KIND_LABEL: Record<ProposalKind, string> = {
   rule_minutes: `${TERMS.protocol} 시간`,
   habit_days: `${TERMS.habit} 요일`,
   review: "다시 보기",
+  create_task: `${TERMS.task} 추가`,
 };

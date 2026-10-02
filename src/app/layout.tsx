@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: { default: "Kyod", template: "%s | Kyod" },
   description: "개인 사이트 — 포트폴리오, 블로그, 비공개 도구",
+  // Installed app icon / iOS home screen (needed for web push on iPhone, ADR 0043).
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Kyod", statusBarStyle: "black-translucent" },
 };
 
 export default function RootLayout({

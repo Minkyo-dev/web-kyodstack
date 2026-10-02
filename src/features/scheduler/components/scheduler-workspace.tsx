@@ -33,6 +33,7 @@ import { TodayTaskPanel } from "./today-task-panel";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TodayMetricsBar } from "./today-metrics-bar";
 import type { Brief } from "@/features/assistant/domain/brief";
+import { NotificationSettingsDialog } from "@/features/assistant/components/notification-settings-dialog";
 import { WeekNavigation } from "./week-navigation";
 import { CalendarViewToggle, MonthNavigation } from "./month-navigation";
 import type { LocalMonth } from "../utils/month";
@@ -104,6 +105,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
   const [classifyOpen, setClassifyOpen] = useState(false);
   const [standardsOpen, setStandardsOpen] = useState(false);
   const [reflecting, setReflecting] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   // Any task visible anywhere on screen can be opened in the drawer.
   const tasksById = useMemo(() => {
@@ -181,6 +183,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
             showActualDefault={context.settings.show_actual_default}
             onManageClassification={() => setClassifyOpen(true)}
             onOpenWorkStandards={() => setStandardsOpen(true)}
+            onOpenNotifications={() => setNotificationsOpen(true)}
           />
           <CalendarViewToggle
             view={monthView ? "month" : "week"}
@@ -293,6 +296,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
         onOpenChange={setStandardsOpen}
         trigger={false}
       />
+      <NotificationSettingsDialog open={notificationsOpen} onOpenChange={setNotificationsOpen} />
       <ClassificationDialog
         open={classifyOpen}
         onOpenChange={setClassifyOpen}
