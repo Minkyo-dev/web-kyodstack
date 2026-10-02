@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,20 @@ export function TransactionDetail({
   const f = useFinance();
   const text = useTransactionText(tx);
   const { run, pending } = useActionRunner();
-  const [mode, setMode] = useState<"view" | "edit" | "confirm-delete">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "refund" | "confirm-delete">("view");
+
+  // ADR 0035: a refund of this expense starts from its category, account, merchant and amount; once saved, the panel
+  // shows the new refund.
+  if (mode === "refund") {
+    return (
+      <TransactionForm
+        refundOf={tx}
+        idPrefix={`refund-${tx.id.slice(0, 8)}`}
+        onCancel={() => setMode("view")}
+        onSaved={(next) => onChanged?.(next)}
+      />
+    );
+  }
 
   if (mode === "edit") {
     return (
@@ -112,7 +125,7 @@ export function TransactionDetail({
         ) : (
           <Row label="계좌">{text.account}</Row>
         )}
-        <Row label={tx.type === "INCOME" ? "받은 사람" : "결제한 사람"}>{payer ?? "지정 안 함"}</Row>
+        <Row label={tx.type === "INCOME" ? "받은 사람" : tx.type === "REFUND" ? "환불받은 사람" : "결제한 사람"}>{payer ?? "지정 안 함"}</Row>
         <Row label="날짜">{formatDay(tx.transaction_date)}</Row>
         {time && <Row label="시간">{time}</Row>}
         {tx.note && <Row label="메모">{tx.note}</Row>}
@@ -144,6 +157,12 @@ export function TransactionDetail({
         </div>
       ) : (
         <div className={cn("flex justify-end gap-2")}>
+          {tx.type === "EXPENSE" && (
+            <Button variant="outline" size="sm" className="mr-auto" onClick={() => setMode("refund")}>
+              <Undo2 aria-hidden />
+              환불 기록
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setMode("edit")}>
             <Pencil aria-hidden />
             수정

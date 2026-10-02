@@ -210,6 +210,8 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       owed moves from the payment account to the card as one CARD_PAYMENT transfer (page load, after a save, daily
       job). Tests: schema in `tests/unit/finance.test.ts`, RLS assertions in `finance.sql`, E2E
       `finance-card-payment.spec.ts`
+- [x] ADR 0035: refunds in the add form and the bulk grid (expense categories), "환불 기록" on an expense's detail
+      (prefilled). Tests: schema in `tests/unit/finance.test.ts`, `finance-bulk.test.ts`, E2E `finance-refund.spec.ts`
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

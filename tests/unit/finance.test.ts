@@ -195,11 +195,16 @@ describe("transaction schema", () => {
     ).toBe(true);
   });
 
+  it("takes a refund with an (expense) category (ADR 0035)", () => {
+    expect(createTransactionSchema.safeParse({ ...base, type: "REFUND" }).success).toBe(true);
+    expect(createTransactionSchema.safeParse({ ...base, type: "REFUND", categoryId: null }).success).toBe(false);
+    expect(createTransactionSchema.safeParse({ ...base, type: "ADJUSTMENT" }).success).toBe(false);
+  });
+
   it("rejects bad amounts, dates and times", () => {
     expect(createTransactionSchema.safeParse({ ...base, amount: "0" }).success).toBe(false);
     expect(createTransactionSchema.safeParse({ ...base, date: "2026-02-30" }).success).toBe(false);
     expect(createTransactionSchema.safeParse({ ...base, time: "25:00" }).success).toBe(false);
-    expect(createTransactionSchema.safeParse({ ...base, type: "REFUND" }).success).toBe(false);
   });
 
   it("drops invalid filters instead of failing the page", () => {

@@ -89,8 +89,9 @@ const lookups: BulkLookups = {
     { id: "EXPENSE", label: "지출", aliases: ["-"] },
     { id: "INCOME", label: "수입", aliases: ["+"] },
     { id: "TRANSFER", label: "이체" },
+    { id: "REFUND", label: "환불" },
   ],
-  categories: { EXPENSE: options, INCOME: [{ id: "salary", label: "급여" }] },
+  categories: { EXPENSE: options, INCOME: [{ id: "salary", label: "급여" }], REFUND: options },
   accounts: [
     { id: "a1", label: "TD Debit" },
     { id: "a2", label: "AMEX" },
@@ -111,6 +112,12 @@ const row = (over: Partial<BulkRow> = {}): BulkRow => ({
 });
 
 describe("checkRow", () => {
+  it("records a refund against an expense category (ADR 0035)", () => {
+    const check = checkRow(row({ type: "환불", amount: "20" }), lookups);
+    expect(check.payload).toMatchObject({ type: "REFUND", amount: 20, categoryId: "groc", accountId: "a1" });
+    expect(checkRow(row({ type: "환불", category: "급여" }), lookups).errors?.category).toBe("카테고리를 찾을 수 없습니다.");
+  });
+
   it("builds a payload from loose text", () => {
     expect(checkRow(row(), lookups)).toEqual({
       payload: {

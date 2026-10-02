@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
-import type { Transaction } from "../domain/finance.types";
+import { categoryTypeOf, type Transaction } from "../domain/finance.types";
 import type { CreateTransactionInput, UpdateTransactionInput } from "../schemas/finance.schema";
 import { listTransactionsByDate } from "../queries/finance.queries";
 import { householdMemberIds, requireHousehold } from "./household.service";
@@ -52,7 +52,7 @@ function checkReferences(refs: References, input: CreateTransactionInput, existi
   if (input.type !== "TRANSFER" && input.categoryId) {
     const category = refs.categories.get(input.categoryId);
     if (!category) throw new AppError("VALIDATION_ERROR", `${at}카테고리를 찾을 수 없습니다.`);
-    if (category.type !== input.type) throw new AppError("VALIDATION_ERROR", `${at}거래 종류와 카테고리 종류가 다릅니다.`);
+    if (category.type !== categoryTypeOf(input.type)) throw new AppError("VALIDATION_ERROR", `${at}거래 종류와 카테고리 종류가 다릅니다.`);
     if (!category.is_active && existing?.category_id !== input.categoryId) {
       throw new AppError("VALIDATION_ERROR", `${at}보관된 카테고리는 새로 선택할 수 없습니다.`);
     }

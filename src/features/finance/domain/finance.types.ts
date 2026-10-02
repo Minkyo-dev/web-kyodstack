@@ -31,11 +31,13 @@ export const CATEGORY_TYPES = ["EXPENSE", "INCOME"] as const;
 export type CategoryType = (typeof CATEGORY_TYPES)[number];
 export const CATEGORY_TYPE_LABEL: Record<CategoryType, string> = { EXPENSE: "지출", INCOME: "수입" };
 
-/** All types the schema stores. The MVP form records only the first three (spec §21). */
+/** All types the schema stores. The forms record all but ADJUSTMENT, which only reconciling writes (ADR 0032, 0035). */
 export const TRANSACTION_TYPES = ["EXPENSE", "INCOME", "TRANSFER", "REFUND", "ADJUSTMENT"] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
-export const ENTRY_TYPES = ["EXPENSE", "INCOME", "TRANSFER"] as const;
+export const ENTRY_TYPES = ["EXPENSE", "INCOME", "TRANSFER", "REFUND"] as const;
 export type EntryType = (typeof ENTRY_TYPES)[number];
+/** The category list a transaction type picks from: a refund (ADR 0035) goes back to an expense category. */
+export const categoryTypeOf = (type: "EXPENSE" | "INCOME" | "REFUND"): CategoryType => (type === "INCOME" ? "INCOME" : "EXPENSE");
 export const TRANSACTION_TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: "지출",
   INCOME: "수입",

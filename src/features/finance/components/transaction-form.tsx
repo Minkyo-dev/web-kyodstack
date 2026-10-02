@@ -11,7 +11,7 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import { cn } from "@/lib/utils";
 import { createTransactionAction, updateTransactionAction } from "../actions/finance.actions";
 import { categoryOptions } from "../domain/category-tree";
-import { ENTRY_TYPES, TRANSACTION_TYPE_LABEL, type EntryType, type Transaction } from "../domain/finance.types";
+import { categoryTypeOf, ENTRY_TYPES, TRANSACTION_TYPE_LABEL, type EntryType, type Transaction } from "../domain/finance.types";
 import { useFinance } from "./finance-provider";
 import { nativeSelectClass } from "@/components/ui/native-select";
 
@@ -45,21 +45,29 @@ export function Field({
   );
 }
 
-const PAYER_LABEL: Record<EntryType, string> = { EXPENSE: "결제한 사람", INCOME: "받은 사람", TRANSFER: "보낸 사람" };
-const MERCHANT_LABEL: Record<EntryType, string> = { EXPENSE: "가맹점", INCOME: "보낸 곳", TRANSFER: "내용" };
+const PAYER_LABEL: Record<EntryType, string> = {
+  EXPENSE: "결제한 사람",
+  INCOME: "받은 사람",
+  TRANSFER: "보낸 사람",
+  REFUND: "환불받은 사람",
+};
+const MERCHANT_LABEL: Record<EntryType, string> = { EXPENSE: "가맹점", INCOME: "보낸 곳", TRANSFER: "내용", REFUND: "환불한 곳" };
 
 /**
- * Add / edit form (spec §21–22). Required: amount, account, date, and a category for income/expense (a transfer needs
- * a destination account instead). Everything else is optional.
+ * Add / edit form (spec §21–22). Required: amount, account, date, and a category for income/expense/refund (a transfer
+ * needs a destination account instead). Everything else is optional. `refundOf` (ADR 0035) starts a new refund from an
+ * expense: same category, account, merchant, payer and amount, dated today.
  */
 export function TransactionForm({
   transaction,
+  refundOf,
   defaultDate,
   onSaved,
   onCancel,
   idPrefix = "tx",
 }: {
   transaction?: Transaction;
+  refundOf?: Transaction;
   defaultDate?: string;
   onSaved?: (tx: Transaction) => void;
   onCancel?: () => void;
@@ -68,19 +76,27 @@ export function TransactionForm({
   const finance = useFinance();
   const { run, pending } = useActionRunner();
   const editing = !!transaction;
+  // A refund keeps the expense's account only while it is still active.
+  const source = transaction ?? refundOf;
+  const refundAccount = refundOf && finance.activeAccounts.some((a) => a.id === refundOf.account_id) ? refundOf.account_id : null;
 
-  const initialType: EntryType =
-    transaction && (ENTRY_TYPES as readonly string[]).includes(transaction.type) ? (transaction.type as EntryType) : "EXPENSE";
+  const initialType: EntryType = refundOf
+    ? "REFUND"
+    : transaction && (ENTRY_TYPES as readonly string[]).includes(transaction.type)
+      ? (transaction.type as EntryType)
+      : "EXPENSE";
   const [type, setType] = useState<EntryType>(initialType);
-  const [amount, setAmount] = useState(transaction ? String(Number(transaction.amount)) : "");
-  const [accountId, setAccountId] = useState(transaction?.account_id ?? finance.activeAccounts[0]?.id ?? "");
+  const [amount, setAmount] = useState(source ? String(Number(source.amount)) : "");
+  const [accountId, setAccountId] = useState(
+    transaction?.account_id ?? refundAccount ?? finance.activeAccounts[0]?.id ?? "",
+  );
   const [transferAccountId, setTransferAccountId] = useState(transaction?.transfer_account_id ?? "");
-  const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
+  const [categoryId, setCategoryId] = useState(source?.category_id ?? "");
   const [date, setDate] = useState<string | null>(transaction?.transaction_date ?? defaultDate ?? finance.today);
   const [time, setTime] = useState(transaction?.transaction_time?.slice(0, 5) ?? "");
-  const [merchant, setMerchant] = useState(transaction?.merchant_name ?? "");
-  const [payerTouched, setPayerTouched] = useState(editing);
-  const [paidBy, setPaidBy] = useState(transaction ? (transaction.paid_by_user_id ?? "") : finance.meId);
+  const [merchant, setMerchant] = useState(source?.merchant_name ?? "");
+  const [payerTouched, setPayerTouched] = useState(!!source);
+  const [paidBy, setPaidBy] = useState(source ? (source.paid_by_user_id ?? "") : finance.meId);
   const [note, setNote] = useState(transaction?.note ?? "");
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
@@ -93,8 +109,8 @@ export function TransactionForm({
     [finance.accounts, transaction],
   );
   const categoryChoices = useMemo(
-    () => (type === "TRANSFER" ? [] : categoryOptions(finance.categories, type, transaction?.category_id)),
-    [finance.categories, type, transaction?.category_id],
+    () => (type === "TRANSFER" ? [] : categoryOptions(finance.categories, categoryTypeOf(type), source?.category_id)),
+    [finance.categories, type, source?.category_id],
   );
 
   if (finance.activeAccounts.length === 0 && !editing) {
@@ -111,7 +127,7 @@ export function TransactionForm({
   const changeType = (next: EntryType) => {
     setType(next);
     const current = finance.categories.find((c) => c.id === categoryId);
-    if (current && current.type !== next) setCategoryId("");
+    if (current && (next === "TRANSFER" || current.type !== categoryTypeOf(next))) setCategoryId("");
     setErrors({});
   };
 
@@ -147,7 +163,7 @@ export function TransactionForm({
           ? updateTransactionAction({ ...payload, transactionId: transaction.id })
           : createTransactionAction(payload),
       {
-        success: editing ? "거래를 수정했습니다." : "거래를 추가했습니다.",
+        success: editing ? "거래를 수정했습니다." : refundOf ? "환불을 기록했습니다." : "거래를 추가했습니다.",
         onSuccess: (tx) => {
           setErrors({});
           onSaved?.(tx);
@@ -159,8 +175,8 @@ export function TransactionForm({
   };
 
   return (
-    <form aria-label={editing ? "거래 수정" : "거래 추가"} className="space-y-3" onSubmit={submit} noValidate>
-      <div role="radiogroup" aria-label="거래 종류" className="grid grid-cols-3 gap-1 rounded-lg border border-border p-0.5">
+    <form aria-label={editing ? "거래 수정" : refundOf ? "환불 기록" : "거래 추가"} className="space-y-3" onSubmit={submit} noValidate>
+      <div role="radiogroup" aria-label="거래 종류" className="grid grid-cols-4 gap-1 rounded-lg border border-border p-0.5">
         {ENTRY_TYPES.map((t) => (
           <button
             key={t}
@@ -177,6 +193,11 @@ export function TransactionForm({
           </button>
         ))}
       </div>
+      {type === "REFUND" && (
+        <p className="text-xs text-muted-foreground">
+          환불은 지출 카테고리에 기록되고, 그 카테고리의 지출에서 빠집니다. 돈이 들어온 계좌를 고르세요.
+        </p>
+      )}
 
       <Field label="금액" htmlFor={id("amount")} error={err("amount")}>
         <div className="relative">

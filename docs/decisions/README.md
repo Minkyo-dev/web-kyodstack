@@ -52,3 +52,4 @@ Template:
 | 0032 | Account balances by reconciling, net worth, asset flow | accepted |
 | 0033 | Monthly category budgets | accepted |
 | 0034 | Credit card payment day | accepted |
+| 0035 | Recording refunds | accepted |

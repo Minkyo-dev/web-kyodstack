@@ -10,8 +10,8 @@ export const BULK_COLUMNS = ["date", "type", "amount", "category", "account", "m
 export type BulkColumn = (typeof BULK_COLUMNS)[number];
 export type BulkRow = Record<BulkColumn, string> & { key: string };
 
-export type BulkType = "EXPENSE" | "INCOME" | "TRANSFER";
-export const BULK_TYPE_LABEL: Record<BulkType, string> = { EXPENSE: "지출", INCOME: "수입", TRANSFER: "이체" };
+export type BulkType = "EXPENSE" | "INCOME" | "TRANSFER" | "REFUND";
+export const BULK_TYPE_LABEL: Record<BulkType, string> = { EXPENSE: "지출", INCOME: "수입", TRANSFER: "이체", REFUND: "환불" };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -89,6 +89,7 @@ export function isBlankRow(row: BulkRow): boolean {
 export type BulkLookups = {
   today: string;
   types: PickOption[];
+  /** A refund (ADR 0035) picks from the expense categories. */
   categories: Record<Exclude<BulkType, "TRANSFER">, PickOption[]>;
   accounts: PickOption[];
   members: PickOption[];
@@ -98,7 +99,7 @@ export type BulkPayload = {
   type: BulkType;
   amount: number;
   accountId: string;
-  /** Income/expense only. */
+  /** Income/expense/refund only. */
   categoryId: string | null;
   /** Transfer only: the receiving account. */
   transferAccountId: string | null;
@@ -119,7 +120,7 @@ export function checkRow(row: BulkRow, lookups: BulkLookups): RowCheck {
   const date = parseLooseDate(row.date, lookups.today);
   if (!date) errors.date = "날짜를 알 수 없습니다. 예: 2026-10-03, 10/3, 3";
   const type = resolveOption(row.type, lookups.types)?.id as BulkType | undefined;
-  if (!type) errors.type = "지출, 수입, 이체 중 하나를 입력하세요.";
+  if (!type) errors.type = "지출, 수입, 이체, 환불 중 하나를 입력하세요.";
   const amount = parseAmount(row.amount);
   if (amount === null) errors.amount = "0보다 큰 금액(소수점 둘째 자리까지)을 입력하세요.";
   const account = resolveOption(row.account, lookups.accounts);

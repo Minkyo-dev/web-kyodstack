@@ -46,6 +46,7 @@ const TYPE_OPTIONS: PickOption[] = [
   { id: "EXPENSE", label: BULK_TYPE_LABEL.EXPENSE, aliases: ["-", "e", "expense", "출"] },
   { id: "INCOME", label: BULK_TYPE_LABEL.INCOME, aliases: ["+", "i", "income", "입"] },
   { id: "TRANSFER", label: BULK_TYPE_LABEL.TRANSFER, aliases: ["t", "transfer", "이", ">"] },
+  { id: "REFUND", label: BULK_TYPE_LABEL.REFUND, aliases: ["r", "refund", "환"] },
 ];
 
 const KEY_HINTS: [string, string][] = [
@@ -249,7 +250,7 @@ export function BulkEntryGrid({
   const pendingFocus = useRef<[number, number] | null>(null);
 
   const lookups = useMemo<BulkLookups>(() => {
-    const categories = (type: Exclude<BulkType, "TRANSFER">) =>
+    const categories = (type: "EXPENSE" | "INCOME") =>
       categoryOptions(f.categories, type).map((o) => ({
         id: o.id,
         label: o.label,
@@ -258,7 +259,7 @@ export function BulkEntryGrid({
     return {
       today: f.today,
       types: TYPE_OPTIONS,
-      categories: { EXPENSE: categories("EXPENSE"), INCOME: categories("INCOME") },
+      categories: { EXPENSE: categories("EXPENSE"), INCOME: categories("INCOME"), REFUND: categories("EXPENSE") },
       accounts: f.activeAccounts.map((a) => ({ id: a.id, label: a.name })),
       members: f.members.map((m) => ({ id: m.userId, label: m.displayName })),
     };
@@ -311,6 +312,7 @@ export function BulkEntryGrid({
     expense: sumAmounts(valid.filter((p) => p.type === "EXPENSE").map((p) => p.amount)),
     income: sumAmounts(valid.filter((p) => p.type === "INCOME").map((p) => p.amount)),
     transfer: sumAmounts(valid.filter((p) => p.type === "TRANSFER").map((p) => p.amount)),
+    refund: sumAmounts(valid.filter((p) => p.type === "REFUND").map((p) => p.amount)),
   };
   const currency = f.activeAccounts[0]?.currency_code ?? "CAD";
 
@@ -684,6 +686,11 @@ export function BulkEntryGrid({
               {totals.transfer > 0 && (
                 <>
                   {" · "}이체 <span className="font-medium text-foreground tabular-nums">{formatMoney(totals.transfer, currency)}</span>
+                </>
+              )}
+              {totals.refund > 0 && (
+                <>
+                  {" · "}환불 <span className="font-medium text-foreground tabular-nums">{formatMoney(totals.refund, currency)}</span>
                 </>
               )}
             </>
