@@ -23,9 +23,9 @@ async function resolveHabitProtocol(
     .eq("user_id", ctx.user.id)
     .maybeSingle();
   if (error) throw fromDbError(error);
-  if (!data) throw new AppError("NOT_FOUND", "실행 방식을 찾을 수 없습니다.");
+  if (!data) throw new AppError("NOT_FOUND", "실행 의도를 찾을 수 없습니다.");
   if (isNewLink(protocolId, currentProtocolId) && (data.status !== "active" || data.path?.status !== "active")) {
-    throw new AppError("VALIDATION_ERROR", "보관되었거나 교체된 실행 방식에는 연결할 수 없습니다.");
+    throw new AppError("VALIDATION_ERROR", "보관되었거나 교체된 실행 의도에는 연결할 수 없습니다.");
   }
   return { protocol_id: data.id, mission_id: data.mission_id };
 }

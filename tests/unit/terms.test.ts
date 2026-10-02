@@ -20,7 +20,7 @@ describe("terms", () => {
   it("switches the nouns", () => {
     expect(termsFor(false)).toBe(PLAIN_TERMS);
     expect(termsFor(true)).toBe(QUEST_TERMS);
-    expect(PLAIN_TERMS).toMatchObject({ task: "할 일", project: "프로젝트", mission: "목표", path: "전략", protocol: "실행 방식", habit: "습관", systemQuest: "오늘의 목표" });
-    expect(QUEST_TERMS).toMatchObject({ task: "퀘스트", project: "메인 퀘스트", directive: "SYSTEM DIRECTIVE", mission: "MISSION", habits: "DAILY QUESTS", systemQuest: "SYSTEM QUEST" });
+    expect(PLAIN_TERMS).toMatchObject({ task: "할 일", project: "프로젝트", mission: "결과 목표", path: "시스템", protocol: "실행 의도", habit: "습관", systemQuest: "오늘의 1%" });
+    expect(QUEST_TERMS).toMatchObject({ task: "퀘스트", project: "메인 퀘스트", directive: "CORE BELIEF", mission: "OUTCOME", habits: "DAILY QUESTS", systemQuest: "1% QUEST" });
   });
 });

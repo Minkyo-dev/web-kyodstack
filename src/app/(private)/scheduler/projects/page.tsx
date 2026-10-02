@@ -102,7 +102,7 @@ export default async function ProjectsPage({
         </div>
         {projects.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            {`아직 ${josa(terms.project, "이/가")} 없습니다. 목표가 있는 작업 묶음을 ${josa(terms.project, "으로/로")} 만들어 보세요.`}
+            {`아직 ${josa(terms.project, "이/가")} 없습니다. 기한이 있는 작업 묶음을 ${josa(terms.project, "으로/로")} 만들어 보세요.`}
           </p>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto">

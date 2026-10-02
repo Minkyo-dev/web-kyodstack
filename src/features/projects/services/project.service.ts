@@ -64,7 +64,7 @@ export async function updateProject(ctx: ActionContext, input: UpdateProjectInpu
     if (tasks.error) throw fromDbError(tasks.error);
     const conflicts = countProjectConflicts(missionId, tasks.data.map((t) => t.mission_id));
     if (conflicts > 0) {
-      throw new AppError("VALIDATION_ERROR", `작업 ${conflicts}개가 다른 목표에 연결되어 있습니다.`);
+      throw new AppError("VALIDATION_ERROR", `작업 ${conflicts}개가 다른 결과 목표에 연결되어 있습니다.`);
     }
   }
   const { data, error } = await ctx.supabase

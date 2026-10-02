@@ -6,8 +6,8 @@ const PAGES = [
   { path: "/scheduler", label: "스케줄러 도움말" },
   { path: "/scheduler/directive", label: /도움말$/ },
   { path: "/scheduler/projects", label: /도움말$/ },
-  { path: "/scheduler/review", label: "주간 리뷰 도움말" },
-  { path: "/scheduler/progress", label: "진행 도움말" },
+  { path: "/scheduler/review", label: "주간 회고 도움말" },
+  { path: "/scheduler/progress", label: "추적 도움말" },
 ];
 
 test("each page explains itself behind a help icon", async ({ page }) => {
@@ -28,7 +28,7 @@ test("each page explains itself behind a help icon", async ({ page }) => {
   // Keyboard: focus + Enter opens it too.
   await page.goto("/scheduler/review");
   await expect(async () => {
-    await page.getByRole("button", { name: "주간 리뷰 도움말" }).focus();
+    await page.getByRole("button", { name: "주간 회고 도움말" }).focus();
     await page.keyboard.press("Enter");
     await expect(page.getByText("사용 방법")).toBeVisible({ timeout: 1_000 });
   }).toPass();

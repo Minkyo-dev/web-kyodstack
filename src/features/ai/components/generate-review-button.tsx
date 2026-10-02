@@ -26,7 +26,7 @@ export function GenerateReviewButton({ weekStart, hasReview }: { weekStart: stri
             toast.error(body && !body.ok ? body.message : "리뷰를 만들지 못했습니다.");
             return;
           }
-          toast.success("주간 리뷰를 만들었습니다.");
+          toast.success("주간 회고를 만들었습니다.");
           router.refresh();
         })
       }

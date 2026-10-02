@@ -16,7 +16,7 @@ test.describe("habits", () => {
       const title = `${E2E_PREFIX} Stretch ${Date.now()}`;
       await login(page);
 
-      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: "정체성" }).click();
       const form = page.getByRole("form", { name: "새 습관" });
       await form.getByLabel("이름").fill(title);
       for (const d of ["토", "일"]) await form.getByLabel(d, { exact: true }).check();
@@ -41,7 +41,7 @@ test.describe("habits", () => {
       await expect(row).toContainText("미완료");
       await expect.poll(async () => (await db.from("habit_checks").select("id").eq("habit_id", habitId)).data?.length).toBe(0);
 
-      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: "정체성" }).click();
       await page.getByRole("listitem", { name: `습관 ${title}` }).getByRole("button", { name: "보관" }).click();
       await expect(page.getByRole("listitem", { name: `습관 ${title}` })).toHaveCount(0);
       await page.getByRole("link", { name: "스케줄러" }).click();

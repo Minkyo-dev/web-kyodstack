@@ -15,7 +15,7 @@ import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { addLocalDays, isLocalDateString, localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics, type WeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
 
-export const metadata: Metadata = { title: "주간 리뷰", robots: { index: false } };
+export const metadata: Metadata = { title: "주간 회고", robots: { index: false } };
 
 export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
   const user = await requireUserOrRedirect();
@@ -39,7 +39,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">주간 리뷰</h1>
+          <h1 className="text-2xl font-semibold">주간 회고</h1>
           <PageHelp page="review" />
         </div>
         <nav aria-label="주 이동" className="flex items-center gap-1.5">

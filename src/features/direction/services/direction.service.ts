@@ -19,7 +19,7 @@ import type {
 } from "../schemas/direction.schema";
 
 const retiredError = (code?: string) =>
-  code === "23514" ? new AppError("VALIDATION_ERROR", "교체된 전략은 수정할 수 없습니다.") : null;
+  code === "23514" ? new AppError("VALIDATION_ERROR", "교체된 시스템은 수정할 수 없습니다.") : null;
 
 /** Archive the active purpose and insert the new one in one transaction (`set_purpose`). */
 export async function setPurpose(ctx: ActionContext, input: SetPurposeInput): Promise<Purpose> {
@@ -166,7 +166,7 @@ export async function switchPath(ctx: ActionContext, input: SwitchPathInput): Pr
     })
     .single();
   if (error) {
-    if (error.code === "P0002") throw new AppError("NOT_FOUND", "진행 중인 목표를 찾을 수 없습니다.");
+    if (error.code === "P0002") throw new AppError("NOT_FOUND", "진행 중인 결과 목표를 찾을 수 없습니다.");
     throw fromDbError(error);
   }
   return data as Path;
@@ -194,7 +194,7 @@ export async function createProtocol(ctx: ActionContext, input: CreateProtocolIn
     .maybeSingle();
   if (path.error) throw fromDbError(path.error);
   if (!path.data) throw new AppError("NOT_FOUND");
-  if (path.data.status !== "active") throw new AppError("VALIDATION_ERROR", "교체된 전략은 수정할 수 없습니다.");
+  if (path.data.status !== "active") throw new AppError("VALIDATION_ERROR", "교체된 시스템은 수정할 수 없습니다.");
   const { count } = await ctx.supabase.from("protocols").select("id", { count: "exact", head: true }).eq("path_id", input.pathId);
   const { data, error } = await ctx.supabase
     .from("protocols")
@@ -249,12 +249,12 @@ export async function resolveDirectionLink(
       .eq("user_id", ctx.user.id)
       .maybeSingle();
     if (error) throw fromDbError(error);
-    if (!data) throw new AppError("NOT_FOUND", "실행 방식을 찾을 수 없습니다.");
+    if (!data) throw new AppError("NOT_FOUND", "실행 의도를 찾을 수 없습니다.");
     if (input.missionId && input.missionId !== data.mission_id) {
-      throw new AppError("VALIDATION_ERROR", "실행 방식이 선택한 목표에 속하지 않습니다.");
+      throw new AppError("VALIDATION_ERROR", "실행 의도가 선택한 결과 목표에 속하지 않습니다.");
     }
     if (isNewLink(input.protocolId, current?.protocol_id) && (data.status !== "active" || data.path?.status !== "active")) {
-      throw new AppError("VALIDATION_ERROR", "보관되었거나 교체된 실행 방식에는 연결할 수 없습니다.");
+      throw new AppError("VALIDATION_ERROR", "보관되었거나 교체된 실행 의도에는 연결할 수 없습니다.");
     }
     return { mission_id: data.mission_id, protocol_id: data.id };
   }
@@ -266,9 +266,9 @@ export async function resolveDirectionLink(
       .eq("user_id", ctx.user.id)
       .maybeSingle();
     if (error) throw fromDbError(error);
-    if (!data) throw new AppError("NOT_FOUND", "목표를 찾을 수 없습니다.");
+    if (!data) throw new AppError("NOT_FOUND", "결과 목표를 찾을 수 없습니다.");
     if (isNewLink(input.missionId, current?.mission_id) && data.status !== "active") {
-      throw new AppError("VALIDATION_ERROR", "종료된 목표에는 연결할 수 없습니다.");
+      throw new AppError("VALIDATION_ERROR", "종료된 결과 목표에는 연결할 수 없습니다.");
     }
     return { mission_id: data.id, protocol_id: null };
   }

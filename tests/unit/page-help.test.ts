@@ -14,8 +14,8 @@ describe("pageHelp", () => {
   });
 
   it("uses the active terminology", () => {
-    expect(JSON.stringify(pageHelp("directive", QUEST_TERMS))).toContain("MISSION");
-    expect(JSON.stringify(pageHelp("directive", PLAIN_TERMS))).toContain("목표");
+    expect(JSON.stringify(pageHelp("directive", QUEST_TERMS))).toContain("OUTCOME");
+    expect(JSON.stringify(pageHelp("directive", PLAIN_TERMS))).toContain("결과 목표");
     expect(JSON.stringify(pageHelp("projects", QUEST_TERMS))).toContain("메인 퀘스트");
   });
 });

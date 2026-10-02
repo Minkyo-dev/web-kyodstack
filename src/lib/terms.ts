@@ -1,4 +1,7 @@
-/** Quest terminology (E2 spec §4, G umbrella §2): a label layer only. Code and DB use domain names. */
+/**
+ * Quest terminology (E2 spec §4, G umbrella §2): a label layer only. Code and DB use domain names.
+ * Labels follow Atomic Habits (ADR 0036): belief/identity → outcome → system → implementation intention → habit.
+ */
 export type Terms = {
   task: string;
   project: string;
@@ -19,36 +22,36 @@ export type Terms = {
 export const PLAIN_TERMS: Terms = {
   task: "할 일",
   project: "프로젝트",
-  directive: "목적",
-  directiveNav: "방향",
+  directive: "신념",
+  directiveNav: "정체성",
   identity: "정체성",
-  className: "대표 정체성",
-  mission: "목표",
-  path: "전략",
-  protocol: "실행 방식",
+  className: "핵심 정체성",
+  mission: "결과 목표",
+  path: "시스템",
+  protocol: "실행 의도",
   growth: "성장",
   maintenance: "유지",
   habit: "습관",
   habits: "습관",
-  systemQuest: "오늘의 목표",
-  systemQuests: "오늘의 목표",
+  systemQuest: "오늘의 1%",
+  systemQuests: "오늘의 1%",
 };
 export const QUEST_TERMS: Terms = {
   task: "퀘스트",
   project: "메인 퀘스트",
-  directive: "SYSTEM DIRECTIVE",
-  directiveNav: "DIRECTIVE",
+  directive: "CORE BELIEF",
+  directiveNav: "IDENTITY",
   identity: "IDENTITY",
-  className: "CLASS",
-  mission: "MISSION",
-  path: "PATH",
-  protocol: "PROTOCOL",
+  className: "CORE IDENTITY",
+  mission: "OUTCOME",
+  path: "SYSTEM",
+  protocol: "INTENTION",
   growth: "GROWTH",
   maintenance: "MAINTENANCE",
   habit: "DAILY QUEST",
   habits: "DAILY QUESTS",
-  systemQuest: "SYSTEM QUEST",
-  systemQuests: "SYSTEM QUESTS",
+  systemQuest: "1% QUEST",
+  systemQuests: "1% QUESTS",
 };
 
 export function termsFor(questTerminology: boolean): Terms {

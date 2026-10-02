@@ -84,7 +84,7 @@ export function PathPanel({
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">{`아직 ${josa(terms.path, "이/가")} 없습니다. 목표에 어떻게 접근할지, 무엇을 포기할지 적어 보세요.`}</p>
+        <p className="text-sm text-muted-foreground">{`아직 ${josa(terms.path, "이/가")} 없습니다. 목표보다 시스템입니다. 결과 목표를 향해 매일 반복할 과정과 하지 않을 것을 적어 보세요.`}</p>
       )}
 
       {!closed && (

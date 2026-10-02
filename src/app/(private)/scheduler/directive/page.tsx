@@ -20,7 +20,7 @@ import { getMissionDetail, listMissionOptions, loadDirective } from "@/features/
 import { listHabits } from "@/features/direction/queries/habit.queries";
 import { HabitSection } from "@/features/direction/components/habit-section";
 
-export const metadata: Metadata = { title: "방향", robots: { index: false } };
+export const metadata: Metadata = { title: "정체성", robots: { index: false } };
 
 /** Purpose and identities on top; missions on the left; the selected mission (?mission=) on the right. */
 export default async function DirectivePage({ searchParams }: { searchParams: Promise<{ mission?: string }> }) {

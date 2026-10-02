@@ -27,7 +27,7 @@ import { loadDirectionStatus, type DirectionStatus as Status } from "@/features/
 import { DirectionStatus } from "@/features/direction/components/direction-status";
 import { log } from "@/lib/logger";
 
-export const metadata: Metadata = { title: "진행", robots: { index: false } };
+export const metadata: Metadata = { title: "추적", robots: { index: false } };
 
 /** Live stats (always current) with 8-week trends from nightly snapshots (D2 spec §3). */
 export default async function ProgressPage() {
@@ -70,7 +70,7 @@ export default async function ProgressPage() {
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">진행</h1>
+          <h1 className="text-2xl font-semibold">추적</h1>
           <PageHelp page="progress" />
         </div>
         <WorkStandardsDialog settings={input.settings} />

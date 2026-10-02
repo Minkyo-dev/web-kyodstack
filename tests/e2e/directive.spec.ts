@@ -19,13 +19,13 @@ test.describe("direction layer", () => {
       const task = `${E2E_PREFIX} Shadow 5 sentences ${stamp}`;
       await login(page);
 
-      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: "정체성" }).click();
       await expect(page).toHaveURL(/\/scheduler\/directive$/);
 
       // Directive
-      const directive = page.getByRole("region", { name: "목적" });
+      const directive = page.getByRole("region", { name: "신념" });
       await directive.getByRole("button", { name: /^(설정|편집)$/ }).click();
-      const purposeForm = page.getByRole("form", { name: "목적 편집" });
+      const purposeForm = page.getByRole("form", { name: "신념 편집" });
       await purposeForm.getByLabel("문장").fill(`${E2E_PREFIX} Build an independent life`);
       await purposeForm.getByRole("button", { name: "저장" }).click();
       await expect(directive).toContainText("Build an independent life");
@@ -44,11 +44,11 @@ test.describe("direction layer", () => {
       await expect(ids.first()).toContainText("Builder");
 
       // Mission
-      const missionForm = page.getByRole("form", { name: "새 목표" });
-      await missionForm.getByLabel("목표 이름").fill(mission);
+      const missionForm = page.getByRole("form", { name: "새 결과 목표" });
+      await missionForm.getByLabel("결과 목표 이름").fill(mission);
       await missionForm.getByRole("button", { name: "만들기" }).click();
       await expect(page).toHaveURL(/\?mission=/);
-      const detail = page.getByRole("region", { name: "목표 상세" });
+      const detail = page.getByRole("region", { name: "결과 목표 상세" });
       await expect(detail.getByRole("heading", { level: 2, name: mission })).toBeVisible();
 
       // Criterion
@@ -71,21 +71,21 @@ test.describe("direction layer", () => {
       await expect(detail.getByRole("heading", { name: /성공 기준/ })).toContainText("2/2");
 
       // Path
-      const setPath = detail.getByRole("form", { name: "전략 설정" });
+      const setPath = detail.getByRole("form", { name: "시스템 설정" });
       await setPath.getByLabel("이름").fill("Input first");
       await setPath.getByLabel("접근 방식").fill("Listen a lot");
       await setPath.getByLabel("포기하는 것").fill("Grammar drills");
       await setPath.getByRole("button", { name: "설정" }).click();
-      const current = detail.getByRole("region", { name: "현재 전략" });
+      const current = detail.getByRole("region", { name: "현재 시스템" });
       await expect(current).toContainText("Input first");
 
       // Protocol
-      const proto = detail.getByRole("form", { name: "새 실행 방식" });
+      const proto = detail.getByRole("form", { name: "새 실행 의도" });
       await proto.getByLabel("이름").fill("Shadowing");
       await proto.getByLabel("의도 시간(분)").fill("20");
       await proto.getByLabel("단계 (한 줄에 하나)").fill("Listen\nRepeat");
       await proto.getByRole("button", { name: "추가" }).click();
-      await expect(detail.getByRole("listitem", { name: "실행 방식 Shadowing" })).toBeVisible();
+      await expect(detail.getByRole("listitem", { name: "실행 의도 Shadowing" })).toBeVisible();
 
       // Task → protocol link in the drawer
       await page.getByRole("link", { name: "스케줄러" }).click();
@@ -94,7 +94,7 @@ test.describe("direction layer", () => {
       await page.getByRole("button", { name: task, exact: true }).click();
       const drawer = page.getByRole("dialog", { name: task });
       await expect(drawer.getByText("유지", { exact: true })).toBeVisible();
-      await drawer.getByLabel("목표 / 실행 방식").selectOption({ label: `${mission} › Shadowing` });
+      await drawer.getByLabel("결과 목표 / 실행 의도").selectOption({ label: `${mission} › Shadowing` });
       await drawer.getByRole("button", { name: "저장" }).click();
       const crumbs = drawer.getByRole("navigation", { name: "연결 경로" });
       await expect(crumbs).toContainText(mission);
@@ -106,19 +106,19 @@ test.describe("direction layer", () => {
       await page.keyboard.press("Escape");
 
       // Switch the path: old one goes to history, the task keeps its link
-      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: "정체성" }).click();
       await page.getByRole("link", { name: mission }).click();
-      const detail2 = page.getByRole("region", { name: "목표 상세" });
-      await detail2.getByText("전략 교체", { exact: true }).click();
-      const swap = detail2.getByRole("form", { name: "전략 교체" });
+      const detail2 = page.getByRole("region", { name: "결과 목표 상세" });
+      await detail2.getByText("시스템 교체", { exact: true }).click();
+      const swap = detail2.getByRole("form", { name: "시스템 교체" });
       await swap.getByLabel("이름").fill("Output first");
       await swap.getByLabel("접근 방식").fill("Speak daily");
       await swap.getByRole("button", { name: "교체" }).click();
-      await expect(detail2.getByRole("region", { name: "현재 전략" })).toContainText("Output first");
-      const history = detail2.getByRole("group", { name: "이전 전략" });
+      await expect(detail2.getByRole("region", { name: "현재 시스템" })).toContainText("Output first");
+      const history = detail2.getByRole("group", { name: "이전 시스템" });
       await history.locator("summary").click();
       await expect(history).toContainText("Input first");
-      await expect(detail2.getByRole("listitem", { name: "실행 방식 Shadowing" })).toHaveCount(0);
+      await expect(detail2.getByRole("listitem", { name: "실행 의도 Shadowing" })).toHaveCount(0);
 
       // Existing link survives a save after the switch
       await page.getByRole("link", { name: "스케줄러" }).click();
@@ -133,11 +133,11 @@ test.describe("direction layer", () => {
 
       // Close the mission through the settings form (save_mission update path).
       await page.keyboard.press("Escape");
-      await page.getByRole("link", { name: "방향" }).click();
+      await page.getByRole("link", { name: "정체성" }).click();
       await page.getByRole("link", { name: mission }).click();
-      const detail3 = page.getByRole("region", { name: "목표 상세" });
-      await detail3.getByText("목표 설정", { exact: true }).click();
-      const settings = detail3.getByRole("form", { name: "목표 설정" });
+      const detail3 = page.getByRole("region", { name: "결과 목표 상세" });
+      await detail3.getByText("결과 목표 설정", { exact: true }).click();
+      const settings = detail3.getByRole("form", { name: "결과 목표 설정" });
       await settings.getByLabel("상태").selectOption("achieved");
       await settings.getByRole("button", { name: "저장" }).click();
       await expect

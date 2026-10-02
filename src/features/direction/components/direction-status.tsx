@@ -121,7 +121,7 @@ export function DirectionStatus({ status, terms }: { status: Status; terms: Term
           )}
         </dl>
         {status.identities.length > 0 && (
-          <ul aria-label={`${terms.identity} 근거`} className="space-y-1 text-sm">
+          <ul aria-label={`${terms.identity}에 던진 표`} className="space-y-1 text-sm">
             {status.identities.map((i) => (
               <li key={i.id} className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-medium">{i.name}</span>

@@ -53,3 +53,4 @@ Template:
 | 0033 | Monthly category budgets | accepted |
 | 0034 | Credit card payment day | accepted |
 | 0035 | Recording refunds | accepted |
+| 0036 | Planner terminology follows Atomic Habits | accepted |

@@ -119,7 +119,7 @@ const habitFields = z.object({
 });
 const habitRule = (v: { rule: HabitRule; targetMinutes: number | null; protocolId: string | null }) =>
   v.rule === "check" ? v.targetMinutes === null : v.targetMinutes !== null && v.protocolId !== null;
-const habitRuleError = { message: "집중 시간 규칙에는 실행 방식과 목표 시간이 필요합니다.", path: ["rule"] };
+const habitRuleError = { message: "집중 시간 규칙에는 실행 의도와 목표 시간이 필요합니다.", path: ["rule"] };
 export const createHabitSchema = habitFields.refine(habitRule, habitRuleError);
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 export const updateHabitSchema = habitFields
