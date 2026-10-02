@@ -8,6 +8,7 @@ import { loadDirective } from "@/features/direction/queries/direction.queries";
 import type { ArchivableStatus } from "@/features/direction/domain/direction.types";
 import { BLOCKERS, type Blocker } from "@/features/scheduler/schemas/reflection.schema";
 import { addLocalDays, toLocalDate } from "@/features/scheduler/utils/timezone";
+import { getOpenFocus } from "./coach.queries";
 
 const STEP_LABEL: Record<PlanStep, string> = {
   change: TERMS.mission,
@@ -18,14 +19,15 @@ const STEP_LABEL: Record<PlanStep, string> = {
 };
 
 /** What the brief needs beyond what the scheduler page already loads (assistant P1 spec §6). */
-export async function loadBriefExtras(supabase: SupabaseServerClient, userId: string, today: string, timezone: string) {
+export async function loadBriefExtras(supabase: SupabaseServerClient, userId: string, today: string, timezone: string, weekStart: string) {
   const yesterday = addLocalDays(today, -1, timezone);
-  const [reflection, habits, checks, line, directive] = await Promise.all([
+  const [reflection, habits, checks, line, directive, focus] = await Promise.all([
     supabase.from("daily_reflections").select("next_task_id, blocker, win").eq("user_id", userId).eq("reflection_date", yesterday).maybeSingle(),
     supabase.from("habits").select("id, title, status, weekdays, rule, created_at, mission_id").eq("user_id", userId),
     supabase.from("habit_checks").select("habit_id").eq("user_id", userId).eq("local_date", yesterday),
     supabase.from("assistant_briefs").select("line").eq("user_id", userId).eq("local_date", today).maybeSingle(),
     loadDirective(supabase, userId),
+    getOpenFocus(supabase, userId, weekStart),
   ]);
   for (const r of [reflection, habits, checks, line]) if (r.error) throw fromDbError(r.error);
 
@@ -54,5 +56,6 @@ export async function loadBriefExtras(supabase: SupabaseServerClient, userId: st
     missedYesterday,
     nextStep,
     line: line.data?.line ?? null,
+    weeklyFocus: focus?.title ?? null,
   };
 }

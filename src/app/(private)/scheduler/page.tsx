@@ -157,7 +157,7 @@ export default async function SchedulerPage({
   // Brief extras (assistant P1): a failure only hides the brief.
   const loadExtras = async () => {
     try {
-      return await loadBriefExtras(supabase, user.id, today, timezone);
+      return await loadBriefExtras(supabase, user.id, today, timezone, localWeek(today, timezone, settings.week_starts_on).startDate);
     } catch (error) {
       log({ action: "assistant.brief", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
       return null;
@@ -193,6 +193,7 @@ export default async function SchedulerPage({
         nextTaskTitle: reflection?.next_task_id ? (todayTasks.find((t) => t.id === reflection.next_task_id)?.title ?? null) : null,
       },
       line: extras.line,
+      weeklyFocus: extras.weeklyFocus,
     });
     if (!extras.line) {
       const forLine = brief;

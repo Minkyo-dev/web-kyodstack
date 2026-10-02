@@ -14,6 +14,10 @@ import { loadWeekInput } from "@/features/scheduler/queries/week.queries";
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { addLocalDays, isLocalDateString, localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { computeWeeklyMetrics, type WeeklyMetrics } from "@/features/scheduler/utils/weekly-metrics";
+import { CoachingSection } from "@/features/assistant/components/coaching-section";
+import { listWeekProposals, type ProposalRow } from "@/features/assistant/queries/coach.queries";
+import { ensureWeeklyCoaching } from "@/features/assistant/services/proposal.service";
+import { log } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "주간 회고", robots: { index: false } };
 
@@ -25,10 +29,23 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const today = todayLocalDate(timezone);
   const anchor = week && isLocalDateString(week) ? week : today;
   const { startDate, endDate } = localWeek(anchor, timezone, settings.week_starts_on);
+  const current = startDate === localWeek(today, timezone, settings.week_starts_on).startDate;
 
-  const [input, review] = await Promise.all([
+  // Weekly coaching (ADR 0040): generated lazily for the current week; a failure only hides the section.
+  const loadCoaching = async (): Promise<ProposalRow[] | null> => {
+    try {
+      if (current) await ensureWeeklyCoaching({ user, supabase });
+      return await listWeekProposals(supabase, user.id, startDate);
+    } catch (error) {
+      log({ action: "assistant.coaching", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+      return null;
+    }
+  };
+
+  const [input, review, proposals] = await Promise.all([
     loadWeekInput(supabase, user.id, startDate, timezone),
     getWeeklyReview(supabase, startDate),
+    loadCoaching(),
   ]);
   const m = computeWeeklyMetrics(input);
   const prev = addLocalDays(startDate, -7, timezone);
@@ -59,6 +76,8 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
           </Link>
         </nav>
       </header>
+
+      {proposals && <CoachingSection proposals={proposals} current={current} />}
 
       <MetricsSection m={m} />
 

@@ -176,7 +176,7 @@ export function TodayTaskPanel({
   return (
     <aside
       aria-labelledby="today-tasks-heading"
-      className="flex max-h-[45dvh] shrink-0 flex-col border-b border-border md:max-h-none md:w-72 md:border-r md:border-b-0 lg:w-80"
+      className="flex max-h-[45dvh] shrink-0 flex-col overflow-y-auto border-b border-border md:max-h-none md:overflow-visible md:w-72 md:border-r md:border-b-0 lg:w-80"
     >
       <div className="flex items-baseline justify-between px-4 pt-3 pb-2">
         <h2 id="today-tasks-heading" className="text-sm font-semibold">

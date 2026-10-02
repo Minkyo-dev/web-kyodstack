@@ -238,7 +238,13 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       cached in `assistant_briefs`, generated via `after()`, ≤ 3 attempts/day). Evening check-in adds win, blocker,
       tomorrow's one thing (`daily_reflections.win/blocker/next_task_id`). Migration `assistant_p1`, SQL test
       `assistant.sql`, unit `brief.test.ts`, E2E `assistant-brief.spec.ts`
-- [ ] Assistant P2: proposal inbox + weekly coaching
+- [x] Assistant P2 (ADR 0040): `assistant_proposals` inbox; weekly coaching `coach-v1` (rule minutes → median,
+      habit weekdays → the held ones, diagnosis reviews), focus "이번 주 1% 변화" on 주간 회고 and in the brief;
+      apply through the existing services with a freshness check; dismissed kind+target quiet for 28 days.
+      Migration `assistant_proposals`, SQL `assistant.sql`, unit `coach.test.ts`, E2E `assistant-coaching.spec.ts`
+- [x] ADR 0041: Gemini (`@google/genai`, `gemini-3.8-flash`, fallback `gemini-3.5-flash-lite` on 429/503) is the
+      default AI provider; Anthropic stays selectable
+- [ ] Assistant P3: chat assistant
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

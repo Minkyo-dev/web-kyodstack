@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, Flag, Gauge, MessageCircle, Moon, Play, Repeat, Sparkles, Sun, Sunset } from "lucide-react";
+import { CheckCircle2, Compass, Flag, Gauge, MessageCircle, Moon, Play, Repeat, Sparkles, Sun, Sunset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TERMS } from "@/lib/terms";
 import type { Brief } from "../domain/brief";
@@ -86,6 +86,16 @@ export function BriefCard({
             <p>
               <Link href={`/scheduler/directive?mission=${brief.nextStep.missionId}#mission-detail`} className="underline-offset-2 hover:underline">
                 {`'${brief.nextStep.title}' — 다음 단계: ${brief.nextStep.step}`}
+              </Link>
+            </p>
+          </div>
+        )}
+        {brief.weeklyFocus && (
+          <div role="listitem" aria-label="이번 주 1% 변화" className="flex gap-2">
+            <Compass className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p>
+              <Link href="/scheduler/review#coaching" className="underline-offset-2 hover:underline">
+                {`이번 주 1% 변화: ${brief.weeklyFocus}`}
               </Link>
             </p>
           </div>

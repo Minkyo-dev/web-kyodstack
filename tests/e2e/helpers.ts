@@ -91,6 +91,8 @@ export async function cleanup(db: SupabaseClient) {
     if (checkIds.length > 0) await db.from("xp_events").delete().eq("rule", "habit").in("source_id", checkIds);
     await db.from("habits").delete().in("id", habitIds);
   }
+  // Coaching proposals (ADR 0040) about [e2e] rules/habits/changes carry the name in their title.
+  await db.from("assistant_proposals").delete().like("title", `%${E2E_PREFIX}%`);
   // Direction layer (G1). Tasks and projects are gone already, so children can go first.
   const { data: e2eMissions } = await db.from("missions").select("id").like("title", `${E2E_PREFIX}%`);
   const missionIds = (e2eMissions ?? []).map((m) => m.id);

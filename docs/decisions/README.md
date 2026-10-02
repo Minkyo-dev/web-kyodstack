@@ -57,3 +57,5 @@ Template:
 | 0037 | Work vocabulary for structure, Solo Leveling for tracking (성취 로그) | accepted (labels amended by 0038) |
 | 0038 | 습관 tab: 변화 instead of 목표, guided habit builder | accepted |
 | 0039 | Assistant P1: daily rhythm (morning brief, evening check-in) | accepted |
+| 0040 | Assistant P2: one proposal inbox and weekly coaching | accepted |
+| 0041 | Gemini (Google AI Studio) is the default AI provider | accepted |

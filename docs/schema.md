@@ -277,3 +277,9 @@ Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, u
 - `assistant_briefs(user_id, local_date, line ≤ 120, model, prompt_version)`, unique per user per local day: the cached
   AI coach line only (the brief itself is computed live). Own select/insert/delete; no update.
 - `scheduler_settings.evening_hour` (12–23, default 18): when the brief switches to the evening check-in.
+
+## Assistant P2 (ADR 0040)
+- `assistant_proposals(user_id, week_start, kind rule_minutes|habit_days|review, target_key, title ≤ 80,
+  reason ≤ 300, payload, evidence, focus, status proposed|applied|dismissed, rules_version, decided_at)`.
+  Unique `(user_id, week_start, kind, target_key)`; one focus per user and week (partial unique index). Own
+  select/insert/delete; update granted on `status`, `decided_at` only (payload is write-once).

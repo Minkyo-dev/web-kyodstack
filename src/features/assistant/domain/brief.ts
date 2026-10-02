@@ -36,6 +36,8 @@ export type BriefInput = {
   yesterday: { nextTaskId: string | null; blocker: Blocker | null; win: string | null } | null;
   checkIn: { done: boolean; nextTaskTitle: string | null };
   line: string | null;
+  /** This week's open "1% 변화" (ADR 0040). */
+  weeklyFocus?: string | null;
 };
 
 export type Brief = {
@@ -48,6 +50,7 @@ export type Brief = {
   nextStep: BriefInput["nextStep"];
   yesterday: { blocker: string | null; win: string | null } | null;
   checkIn: { show: boolean; done: boolean; nextTaskTitle: string | null };
+  weeklyFocus: string | null;
 };
 
 export const PHASE_TITLE: Record<BriefPhase, string> = { morning: "아침 브리핑", day: "오늘의 흐름", evening: "저녁 체크인" };
@@ -97,6 +100,7 @@ export function buildBrief(input: BriefInput): Brief {
         ? { blocker: input.yesterday.blocker ? BLOCKER_LABEL[input.yesterday.blocker] : null, win: input.yesterday.win }
         : null,
     checkIn: { show: phase === "evening" || input.checkIn.done, done: input.checkIn.done, nextTaskTitle: input.checkIn.nextTaskTitle },
+    weeklyFocus: input.weeklyFocus ?? null,
   };
 }
 
