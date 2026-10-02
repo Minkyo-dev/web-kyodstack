@@ -124,8 +124,9 @@ Each answer is at most 500 characters. [초안 만들기] makes one AI call.
   3. Run `sanitizeDirectionDraft`.
   4. In one statement sequence, discard any open draft and insert the new `proposed` row. A unique-index conflict
      maps to `CONFLICT`.
-- **`sanitizeDirectionDraft`** (`features/ai/utils/direction-draft.ts`, pure; input is either the AI shape or an
-  applied payload, output is `directionDraftSchema`):
+- **`sanitizeDirectionDraft(ai, existing)`** (`features/ai/utils/direction-draft.ts`, pure; AI shape in,
+  `directionDraftSchema` shape out). Its sibling **`reconcileDraft(payload, existing)`** re-applies the purpose,
+  identity and link rules to an edited payload at apply time:
   - Drop `purpose` when one is active.
   - Resolve identity link names (see §3).
   - Drop identities whose name matches an existing one (case-insensitive) and remap links to the existing id.
@@ -139,13 +140,14 @@ Each answer is at most 500 characters. [초안 만들기] makes one AI call.
   - invalid output → `AI_OUTPUT_INVALID` (retry offered);
   - provider → `AI_PROVIDER_ERROR`.
   - Nothing is stored on failure.
-- **Fake provider:** returns a fixed, valid draft for `direction_setup`.
+- **Fake provider:** returns a fixed, valid draft for `direction_setup`. The draft lives in
+  `providers/fake-direction-setup.ts` (no `server-only`), so unit tests can check it against `DENY_LIST`.
 
 ## 5. Apply
 
 - **Service `applyDirectionDraft(draftId, payload)`:**
   - Validate `payload` with `directionDraftSchema`.
-  - Re-run `sanitizeDirectionDraft` against the current existing rows (state may have changed since generation).
+  - Run `reconcileDraft` against the current existing rows (state may have changed since generation).
   - Check that every `existingId` is the user's active identity.
   - Call the RPC.
 - **RPC `apply_direction_draft(p_draft_id uuid, p_payload jsonb) returns uuid`**, `security invoker`,
