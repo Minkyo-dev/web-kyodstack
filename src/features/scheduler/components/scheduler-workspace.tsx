@@ -166,7 +166,7 @@ export function SchedulerWorkspace(props: SchedulerWorkspaceProps) {
     <div className="flex h-[calc(100dvh-5.75rem-1px)] flex-col md:h-[calc(100dvh-2.5rem)]">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
         <div className="flex items-center gap-1">
-          <h1 className="text-lg font-semibold">스케줄러</h1>
+          <h2 className="text-lg font-semibold">스케줄러</h2>
           <PageHelp page="scheduler" />
         </div>
         <div className="flex flex-wrap items-center gap-3">

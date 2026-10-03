@@ -18,7 +18,7 @@ export function PlannerNav() {
   ];
 
   return (
-    <nav aria-label="플래너" className="flex h-full gap-0.5 overflow-x-auto sm:gap-1">
+    <nav aria-label="플래너" className="flex h-full gap-0.5 overflow-x-auto overflow-y-hidden sm:gap-1">
       {tabs.map(({ href, label, exact }) => {
         const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
         return (

@@ -90,9 +90,9 @@ export default async function ProjectsPage({
       >
         <div className="space-y-3 border-b border-border p-4">
           <div className="flex items-center gap-1">
-            <h1 id="projects-heading" className="text-lg font-semibold">
+            <h2 id="projects-heading" className="text-lg font-semibold">
               {TERMS.project}
-            </h1>
+            </h2>
             <PageHelp page="projects" />
           </div>
           <ProjectCreateForm />

@@ -20,11 +20,18 @@ export default async function PlannerLayout({ children }: { children: React.Reac
   }
   return (
     <>
-      <header className="flex h-10 items-center gap-2 border-b border-border px-2 sm:px-4 md:px-6">
-        <div className="h-full min-w-0 flex-1">
+      <header className="border-b border-border px-2 pt-3 sm:px-4 md:px-6">
+        <div className="flex items-center gap-2 px-2 sm:px-0">
+          <h1 className="text-lg font-semibold">플래너</h1>
+          {chat && (
+            <div className="ml-auto">
+              <ChatPanel messages={chat.messages} proposals={chat.proposals} currentWeek={chat.currentWeek} />
+            </div>
+          )}
+        </div>
+        <div className="h-10">
           <PlannerNav />
         </div>
-        {chat && <ChatPanel messages={chat.messages} proposals={chat.proposals} currentWeek={chat.currentWeek} />}
       </header>
       {children}
     </>

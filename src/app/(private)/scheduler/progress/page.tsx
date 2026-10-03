@@ -79,7 +79,7 @@ export default async function ProgressPage() {
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">성장</h1>
+          <h2 className="text-2xl font-semibold">성장</h2>
           <PageHelp page="progress" />
         </div>
         <WorkStandardsDialog settings={input.settings} />

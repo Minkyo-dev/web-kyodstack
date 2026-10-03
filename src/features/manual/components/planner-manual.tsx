@@ -36,7 +36,7 @@ export function PlannerManual() {
 
       <article className="min-w-0 flex-1 space-y-10 text-sm leading-relaxed">
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold">플래너 매뉴얼</h1>
+          <h2 className="text-2xl font-semibold">플래너 매뉴얼</h2>
           <p className="text-muted-foreground">
             이 플래너는 『아토믹 해빗』의 생각을 {t.project}·{t.milestone}·{t.task} 같은 업무 용어로 옮긴 도구입니다. 구조는
             업무 용어로 짜고, 이룬 것은 『나 혼자만 레벨업』처럼 레벨·퀘스트·업적·성취 로그로 계속 쌓아 보여 줍니다. 이 문서는 처음

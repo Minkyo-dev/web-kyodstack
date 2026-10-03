@@ -30,7 +30,7 @@ test.describe("progress", () => {
     try {
       await login(page);
       await page.getByRole("navigation", { name: "플래너" }).getByRole("link", { name: "성장", exact: true }).click();
-      await expect(page.getByRole("heading", { level: 1, name: "성장" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 2, name: "성장" })).toBeVisible();
       for (const name of ["예상 정확도", "계획 이행", "꾸준함", "회복력"]) {
         await expect(page.getByRole("article", { name })).toBeVisible();
       }

@@ -97,7 +97,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
     <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
       <header className="space-y-1">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">{TERMS.directiveNav}</h1>
+          <h2 className="text-2xl font-semibold">{TERMS.directiveNav}</h2>
           <PageHelp page="directive" />
         </div>
         <p className="text-sm text-muted-foreground">

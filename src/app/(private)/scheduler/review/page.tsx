@@ -56,7 +56,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold">주간 회고</h1>
+          <h2 className="text-2xl font-semibold">주간 회고</h2>
           <PageHelp page="review" />
         </div>
         <nav aria-label="주 이동" className="flex items-center gap-1.5">
