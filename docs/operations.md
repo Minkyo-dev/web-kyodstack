@@ -100,8 +100,9 @@ select status_code, content, created from net._http_response order by created de
     slots.
   - Seed history 2 or more days back, or build local dates with
     `Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" })`.
-  - Known issue: `calendar-planning.spec.ts` "missed block" fails between about 00:00 and 02:00 local time. Its
-    block crosses midnight, so FullCalendar renders two segments and the locator hits a strict-mode violation.
+  - A seeded block that crosses local midnight renders as two FullCalendar segments, and a locator then hits a
+    strict-mode violation. Keep seeded blocks inside one local day, as `sameLocalDay()` in
+    `calendar-planning.spec.ts` does.
 - **Flaky specs.** The full suite runs against the remote Supabase, and single specs sometimes time out. Re-run a
   failed spec on its own before treating it as a regression.
 - **Local-only edits.** The owner's `package.json` dev-port change (`next dev --port 3001`) is intentionally left

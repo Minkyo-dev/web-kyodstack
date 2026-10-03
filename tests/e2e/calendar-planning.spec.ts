@@ -4,6 +4,18 @@ import { cleanup, dbAsUser, E2E_PREFIX, login } from "./helpers";
 const iso = (ms: number) => new Date(ms).toISOString();
 const localDate = (ms: number) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date(ms));
+/**
+ * A block that crosses local midnight renders as two FullCalendar segments (strict-mode locator violation), so seeds
+ * keep [start, start + minutes) inside one local day: shorter when midnight is near, or moved just past it.
+ */
+function sameLocalDay(start: number, minutes: number): { start: number; end: number } {
+  let room = 0;
+  while (room < minutes && localDate(start + (room + 1) * 60_000) === localDate(start)) room += 1;
+  if (room >= minutes) return { start, end: start + minutes * 60_000 };
+  if (room >= 15) return { start, end: start + room * 60_000 };
+  const next = start + (room + 1) * 60_000; // first minute of the next local day
+  return { start: next, end: next + minutes * 60_000 };
+}
 
 test.describe("calendar planning", () => {
   test.beforeAll(async () => cleanup(await dbAsUser()));
@@ -20,9 +32,9 @@ test.describe("calendar planning", () => {
       .insert({ user_id: me.user!.id, title, user_estimated_minutes: 60 })
       .select("id")
       .single();
-    const start = Date.now() + 5 * 60_000;
+    const { start, end } = sameLocalDay(Date.now() + 5 * 60_000, 60);
     const { data: block } = await db
-      .rpc("create_schedule_block", { p_task_id: task!.id, p_starts_at: iso(start), p_ends_at: iso(start + 3_600_000) })
+      .rpc("create_schedule_block", { p_task_id: task!.id, p_starts_at: iso(start), p_ends_at: iso(end) })
       .single();
 
     await login(page);
@@ -49,7 +61,10 @@ test.describe("calendar planning", () => {
       .insert({ user_id: me.user!.id, title, user_estimated_minutes: 30 })
       .select("id")
       .single();
-    const start = Date.now() - 2 * 3_600_000;
+    // A past 30-minute block. Near local midnight it would cross into the next day and FullCalendar would draw two
+    // segments (strict-mode locator violation), so move it back an hour then; it stays in the past either way.
+    let start = Date.now() - 2 * 3_600_000;
+    if (localDate(start) !== localDate(start + 1_800_000)) start -= 3_600_000;
     const { data: created } = await db
       .rpc("create_schedule_block", { p_task_id: task!.id, p_starts_at: iso(start), p_ends_at: iso(start + 1_800_000) })
       .single();
