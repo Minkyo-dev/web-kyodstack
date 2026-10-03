@@ -33,6 +33,9 @@
   --color-warning: var(--warning);
   --color-planned: var(--planned);
   --color-ai: var(--ai);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -56,25 +59,29 @@
 
 :root {
   color-scheme: light;
-  /* Neutral base with a faint cool tint; one indigo brand accent (spec §14.4). */
-  --background: oklch(0.99 0.002 265);
-  --foreground: oklch(0.2 0.012 265);
+  /* Brand (ADR 0045): the logo's three colors, the same in both themes. Neutrals carry the ink's hue. */
+  --brand-ink: oklch(0.243 0.019 262);
+  --brand: oklch(0.73 0.07 222);
+  --brand-soft: oklch(0.926 0.017 248);
+  /* Neutral base with a faint cool tint (ink hue); ink is the light-theme accent (spec §14.4, ADR 0045). */
+  --background: oklch(0.99 0.002 262);
+  --foreground: oklch(0.2 0.012 262);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.012 265);
+  --card-foreground: oklch(0.2 0.012 262);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.012 265);
-  --primary: oklch(0.52 0.19 270);
+  --popover-foreground: oklch(0.2 0.012 262);
+  --primary: var(--brand-ink);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.005 265);
-  --secondary-foreground: oklch(0.25 0.012 265);
-  --muted: oklch(0.96 0.005 265);
-  --muted-foreground: oklch(0.5 0.015 265);
-  --accent: oklch(0.95 0.012 270);
-  --accent-foreground: oklch(0.25 0.012 265);
+  --secondary: oklch(0.96 0.005 262);
+  --secondary-foreground: oklch(0.25 0.012 262);
+  --muted: oklch(0.96 0.005 262);
+  --muted-foreground: oklch(0.5 0.015 262);
+  --accent: oklch(0.95 0.014 248);
+  --accent-foreground: oklch(0.25 0.012 262);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.006 265);
-  --input: oklch(0.88 0.008 265);
-  --ring: oklch(0.52 0.19 270);
+  --border: oklch(0.91 0.006 262);
+  --input: oklch(0.88 0.008 262);
+  --ring: oklch(0.563 0.074 223);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -89,51 +96,51 @@
   --warning: oklch(0.6 0.15 65);
   --planned: oklch(0.55 0.14 255);
   --ai: oklch(0.55 0.14 300);
-  --sidebar: oklch(0.975 0.004 265);
-  --sidebar-foreground: oklch(0.2 0.012 265);
-  --sidebar-primary: oklch(0.52 0.19 270);
+  --sidebar: oklch(0.975 0.004 262);
+  --sidebar-foreground: oklch(0.2 0.012 262);
+  --sidebar-primary: var(--brand-ink);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.93 0.012 270);
-  --sidebar-accent-foreground: oklch(0.2 0.012 265);
-  --sidebar-border: oklch(0.91 0.006 265);
-  --sidebar-ring: oklch(0.52 0.19 270);
+  --sidebar-accent: oklch(0.935 0.017 248);
+  --sidebar-accent-foreground: oklch(0.2 0.012 262);
+  --sidebar-border: oklch(0.91 0.006 262);
+  --sidebar-ring: oklch(0.563 0.074 223);
 }
 
 .dark {
   /* Native controls (<select> popups, date pickers, scrollbars) follow the theme; without this
      the OS draws a light popup and options inherit the light foreground (invisible text). */
   color-scheme: dark;
-  --background: oklch(0.165 0.006 265);
-  --foreground: oklch(0.965 0.003 265);
-  --card: oklch(0.2 0.007 265);
-  --card-foreground: oklch(0.965 0.003 265);
-  --popover: oklch(0.215 0.008 265);
-  --popover-foreground: oklch(0.965 0.003 265);
-  --primary: oklch(0.55 0.18 270);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.255 0.008 265);
-  --secondary-foreground: oklch(0.965 0.003 265);
-  --muted: oklch(0.24 0.008 265);
-  --muted-foreground: oklch(0.68 0.012 265);
-  --accent: oklch(0.27 0.02 270);
-  --accent-foreground: oklch(0.975 0.003 265);
+  --background: oklch(0.165 0.006 262);
+  --foreground: oklch(0.965 0.003 262);
+  --card: oklch(0.2 0.007 262);
+  --card-foreground: oklch(0.965 0.003 262);
+  --popover: oklch(0.215 0.008 262);
+  --popover-foreground: oklch(0.965 0.003 262);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-ink);
+  --secondary: oklch(0.255 0.008 262);
+  --secondary-foreground: oklch(0.965 0.003 262);
+  --muted: oklch(0.24 0.008 262);
+  --muted-foreground: oklch(0.68 0.012 262);
+  --accent: oklch(0.27 0.02 245);
+  --accent-foreground: oklch(0.975 0.003 262);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.68 0.15 270);
+  --ring: var(--brand);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.185 0.007 265);
-  --sidebar-foreground: oklch(0.965 0.003 265);
-  --sidebar-primary: oklch(0.68 0.15 270);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.255 0.018 270);
+  --sidebar: oklch(0.185 0.007 262);
+  --sidebar-foreground: oklch(0.965 0.003 262);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-ink);
+  --sidebar-accent: oklch(0.255 0.02 245);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.68 0.15 270);
+  --sidebar-ring: var(--brand);
   --success: oklch(0.72 0.13 150);
   --income: #3987e5;
   --expense: #d95926;

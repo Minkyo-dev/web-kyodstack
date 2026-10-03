@@ -43,7 +43,7 @@ Template:
 | 0023 | Strategy review: layer diagnosis and SYSTEM QUESTION | accepted |
 | 0024 | Project archive folder and the scheduler month view | accepted |
 | 0025 | Household finance service | accepted |
-| 0026 | Visual refresh: tinted neutrals, indigo accent, native select styling | accepted |
+| 0026 | Visual refresh: tinted neutrals, indigo accent, native select styling | accepted (§3 superseded by 0045) |
 | 0027 | Logical category delete and the bulk entry grid | accepted |
 | 0028 | The finance calendar's day panel | accepted |
 | 0029 | Recurring payments (subscriptions) | accepted |
@@ -61,3 +61,5 @@ Template:
 | 0041 | Gemini (Google AI Studio) is the default AI provider | accepted |
 | 0042 | Assistant P3: chat as one grounded call per message | accepted |
 | 0043 | Assistant P4: rule-based web push notifications | accepted |
+| 0044 | Assistant P5: learning log, coach-v2, time slots, deadline forecast | accepted |
+| 0045 | Brand: the Kyodstack logo and its colors | accepted |

@@ -1,6 +1,6 @@
 # 0026 — Visual refresh: tinted neutrals, one indigo accent, native select styling
 
-- Status: accepted
+- Status: accepted; §3 accent superseded by ADR 0045 (brand colors)
 - Date: 2026-10-01
 
 ## Context

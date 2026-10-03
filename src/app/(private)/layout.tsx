@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/brand/logo";
 import { LogOut } from "lucide-react";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { logout } from "@/features/auth/actions/auth.actions";
@@ -33,9 +34,7 @@ export default async function PrivateLayout({
       <div className="flex min-h-screen flex-col md:flex-row">
         <aside className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border bg-sidebar px-3 py-2 text-sidebar-foreground md:sticky md:top-0 md:h-screen md:w-56 md:flex-col md:items-stretch md:justify-start md:border-r md:border-b-0 md:py-4">
           <Link href="/" className="flex items-center gap-2 px-2 text-base font-semibold tracking-tight">
-            <span aria-hidden className="grid size-6 place-items-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-              K
-            </span>
+            <LogoMark />
             Kyod
           </Link>
           <LevelLine />

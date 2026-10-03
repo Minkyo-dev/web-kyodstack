@@ -21,6 +21,7 @@ Other docs:
 - `docs/architecture.md`: how this repo is actually laid out.
 - `docs/schema.md`: tables, invariants and metric definitions.
 - `docs/decisions/`: ADRs for deviations from the spec and for non-obvious choices.
+- `docs/brand.md`: what the logo means, the brand colors and how to use them. Use it for blog and About copy.
 
 # Core invariants (do not break)
 
