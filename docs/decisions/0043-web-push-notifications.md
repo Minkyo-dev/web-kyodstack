@@ -37,6 +37,8 @@ must also stay sparse and respectful (umbrella principle 3).
   select vault.create_secret('https://<deployed-domain>/api/internal/jobs/notifications', 'notify_job_url');
   select vault.create_secret('<INTERNAL_JOB_SECRET value>', 'notify_job_secret');
   ```
+- The job URL must be the host that answers without a redirect, because `pg_net` does not follow 30x. See the
+  host check and the run queries in `docs/operations.md` §2.
 - `pg_net` lives in the `extensions` schema (migration `pg_net_extensions_schema`, advisor 0014).
 - iPhone users must add the app to the home screen before they can enable push.
 - A 5-minute tick means `block_soon` arrives 10–15 minutes ahead, not exactly 10.

@@ -266,6 +266,8 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions
+- E2E: `calendar-planning.spec.ts` "missed block" fails around 00:00–02:00 local (the block crosses midnight →
+  two FullCalendar segments). Fix by seeding the block earlier in the day. See `docs/operations.md` §5.
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.
   Don't just revoke `is_admin` from anon: the legacy `*_admin_write` policies apply to every role.
