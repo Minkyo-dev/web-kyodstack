@@ -1,7 +1,7 @@
 # Personal assistant (비서) — overall design
 
 - Date: 2026-10-02
-- Status: accepted (P1 in progress; P2–P5 are direction, each gets its own design before it starts)
+- Status: accepted; P1–P5 implemented (ADR 0039, 0040, 0042, 0043, 0044), each with its own design spec
 - Related: ADR 0009 (AI provider, guardrails), 0018 (AI budget, proposals), 0022/0023 (status, diagnosis), 0037/0038
   (vocabulary, 습관 tab), `2026-10-01-ai-direction-setup-design.md` (to be folded into P3)
 

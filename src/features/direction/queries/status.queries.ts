@@ -6,6 +6,7 @@ import { focusStats } from "@/features/scheduler/utils/focus";
 import { addLocalDays, localDayRange, toLocalDate } from "@/features/scheduler/utils/timezone";
 import { isoWeekday } from "../domain/habits";
 import { diagnose, median, type Diagnosis } from "../domain/diagnosis";
+import { forecast, type Forecast } from "../domain/forecast";
 import {
   alignment,
   habitConsistency,
@@ -30,6 +31,7 @@ export type MissionStatusView = {
   deadline: string | null;
   progress: MissionProgress;
   pace: number | null;
+  forecast: Forecast;
   path: { title: string; approach: string } | null;
   diagnosis: Diagnosis;
 };
@@ -151,7 +153,7 @@ export async function loadDirectionStatus(
     t?.mission_id ?? t?.project?.mission_id ?? null;
 
   /** diagnosis-v1 inputs for one mission over the 28-day window. */
-  const diagnosisFor = (m: { id: string }, progress: MissionProgress, pace: number | null, criteriaRows: CriterionInput[], tasksOf: { status: string; completed_at: string | null }[]) => {
+  const diagnosisFor = (m: { id: string }, progress: MissionProgress, pace: number | null, ratioBefore: number | null) => {
     const mine = ended.filter((s) => s.missionId === m.id);
     const onPath = protocols.data!.filter((p) => p.mission_id === m.id && p.intended_minutes && p.path?.status === "active");
     const byProtocol = onPath
@@ -164,7 +166,7 @@ export async function loadDirectionStatus(
       missionSessions: mine.length,
       pace,
       ratioNow: progress.ratio,
-      ratioBefore: progress.ratio === null ? null : missionProgressBefore({ criteria: criteriaRows, projectTasks: tasksOf, since }),
+      ratioBefore,
       habit,
       protocolSessions: byProtocol?.minutes.length
         ? { medianMinutes: median(byProtocol.minutes)!, intendedMinutes: byProtocol.p.intended_minutes!, count: byProtocol.minutes.length }
@@ -186,7 +188,10 @@ export async function loadDirectionStatus(
       projectTasks: tasksOf,
       focusMinutes: Math.round(ended.filter((s) => s.missionId === m.id).reduce((x, s) => x + s.focusedMinutes, 0)),
     });
-    const pace = paceGap({ createdDate: toLocalDate(m.created_at, timezone), deadline: m.deadline, today, ratio: progress.ratio });
+    const createdDate = toLocalDate(m.created_at, timezone);
+    const pace = paceGap({ createdDate, deadline: m.deadline, today, ratio: progress.ratio });
+    const ratioBefore = progress.ratio === null ? null : missionProgressBefore({ criteria: criteriaRows, projectTasks: tasksOf, since });
+    const openNumeric = criteriaRows.some((c) => c.kind === "numeric" && !c.met_at);
     const path = paths.data!.find((p) => p.mission_id === m.id);
     return {
       id: m.id,
@@ -194,8 +199,9 @@ export async function loadDirectionStatus(
       deadline: m.deadline,
       progress,
       pace,
+      forecast: forecast({ ratio: progress.ratio, ratioBefore, createdDate, deadline: m.deadline, today, openNumeric }),
       path: path ? { title: path.title, approach: path.approach } : null,
-      diagnosis: diagnosisFor(m, progress, pace, criteriaRows, tasksOf),
+      diagnosis: diagnosisFor(m, progress, pace, ratioBefore),
     };
   });
 

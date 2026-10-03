@@ -19,6 +19,9 @@ import { sanitizeForPrompt } from "@/features/ai/utils/prompt-input";
 import { phaseFor, PHASE_TITLE, toBriefTasks } from "../domain/brief";
 import type { ChatSnapshot } from "../domain/chat";
 import { getOpenFocus } from "./coach.queries";
+import { loadLearningLog } from "./learning.queries";
+import { outcomeText } from "../domain/learning";
+import { forecastText } from "@/features/direction/domain/forecast";
 
 const STEP_LABEL: Record<PlanStep, string> = {
   change: TERMS.mission,
@@ -29,13 +32,13 @@ const STEP_LABEL: Record<PlanStep, string> = {
 };
 const s = (text: string | null, max: number) => sanitizeForPrompt(text, max);
 
-/** `chat-context-v1` (ADR 0042): everything the model may read, computed by code. */
+/** `chat-context-v2` (ADR 0042, 0044): everything the model may read, computed by code. */
 export async function loadChatSnapshot(supabase: SupabaseServerClient, userId: string, now: Date): Promise<ChatSnapshot> {
   const { timezone, settings } = await getSchedulerContext(supabase, userId);
   const today = todayLocalDate(timezone, now);
   const range = localDayRange(today, timezone);
   const week = localWeek(today, timezone, settings.week_starts_on);
-  const [tasks, blocks, habits, reflection, directive, status, projectCtx, weekInput, focus, allHabits] = await Promise.all([
+  const [tasks, blocks, habits, reflection, directive, status, projectCtx, weekInput, focus, allHabits, learning] = await Promise.all([
     listTodayTasks(supabase, today, range.start),
     listBlocksInRange(supabase, range.start, range.end),
     listTodayHabits(supabase, userId, today, timezone),
@@ -46,6 +49,7 @@ export async function loadChatSnapshot(supabase: SupabaseServerClient, userId: s
     loadWeekInput(supabase, userId, week.startDate, timezone),
     getOpenFocus(supabase, userId, week.startDate),
     supabase.from("habits").select("mission_id").eq("user_id", userId).eq("status", "active"),
+    loadLearningLog(supabase, userId, now),
   ]);
   if (reflection.error) throw fromDbError(reflection.error);
   if (allHabits.error) throw fromDbError(allHabits.error);
@@ -55,6 +59,7 @@ export async function loadChatSnapshot(supabase: SupabaseServerClient, userId: s
   const briefTasks = toBriefTasks(tasks, blocks, range, (iso) => toLocalDate(iso, timezone)).filter((t) => t.status !== "completed" && t.status !== "cancelled");
   briefTasks.sort((a, b) => (a.firstBlockAt ?? "~").localeCompare(b.firstBlockAt ?? "~") || a.priority - b.priority);
   const signals = new Map(status.missions.map((m) => [m.id, m.diagnosis.signals.map((x) => x.layer)]));
+  const forecasts = new Map(status.missions.map((m) => [m.id, forecastText(m.forecast)]));
   const r = reflection.data;
 
   return {
@@ -91,6 +96,7 @@ export async function loadChatSnapshot(supabase: SupabaseServerClient, userId: s
           nextStep: next ? STEP_LABEL[next] : null,
           deadline: m.deadline,
           signals: signals.get(m.id) ?? [],
+          forecast: forecasts.get(m.id) ?? null,
         };
       }),
     projects: projects
@@ -102,6 +108,7 @@ export async function loadChatSnapshot(supabase: SupabaseServerClient, userId: s
       completed: metrics.completedTaskCount,
       focus: focus?.title ? s(focus.title, 80) : null,
     },
+    learned: learning.slice(0, 5).map((l) => ({ title: s(l.title, 80), applied: l.decidedDate, result: outcomeText(l.outcome) })),
   };
 }
 

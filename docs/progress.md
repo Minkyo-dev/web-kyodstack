@@ -254,7 +254,12 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       Cron + pg_net (Vault secrets `notify_job_url`, `notify_job_secret`); log-first dedupe. Migrations
       `assistant_notifications`, `pg_net_extensions_schema`; SQL `notifications.sql`; unit `notify.test.ts`; E2E
       `notifications.spec.ts`
-- [ ] Assistant P5: learning log, deadline forecast, time-slot suggestions
+- [x] Assistant P5 (ADR 0044): memory and forecasts, no new tables. `learn-v1` learning log (applied coaching vs
+      28 days before; "배운 것" on 주간 회고 and `learned` in the chat snapshot); `coach-v2` reads it (28-day
+      settling, grow back one step once the smaller habit/rule holds); `slot-v1` time slots (new kind `time_slot`:
+      the hour that holds ≥ 50% of a rule's sessions → one task + block on the next fitting day); `forecast-v1`
+      per 변화 on 성장 and in chat (`chat-context-v2`, prompt `chat-v2`). Migration `assistant_time_slot`, SQL
+      `time_slot.sql`, unit `learning`/`forecast`/`slot`/`coach` tests, E2E `assistant-learning.spec.ts`
 - [ ] Finance upgrade C: analytics (next)
 
 ## Open questions

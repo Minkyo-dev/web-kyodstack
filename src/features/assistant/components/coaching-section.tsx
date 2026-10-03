@@ -26,9 +26,11 @@ const EVIDENCE_LABEL: Record<string, string> = {
   blockers: "방해",
   logs: "기록",
   recovery: "회복력",
+  inHour: "그 시간대",
+  hour: "시각",
 };
 const unit = (k: string, v: number | string) =>
-  typeof v === "number" && /Minutes$/.test(k) ? `${v}분` : typeof v === "number" && /Rate|progress|paceGap/.test(k) ? `${Math.round(v * 100)}%` : String(v);
+  k === "hour" ? `${v}시` : typeof v === "number" && /Minutes$/.test(k) ? `${v}분` : typeof v === "number" && /Rate|progress|paceGap/.test(k) ? `${Math.round(v * 100)}%` : String(v);
 const STATUS_TEXT: Record<string, string> = { applied: "적용함", dismissed: "넘김" };
 
 /**

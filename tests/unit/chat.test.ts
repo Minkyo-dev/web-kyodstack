@@ -48,6 +48,7 @@ describe("chatContextText", () => {
     yesterday: null,
     changes: [],
     projects: [],
+    learned: [],
     week: { plannedMinutes: 0, actualMinutes: 0, completed: 0, focus: null },
   });
   it("clips titles, caps lists and stays within the size bound", () => {

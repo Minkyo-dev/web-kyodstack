@@ -3,6 +3,7 @@ import { TERMS } from "@/lib/terms";
 import { formatMinutes } from "@/features/scheduler/utils/duration";
 import { DueBadge } from "@/features/projects/components/due-badge";
 import { STATUS_TEXT } from "../domain/status-text";
+import { forecastText } from "../domain/forecast";
 import { DiagnosisQuestion } from "./diagnosis-question";
 import type { DirectionStatus as Status, MissionStatusView } from "../queries/status.queries";
 
@@ -28,6 +29,7 @@ function Bar({ ratio, label }: { ratio: number; label: string }) {
 function MissionCard({ m, today, weekStart }: { m: MissionStatusView; today: string; weekStart: string }) {
   const { progress: p } = m;
   const pct = p.ratio === null ? null : Math.round(p.ratio * 100);
+  const outlook = forecastText(m.forecast);
   const basis =
     p.kind === "criteria" ? `기준 ${p.basis!.done}/${p.basis!.total}` : p.kind === "projects" ? `프로젝트 작업 ${p.basis!.done}/${p.basis!.total}` : null;
   return (
@@ -44,6 +46,11 @@ function MissionCard({ m, today, weekStart }: { m: MissionStatusView; today: str
         {basis && <span>{basis}</span>}
         <span>최근 28일 집중 {formatMinutes(p.focusMinutes)}</span>
       </p>
+      {outlook && (
+        <p aria-label={`${m.title} 달성 예측`} className="text-xs text-muted-foreground">
+          {outlook}
+        </p>
+      )}
       {m.pace !== null && m.pace >= PACE_NOTE_GAP && m.diagnosis.suspected !== "goal" && (
         <p className="text-xs text-muted-foreground">{STATUS_TEXT.paceBehind}</p>
       )}

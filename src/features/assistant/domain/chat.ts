@@ -14,9 +14,20 @@ export type ChatSnapshot = {
   tasks: { id: string; title: string; priority: number; due: string | null; scheduledAt: string | null; change: string | null }[];
   habits: { title: string; done: boolean }[];
   yesterday: { win: string | null; blocker: string | null } | null;
-  changes: { id: string; title: string; criteria: string; nextStep: string | null; deadline: string | null; signals: string[] }[];
+  changes: {
+    id: string;
+    title: string;
+    criteria: string;
+    nextStep: string | null;
+    deadline: string | null;
+    signals: string[];
+    /** forecast-v1 sentence (ADR 0044), computed by code. */
+    forecast: string | null;
+  }[];
   projects: { name: string; progress: number | null; targetDate: string | null }[];
   week: { plannedMinutes: number; actualMinutes: number; completed: number; focus: string | null };
+  /** learn-v1: applied coaching changes and what happened after (ADR 0044), newest first. */
+  learned: { title: string; applied: string; result: string }[];
 };
 
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
@@ -29,6 +40,7 @@ export function chatContextText(s: ChatSnapshot): string {
     habits: s.habits.slice(0, 15).map((h) => ({ ...h, title: clip(h.title, 60) })),
     changes: s.changes.slice(0, 5).map((c) => ({ ...c, title: clip(c.title, 80) })),
     projects: s.projects.slice(0, 10).map((p) => ({ ...p, name: clip(p.name, 60) })),
+    learned: s.learned.slice(0, 5).map((l) => ({ ...l, title: clip(l.title, 80) })),
   };
   let text = JSON.stringify(trimmed);
   // Still too long: drop tasks from the end until it fits (they are ordered most relevant first).

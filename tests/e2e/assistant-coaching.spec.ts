@@ -31,8 +31,8 @@ test.describe("assistant coaching", () => {
       .insert({ user_id: uid, title: `${E2E_PREFIX} Shadow task ${stamp}`, mission_id: mission!.id, protocol_id: protocol!.id })
       .select("id")
       .single();
-    // Three finished timer sessions of 12, 15 and 18 minutes on the last three days (today is excluded).
-    for (const [daysAgo, minutes] of [[1, 12], [2, 15], [3, 18]] as const) {
+    // Three finished timer sessions of 12, 15 and 18 minutes, 2–4 days back so none lands on the local today (excluded).
+    for (const [daysAgo, minutes] of [[2, 12], [3, 15], [4, 18]] as const) {
       const start = new Date(Date.now() - daysAgo * 86_400_000);
       start.setUTCHours(16, 0, 0, 0);
       await db.from("work_sessions").insert({

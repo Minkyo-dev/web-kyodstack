@@ -1,14 +1,15 @@
 /**
- * Weekly coaching `coach-v1` (ADR 0040, assistant P2 spec §2). Pure and deterministic: thresholds are named so a
- * change needs `coach-v2`; reason texts are templates (no LLM).
+ * Weekly coaching (ADR 0040; `coach-v2` adds settling, grow-back and time slots, ADR 0044). Pure and deterministic:
+ * thresholds are named so a change needs a new version; reason texts are templates (no LLM).
  */
 import { z } from "zod";
 import { TERMS } from "@/lib/terms";
 import { DIAGNOSIS_TEXT } from "@/features/direction/domain/status-text";
 import { LAYERS, type Layer } from "@/features/direction/domain/diagnosis";
 import { formatWeekdays, isoWeekday } from "@/features/direction/domain/habits";
+import { dominantHour, hourLabel, type TimeSlot } from "./slot";
 
-export const COACH_VERSION = "coach-v1";
+export const COACH_VERSION = "coach-v2";
 export const COACH_WINDOW_DAYS = 28;
 const RULE_MIN_SESSIONS = 3;
 const RULE_SHARE = 0.6;
@@ -17,10 +18,12 @@ const HABIT_RATE = 0.5;
 const DAY_RATE = 0.5;
 const MAX_PROPOSALS = 3;
 export const DISMISS_QUIET_DAYS = 28;
+const GROW_RATE = 0.8;
+const GROW_MIN_SESSIONS = 4;
 
-export const PROPOSAL_KINDS = ["rule_minutes", "habit_days", "review", "create_task"] as const;
+export const PROPOSAL_KINDS = ["rule_minutes", "habit_days", "review", "create_task", "time_slot"] as const;
 /** Kinds the weekly coaching writes (chat writes `create_task`, ADR 0042). */
-export const COACH_KINDS = ["rule_minutes", "habit_days", "review"] as const;
+export const COACH_KINDS = ["rule_minutes", "habit_days", "review", "time_slot"] as const;
 export type ProposalKind = (typeof PROPOSAL_KINDS)[number];
 
 export const RuleMinutesPayload = z.object({
@@ -44,7 +47,7 @@ export type ProposalDraft = {
   targetKey: string;
   title: string;
   reason: string;
-  payload: RuleMinutes | HabitDays | Review;
+  payload: RuleMinutes | HabitDays | Review | TimeSlot;
   evidence: Record<string, number | string>;
   focus: boolean;
 };
@@ -55,16 +58,23 @@ export type CoachInput = {
   windowEnd: string;
   protocols: {
     id: string;
+    missionId: string;
     title: string;
     intendedMinutes: number | null;
     /** Focused minutes of finished timer sessions on tasks linked to it, in the window. */
     sessionMinutes: number[];
-    focusHabits: { id: string; targetMinutes: number }[];
+    /** Local start hours of the same sessions. */
+    sessionHours: number[];
+    /** A planned block on one of its tasks in the next 7 days. */
+    hasUpcomingBlock: boolean;
+    focusHabits: { id: string; targetMinutes: number; weekdays: number[] }[];
   }[];
   habits: { id: string; title: string; weekdays: number[]; createdDate: string; checkedDates: string[] }[];
   signals: { missionId: string; missionTitle: string; layer: Layer; evidence: Record<string, number> }[];
   /** `kind:targetKey` dismissed within the quiet period. */
   quiet: Set<string>;
+  /** Applied coaching proposals (learning log, ADR 0044), any order. */
+  applied: { kind: string; decidedDate: string; payload: unknown }[];
 };
 
 export function median(xs: number[]): number | null {
@@ -168,18 +178,120 @@ function review(s: CoachInput["signals"][number]): ProposalDraft {
   };
 }
 
+/** What applied proposals say (ADR 0044): targets still settling, and the latest reduction per target. */
+export function readLearning(input: CoachInput) {
+  const settled = new Set<string>();
+  const habitCuts = new Map<string, { date: string; from: number[]; to: number[] }>();
+  const ruleCuts = new Map<string, { date: string; from: number; to: number }>();
+  for (const a of input.applied) {
+    const recent = a.decidedDate >= input.windowStart;
+    if (a.kind === "rule_minutes") {
+      const p = RuleMinutesPayload.safeParse(a.payload);
+      if (!p.success) continue;
+      if (recent) [p.data.protocolId, ...p.data.habits.map((h) => h.id)].forEach((id) => settled.add(id));
+      const prev = ruleCuts.get(p.data.protocolId);
+      if (p.data.to < p.data.from && (!prev || prev.date < a.decidedDate)) ruleCuts.set(p.data.protocolId, { date: a.decidedDate, ...p.data });
+    } else if (a.kind === "habit_days") {
+      const p = HabitDaysPayload.safeParse(a.payload);
+      if (!p.success) continue;
+      if (recent) settled.add(p.data.habitId);
+      const prev = habitCuts.get(p.data.habitId);
+      if (p.data.to.length < p.data.from.length && (!prev || prev.date < a.decidedDate)) habitCuts.set(p.data.habitId, { date: a.decidedDate, ...p.data });
+    } else if (a.kind === "time_slot" && recent) {
+      const id = (a.payload as { protocolId?: unknown } | null)?.protocolId;
+      if (typeof id === "string") settled.add(`slot:${id}`);
+    }
+  }
+  return { settled, habitCuts, ruleCuts };
+}
+
+type Learning = ReturnType<typeof readLearning>;
+
+/** A reduced rule grows back one step once sessions hold at the smaller size. */
+function ruleGrow(p: CoachInput["protocols"][number], l: Learning): ProposalDraft | null {
+  const cut = l.ruleCuts.get(p.id);
+  const med = median(p.sessionMinutes);
+  if (!cut || !p.intendedMinutes || l.settled.has(p.id) || p.intendedMinutes >= cut.from) return null;
+  if (p.sessionMinutes.length < GROW_MIN_SESSIONS || med === null || med < p.intendedMinutes) return null;
+  const to = Math.min(cut.from, Math.max(p.intendedMinutes + 5, round5(med)));
+  return {
+    kind: "rule_minutes",
+    targetKey: `${p.id}:grow`,
+    title: `'${p.title}' ${p.intendedMinutes}분 → ${to}분`.slice(0, 80),
+    reason: `줄인 뒤 4주 동안 ${p.sessionMinutes.length}번 했고 보통 ${Math.round(med)}분이었어요. 자리가 잡혔으니 ${to}분으로 조금 늘려 볼까요?`,
+    payload: {
+      protocolId: p.id,
+      from: p.intendedMinutes,
+      to,
+      habits: p.focusHabits.filter((h) => h.targetMinutes === p.intendedMinutes).map((h) => ({ id: h.id, from: h.targetMinutes, to })),
+    },
+    evidence: { sessions: p.sessionMinutes.length, medianMinutes: Math.round(med), intendedMinutes: p.intendedMinutes },
+    focus: false,
+  };
+}
+
+/** A habit whose days were cut gets one removed weekday back once it is kept ≥ 80% (≥ 8 due days). */
+function habitGrow(h: CoachInput["habits"][number], input: CoachInput, l: Learning): ProposalDraft | null {
+  const cut = l.habitCuts.get(h.id);
+  if (!cut || l.settled.has(h.id)) return null;
+  const current = new Set(h.weekdays);
+  const missing = cut.from.filter((d) => !current.has(d)).sort((a, b) => a - b);
+  if (missing.length === 0 || !h.weekdays.every((d) => cut.from.includes(d))) return null;
+  const from = h.createdDate > input.windowStart ? h.createdDate : input.windowStart;
+  let due = 0;
+  let done = 0;
+  for (const r of weekdayRates(h.weekdays, from, input.windowEnd, new Set(h.checkedDates)).values()) {
+    due += r.due;
+    done += r.done;
+  }
+  if (due < HABIT_MIN_DUE || done / due < GROW_RATE) return null;
+  const to = [...h.weekdays, missing[0]].sort((a, b) => a - b);
+  return {
+    kind: "habit_days",
+    targetKey: `${h.id}:grow`,
+    title: `'${h.title}' ${formatWeekdays(h.weekdays)} → ${formatWeekdays(to)}`.slice(0, 80),
+    reason: `요일을 줄인 뒤 최근 4주 ${done}/${due}번 지켰어요. 자리가 잡혔으니 한 요일을 다시 더해 볼까요?`,
+    payload: { habitId: h.id, from: [...h.weekdays].sort((a, b) => a - b), to },
+    evidence: { done, due },
+    focus: false,
+  };
+}
+
+/** Place the rule's block at the hour its sessions actually start (`slot-v1`). */
+function timeSlot(p: CoachInput["protocols"][number], l: Learning): ProposalDraft | null {
+  if (!p.intendedMinutes || p.hasUpcomingBlock || l.settled.has(`slot:${p.id}`)) return null;
+  const top = dominantHour(p.sessionHours);
+  if (!top) return null;
+  const weekdays = [...new Set(p.focusHabits.flatMap((h) => h.weekdays))].sort((a, b) => a - b);
+  return {
+    kind: "time_slot",
+    targetKey: p.id,
+    title: `'${p.title}' ${hourLabel(top.hour)}에 ${p.intendedMinutes}분 블록`.slice(0, 80),
+    reason: `최근 4주 ${p.sessionHours.length}번 중 ${top.count}번이 ${top.hour}시대에 시작됐어요. 잘 지켜지는 시간에 미리 블록을 잡아 두면 시작이 쉬워져요.`,
+    payload: { protocolId: p.id, missionId: p.missionId, hour: top.hour, minutes: p.intendedMinutes, weekdays },
+    evidence: { sessions: p.sessionHours.length, inHour: top.count, hour: top.hour },
+    focus: false,
+  };
+}
+
 /** This week's proposals, best first; the first is the focus ("이번 주 1% 변화"). */
 export function coachProposals(input: CoachInput): ProposalDraft[] {
+  const l = readLearning(input);
   const concrete = [
-    ...input.protocols.map(ruleMinutes),
-    ...input.habits.map((h) => habitDays(h, input)),
+    ...input.protocols.filter((p) => !l.settled.has(p.id)).map(ruleMinutes),
+    ...input.habits.filter((h) => !l.settled.has(h.id)).map((h) => habitDays(h, input)),
+  ].filter((d): d is ProposalDraft => d !== null);
+  const growth = [
+    ...input.protocols.map((p) => ruleGrow(p, l)),
+    ...input.habits.map((h) => habitGrow(h, input, l)),
+    ...input.protocols.map((p) => timeSlot(p, l)),
   ].filter((d): d is ProposalDraft => d !== null);
   // A concrete fix already covers a tactic signal; other layers become reviews, lowest layer first (ADR 0023).
   const reviews = input.signals
     .filter((s) => !(s.layer === "tactic" && concrete.length > 0))
     .sort((a, b) => LAYERS.indexOf(b.layer) - LAYERS.indexOf(a.layer))
     .map(review);
-  const all = [...concrete, ...reviews].filter((d) => !input.quiet.has(`${d.kind}:${d.targetKey}`));
+  const all = [...concrete, ...growth, ...reviews].filter((d) => !input.quiet.has(`${d.kind}:${d.targetKey}`));
   const seen = new Set<string>();
   const unique = all.filter((d) => (seen.has(`${d.kind}:${d.targetKey}`) ? false : (seen.add(`${d.kind}:${d.targetKey}`), true)));
   return unique.slice(0, MAX_PROPOSALS).map((d, i) => ({ ...d, focus: i === 0 }));
@@ -190,4 +302,5 @@ export const KIND_LABEL: Record<ProposalKind, string> = {
   habit_days: `${TERMS.habit} 요일`,
   review: "다시 보기",
   create_task: `${TERMS.task} 추가`,
+  time_slot: "시간대",
 };

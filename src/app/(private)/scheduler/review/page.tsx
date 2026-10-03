@@ -17,6 +17,8 @@ import { computeWeeklyMetrics, type WeeklyMetrics } from "@/features/scheduler/u
 import { CoachingSection } from "@/features/assistant/components/coaching-section";
 import { listWeekProposals, type ProposalRow } from "@/features/assistant/queries/coach.queries";
 import { ensureWeeklyCoaching } from "@/features/assistant/services/proposal.service";
+import { LearningLog } from "@/features/assistant/components/learning-log";
+import { loadLearningLog, type LearningEntry } from "@/features/assistant/queries/learning.queries";
 import { log } from "@/lib/logger";
 
 export const metadata: Metadata = { title: "주간 회고", robots: { index: false } };
@@ -42,10 +44,21 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     }
   };
 
-  const [input, review, proposals] = await Promise.all([
+  // Learning log (ADR 0044): applied coaching with before/after results; a failure only hides the section.
+  const loadLearning = async (): Promise<LearningEntry[] | null> => {
+    try {
+      return await loadLearningLog(supabase, user.id, new Date());
+    } catch (error) {
+      log({ action: "assistant.learning", userId: user.id, success: false, errorCode: "INTERNAL_ERROR", detail: String(error) });
+      return null;
+    }
+  };
+
+  const [input, review, proposals, learning] = await Promise.all([
     loadWeekInput(supabase, user.id, startDate, timezone),
     getWeeklyReview(supabase, startDate),
     loadCoaching(),
+    loadLearning(),
   ]);
   const m = computeWeeklyMetrics(input);
   const prev = addLocalDays(startDate, -7, timezone);
@@ -78,6 +91,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
       </header>
 
       {proposals && <CoachingSection proposals={proposals} current={current} />}
+      {learning && <LearningLog entries={learning} />}
 
       <MetricsSection m={m} />
 

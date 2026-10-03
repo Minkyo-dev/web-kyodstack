@@ -296,3 +296,13 @@ Implemented in `src/features/scheduler/utils/metrics.ts` (`computeDaySummary`, u
   the service role inserts (log-first idempotency); own select/delete.
 - Cron `assistant-notify` (`*/5 * * * *`) → `private.notify_tick()` → `net.http_post` to the Vault URL with the
   Vault secret; a no-op until both secrets exist.
+
+## Assistant P5 (ADR 0044)
+- No new tables. `assistant_proposals.kind` adds `time_slot` (payload `{protocolId, missionId, hour, minutes,
+  weekdays}`); coaching rows carry `rules_version coach-v2`.
+- `learn-v1`: applied `rule_minutes`/`habit_days`/`time_slot` of the last 180 days (max 12); before = 28 local days
+  before the decision day, after = up to 28 days from it (today excluded); "watching" under 14 days. Habit rate
+  (≥ 4 due days each side, ±0.15 → better/worse) or timer sessions per week on the protocol (×1.25 and +0.5 →
+  better, ×0.75 → worse).
+- `forecast-v1`: ETA = today + ⌈(1 − ratio) / rate⌉; rate = 28-day delta / 28 when the mission is ≥ 28 days old and
+  has no unmet numeric criterion, else ratio / age; collecting under 14 days; far over 730 days.

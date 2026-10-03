@@ -3,19 +3,52 @@ import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { Json } from "@/types/database";
 import { getSchedulerContext } from "@/features/scheduler/queries/schedule.queries";
-import { localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
+import { addLocalDays, localDateTimeToIso, localWeek, todayLocalDate } from "@/features/scheduler/utils/timezone";
 import { updateProtocol } from "@/features/direction/services/direction.service";
 import { updateHabit } from "@/features/direction/services/habit.service";
 import type { HabitRule } from "@/features/direction/domain/direction.types";
 import { createTask } from "@/features/scheduler/services/task.service";
+import { scheduleTask } from "@/features/scheduler/services/scheduling.service";
 import { COACH_KINDS, COACH_VERSION, coachProposals, HabitDaysPayload, ReviewPayload, RuleMinutesPayload } from "../domain/coach";
 import { CreateTaskPayload } from "../domain/chat";
+import { pickSlotDay, TimeSlotPayload } from "../domain/slot";
 import { loadCoachInput } from "../queries/coach.queries";
 
 async function currentWeek(ctx: ActionContext, now: Date) {
   const { timezone, settings } = await getSchedulerContext(ctx.supabase, ctx.user.id);
   const today = todayLocalDate(timezone, now);
   return { today, timezone, weekStart: localWeek(today, timezone, settings.week_starts_on).startDate };
+}
+
+/** `slot-apply-v1` (ADR 0044): one task and one block for the rule at its hour, on the next fitting day. */
+async function applyTimeSlot(ctx: ActionContext, proposalId: string, payload: unknown, now: Date) {
+  const pl = TimeSlotPayload.parse(payload);
+  const { data: proto, error } = await ctx.supabase
+    .from("protocols")
+    .select("id, mission_id, title, status, path:paths!protocols_path_id_mission_id_fkey(status)")
+    .eq("id", pl.protocolId)
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (error) throw fromDbError(error);
+  if (!proto || proto.status !== "active" || proto.path?.status !== "active") return stale(ctx, proposalId);
+  const { today, timezone } = await currentWeek(ctx, now);
+  const slot = pickSlotDay({
+    today,
+    weekdays: pl.weekdays,
+    hour: pl.hour,
+    now,
+    addDays: (d, n) => addLocalDays(d, n, timezone),
+    startOf: (d, t) => localDateTimeToIso(d, t, timezone),
+  });
+  if (!slot) throw new AppError("CONFLICT", "일주일 안에 맞는 시간이 없습니다.");
+  const { task } = await createTask(ctx, {
+    title: proto.title,
+    protocolId: proto.id,
+    missionId: proto.mission_id,
+    targetDate: slot.date,
+    userEstimatedMinutes: pl.minutes,
+  });
+  await scheduleTask(ctx, { taskId: task.id, startsAt: slot.startsAt, endsAt: new Date(Date.parse(slot.startsAt) + pl.minutes * 60_000).toISOString() });
 }
 
 /**
@@ -139,6 +172,8 @@ export async function applyProposal(ctx: ActionContext, proposalId: string, now 
     const habit = await loadHabit(ctx, pl.habitId);
     if (!habit || habit.status !== "active" || !(sameDays(habit.weekdays, pl.from) || sameDays(habit.weekdays, pl.to))) return stale(ctx, proposalId);
     if (!sameDays(habit.weekdays, pl.to)) await updateHabit(ctx, habitUpdate(habit, { weekdays: pl.to }));
+  } else if (p.kind === "time_slot") {
+    await applyTimeSlot(ctx, proposalId, p.payload, now);
   } else if (p.kind === "create_task") {
     // Chat proposal (ADR 0042): the task service validates the title, date and the change link.
     const pl = CreateTaskPayload.parse(p.payload);
