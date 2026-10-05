@@ -6,10 +6,13 @@ import {
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { describeNotionError, toNotionAppError } from "./errors";
+import { createThrottle } from "./throttle";
 import { toGrant, toNotionPage, toPageRefs, toPropertyConfigs, toPropertyInfos, toPropertyValues } from "./mapping";
 import type { CreatedDatabase, NotionAuth, NotionGateway, NotionPage, NotionPageRef, NotionPropertyInfo, NotionPropertySpec, NotionValue, OAuthGrant } from "./types";
 
 export const NOTION_VERSION = "2026-03-11";
+/** ~3 requests per second per token (spec §5.4); shared by every gateway instance in this process. */
+const throttle = createThrottle(334);
 type PageProperties = CreatePageParameters["properties"];
 type InitialProperties = NonNullable<NonNullable<CreateDatabaseParameters["initial_data_source"]>["properties"]>;
 
@@ -29,7 +32,8 @@ export class ClientNotionGateway implements NotionGateway {
     });
   }
 
-  private async run<T>(op: string, fn: () => Promise<T>): Promise<T> {
+  private async run<T>(op: string, fn: () => Promise<T>, auth?: NotionAuth): Promise<T> {
+    if (auth) await throttle(auth.accessToken);
     try {
       return await fn();
     } catch (error) {
@@ -70,7 +74,7 @@ export class ClientNotionGateway implements NotionGateway {
         page_size: 50,
       });
       return toPageRefs(res.results);
-    });
+    }, auth);
   }
 
   createDatabase(auth: NotionAuth, input: { parentPageId: string; title: string; properties: readonly NotionPropertySpec[] }): Promise<CreatedDatabase> {
@@ -86,7 +90,7 @@ export class ClientNotionGateway implements NotionGateway {
       const source = await client.dataSources.retrieve({ data_source_id: sourceId });
       if (!isFullDataSource(source)) throw new AppError("NOTION_ERROR");
       return { databaseId: db.id, dataSourceId: source.id, url: db.url, properties: toPropertyInfos(source.properties) };
-    });
+    }, auth);
   }
 
   getDataSourceProperties(auth: NotionAuth, dataSourceId: string): Promise<NotionPropertyInfo[]> {
@@ -94,7 +98,7 @@ export class ClientNotionGateway implements NotionGateway {
       const source = await this.client(auth).dataSources.retrieve({ data_source_id: dataSourceId });
       if (!isFullDataSource(source)) throw new AppError("NOTION_ERROR");
       return toPropertyInfos(source.properties);
-    });
+    }, auth);
   }
 
   addProperties(auth: NotionAuth, dataSourceId: string, properties: readonly NotionPropertySpec[]): Promise<NotionPropertyInfo[]> {
@@ -105,7 +109,7 @@ export class ClientNotionGateway implements NotionGateway {
       });
       if (!isFullDataSource(source)) throw new AppError("NOTION_ERROR");
       return toPropertyInfos(source.properties);
-    });
+    }, auth);
   }
 
   queryPages(auth: NotionAuth, dataSourceId: string, opts: { editedOnOrAfter?: string; cursor?: string }): Promise<{ pages: NotionPage[]; nextCursor: string | null }> {
@@ -118,7 +122,7 @@ export class ClientNotionGateway implements NotionGateway {
         sorts: [{ timestamp: "last_edited_time", direction: "ascending" }],
       });
       return { pages: res.results.filter(isFullPage).map(toNotionPage), nextCursor: res.has_more ? res.next_cursor : null };
-    });
+    }, auth);
   }
 
   createPage(auth: NotionAuth, dataSourceId: string, values: Record<string, NotionValue>): Promise<NotionPage> {
@@ -129,7 +133,7 @@ export class ClientNotionGateway implements NotionGateway {
       });
       if (!isFullPage(page)) throw new AppError("NOTION_ERROR");
       return toNotionPage(page);
-    });
+    }, auth);
   }
 
   updatePage(auth: NotionAuth, pageId: string, values: Record<string, NotionValue>): Promise<NotionPage> {
@@ -137,12 +141,12 @@ export class ClientNotionGateway implements NotionGateway {
       const page = await this.client(auth).pages.update({ page_id: pageId, properties: toPropertyValues(values) as PageProperties });
       if (!isFullPage(page)) throw new AppError("NOTION_ERROR");
       return toNotionPage(page);
-    });
+    }, auth);
   }
 
   trashPage(auth: NotionAuth, pageId: string): Promise<void> {
     return this.run("pages.trash", async () => {
       await this.client(auth).pages.update({ page_id: pageId, in_trash: true });
-    });
+    }, auth);
   }
 }
