@@ -1,5 +1,5 @@
 # 0046. 단어장: Notion as the word table, FSRS in Supabase
-- Status: proposed (accepted when V0 lands)
+- Status: accepted (V0 implemented 2026-10-05)
 - Date: 2026-10-05
 - Spec: docs/superpowers/specs/2026-10-05-vocab-notion-design.md
 - Amends: ADR 0018 (AI budget gets pools), ADR 0043 (notify rules gain `vocab_due`)
@@ -28,6 +28,14 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
    stays for everything else. Practice output is advice: AI output never reaches Notion without a user action.
 6. **Notion access goes through a `NotionGateway` interface** with a fake implementation for tests and E2E
    (`NOTION_GATEWAY=fake`, refused in production).
+
+### V0 refinements (plan `2026-10-05-vocab-v0-notion-connect.md`)
+- The gateway is generic (`createDatabase(properties)`, `getDataSourceProperties`, `addProperties`): `lib` must not
+  import a feature, so the vocabulary schema lives in `features/vocab/domain/notion-schema.ts`.
+- Tables arrive with the phase that uses them. V0 creates only `notion_connections`.
+- 429/5xx retries use the SDK's built-in `retry` (it honors `Retry-After`); an in-process throttle waits for V1's
+  bulk writes.
+- The connection stores `database_url`, so the UI links to the DB without a Notion call.
 
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.

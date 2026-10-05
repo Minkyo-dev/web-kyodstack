@@ -29,5 +29,7 @@ export default defineConfig({
         url: `http://localhost:${PORT}/login`,
         reuseExistingServer: true,
         timeout: 120_000,
+        // ADR 0046: the vocab specs run against the fake Notion gateway.
+        env: { NOTION_GATEWAY: "fake" },
       },
 });

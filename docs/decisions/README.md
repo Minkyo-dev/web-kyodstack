@@ -63,4 +63,4 @@ Template:
 | 0043 | Assistant P4: rule-based web push notifications | accepted |
 | 0044 | Assistant P5: learning log, coach-v2, time slots, deadline forecast | accepted |
 | 0045 | Brand: the Kyodstack logo and its colors | accepted |
-| 0046 | 단어장: Notion as the word table, FSRS in Supabase | proposed |
+| 0046 | 단어장: Notion as the word table, FSRS in Supabase | accepted |

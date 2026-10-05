@@ -205,15 +205,19 @@ in Notion does not break sync. A deleted or type-changed property raises `NOTION
 offers [속성 복구], which re-adds the missing properties with `PATCH /v1/data_sources/{id}` and stores the new ids.
 
 ### 5.4 Gateway contract
+The gateway in `src/lib/notion/types.ts` is generic. It knows Notion, not vocabulary (the vocabulary schema is
+`features/vocab/domain/notion-schema.ts`):
 ```ts
 interface NotionGateway {
-  searchSharedPages(conn): Promise<{ id; title; url }[]>;
-  createVocabDatabase(conn, parentPageId): Promise<{ databaseId; dataSourceId; propertyIds }>;
-  repairSchema(conn): Promise<{ propertyIds }>;
-  queryPages(conn, { editedOnOrAfter?: Date; cursor?: string; idsOnly?: boolean }): Promise<{ pages: NotionWordPage[]; nextCursor: string | null }>;
-  createPage(conn, fields: WordFields): Promise<NotionWordPage>;
-  updatePage(conn, pageId, patch: Partial<WordFields & StudyFields>): Promise<NotionWordPage>;
-  trashPage(conn, pageId): Promise<void>;
+  authorizeUrl(state, redirectUri): string;
+  exchangeCode(code, redirectUri): Promise<OAuthGrant>;
+  refresh(refreshToken): Promise<OAuthGrant>;
+  revoke(accessToken): Promise<void>;
+  searchPages(auth): Promise<NotionPageRef[]>;
+  createDatabase(auth, { parentPageId, title, properties: NotionPropertySpec[] }): Promise<CreatedDatabase>;
+  getDataSourceProperties(auth, dataSourceId): Promise<NotionPropertyInfo[]>;
+  addProperties(auth, dataSourceId, properties): Promise<NotionPropertyInfo[]>;
+  // V1 adds the word-page methods: queryPages, createPage, updatePage, trashPage
 }
 ```
 `NotionWordPage` holds the page id, url, `last_edited_time`, `in_trash` and the mapped fields. Mapping lives in the
@@ -283,7 +287,7 @@ A pull:
 
 ## 7. Learning
 
-### 7.1 Data model (migration `vocab_core`; RLS own-row on every table)
+### 7.1 Data model (RLS own-row on every table; each table arrives in the phase that first uses it)
 ```sql
 notion_connections (
   user_id uuid primary key references auth.users on delete cascade,
@@ -603,7 +607,7 @@ Each phase has its own plan in `docs/superpowers/plans/` and its own checklist i
 
 | Phase | Scope | Exit |
 |---|---|---|
-| **V0** | ADR 0046; env; `lib/notion` (gateway, client, fake, crypto, oauth, errors); migration `vocab_core` (all tables, RLS, RPCs) + types + RLS tests + advisors; connect/callback routes; setup (pick a page → create the DB, repair schema); `/english` layout, tab bar, sidebar and dashboard entries, settings page (connection part) | a real Notion workspace connects, the DB is created with the §5.3 schema, and the settings page shows it |
+| **V0** | ADR 0046; env; `lib/notion` (gateway, client, fake, crypto, oauth, errors); migration `vocab_notion_connections` (later tables and RPCs arrive with their phase) + types + RLS tests + advisors; connect/callback routes; setup (pick a page → create the DB, repair schema); `/english` layout, tab bar, sidebar and dashboard entries, settings page (connection part) | a real Notion workspace connects, the DB is created with the §5.3 schema, and the settings page shows it |
 | **V1** | word CRUD write-through; words page (table, filters, search, drawer, quick add without AI); pull, reconcile, outbox; nightly job `vocab-sync` | edits in either place appear in the other; trash in Notion removes the word from the app |
 | **V2** | `srs`, `queue`, review screen, shortcuts, TTS, undo, 학습 완료 and the mature hint, outbox write-back of 상태 and 다음 복습; home today card and topic cards | the keyboard-only review E2E passes; Notion shows 상태 and 다음 복습 after a session |
 | **V3** | due buckets and forecast, `vocab_due` push (notify-v2), stats page, streak and heatmap | push arrives once at the reminder time; stats match the SQL test fixtures |

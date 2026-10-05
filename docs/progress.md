@@ -268,8 +268,9 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [ ] Finance upgrade C: analytics (next)
 
 ## 단어장 (docs/superpowers/specs/2026-10-05-vocab-notion-design.md, ADR 0046)
-- [ ] V0: Notion OAuth + encrypted tokens, `lib/notion` gateway (client/fake), migration `vocab_core` (RLS, RPCs,
-      SQL tests), DB creation with the v1 schema, `/english` shell + settings connection
+- [x] V0: Notion OAuth + encrypted tokens, `lib/notion` gateway (client/fake), migration `vocab_notion_connections`
+      (RLS; SQL `supabase/tests/rls/vocab.sql`), DB creation with the v1 schema, `/english` shell + settings
+      connection (E2E `vocab-connect.spec.ts`)
 - [ ] V1: word CRUD write-through, words page, incremental pull, reconcile, outbox, nightly `vocab-sync`
 - [ ] V2: FSRS (`ts-fsrs`), queue, review screen + shortcuts + TTS + undo, 학습 완료, 상태/다음 복습 write-back
 - [ ] V3: due buckets + forecast, `vocab_due` push (notify-v2), stats + streak

@@ -18,6 +18,10 @@ production. `.env.example` lists the names. All server-only values are validated
 | `CRON_SECRET` | Vercel Cron (`vercel.ts`) | random ≥ 16 chars; Vercel sends it as `Authorization: Bearer …` |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | web push (ADR 0043) | `npx web-push generate-vapid-keys`. The public key reaches the browser through a Server Action, so it needs no `NEXT_PUBLIC_` prefix. |
 | `VAPID_SUBJECT` | web push | a contact URL or `mailto:`; the repo URL is used (`https://github.com/Minkyo-dev/web-kyodstack`) |
+| `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET` | 단어장 (ADR 0046) | the Notion **public** integration (§7) |
+| `NOTION_REDIRECT_URI` | optional | defaults to `<request origin>/api/notion/callback`; set it when the deployed host differs from the registered URI |
+| `NOTION_TOKEN_KEY` | 단어장 | `openssl rand -base64 32`. Encrypts Notion tokens at rest. Rotating it makes every stored token unreadable: each user's connection flips to 다시 연결 on next use |
+| `NOTION_GATEWAY` | dev/E2E only | `fake` serves a deterministic Notion (refused in production); unset = the real API |
 
 - The Gemini free tier allows about 5 requests per minute. Bursts get 429. The fallback model and the SDK retries
   absorb most of it, and every AI part of a screen fails soft.
@@ -105,6 +109,9 @@ select status_code, content, created from net._http_response order by created de
     `calendar-planning.spec.ts` does.
 - **Flaky specs.** The full suite runs against the remote Supabase, and single specs sometimes time out. Re-run a
   failed spec on its own before treating it as a regression.
+- **단어장 E2E uses the fake Notion.** Playwright's own server starts with `NOTION_GATEWAY=fake`. Against an external
+  server (`E2E_BASE_URL`), `vocab-*.spec.ts` are skipped unless that server was started with
+  `NOTION_GATEWAY=fake npx next dev -p <port>` and the run also sets `NOTION_GATEWAY=fake`.
 - **Local-only edits.** The owner's `package.json` dev-port change (`next dev --port 3001`) is intentionally left
   uncommitted.
 
@@ -117,3 +124,16 @@ Follow AGENTS.md "Database workflow":
 5. Check `get_advisors`.
 
 Never edit an applied migration, not even a comment. Add a new one instead.
+
+## 7. Notion integration (단어장, ADR 0046)
+1. notion.so/profile/integrations → **New integration** → type **Public**.
+2. Redirect URIs: `https://<prod-host>/api/notion/callback` and `http://localhost:3001/api/notion/callback`.
+3. Fill in the website, privacy policy and terms URLs if Notion asks for them (the integration does not need to be
+   listed in Notion's gallery).
+4. Copy the OAuth client id and secret into Vercel env and `.env.local` (`NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`),
+   and add a `NOTION_TOKEN_KEY` to Vercel (each environment may have its own key).
+5. **Smoke test once per environment:**
+   - `/english` → Notion 연결 → share one page.
+   - Pick it → 단어장 만들기.
+   - In Notion, check that "Kyod 단어장" has the 11 properties and that 상태 offers 새 단어 / 학습 중 / 학습 완료.
+   - Record in ADR 0046 whether Notion returned a `refresh_token` (spec §15).
