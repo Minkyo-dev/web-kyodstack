@@ -1,12 +1,16 @@
 import "server-only";
-import { Client, isFullDatabase, isFullDataSource, type CreateDatabaseParameters, type UpdateDataSourceParameters } from "@notionhq/client";
+import {
+  Client, isFullDatabase, isFullDataSource, isFullPage,
+  type CreateDatabaseParameters, type CreatePageParameters, type UpdateDataSourceParameters,
+} from "@notionhq/client";
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { describeNotionError, toNotionAppError } from "./errors";
-import { toGrant, toPageRefs, toPropertyConfigs, toPropertyInfos } from "./mapping";
-import type { CreatedDatabase, NotionAuth, NotionGateway, NotionPageRef, NotionPropertyInfo, NotionPropertySpec, OAuthGrant } from "./types";
+import { toGrant, toNotionPage, toPageRefs, toPropertyConfigs, toPropertyInfos, toPropertyValues } from "./mapping";
+import type { CreatedDatabase, NotionAuth, NotionGateway, NotionPage, NotionPageRef, NotionPropertyInfo, NotionPropertySpec, NotionValue, OAuthGrant } from "./types";
 
 export const NOTION_VERSION = "2026-03-11";
+type PageProperties = CreatePageParameters["properties"];
 type InitialProperties = NonNullable<NonNullable<CreateDatabaseParameters["initial_data_source"]>["properties"]>;
 
 /** @notionhq/client behind NotionGateway. The SDK retries 429/5xx and honors Retry-After (ADR 0046). */
@@ -101,6 +105,44 @@ export class ClientNotionGateway implements NotionGateway {
       });
       if (!isFullDataSource(source)) throw new AppError("NOTION_ERROR");
       return toPropertyInfos(source.properties);
+    });
+  }
+
+  queryPages(auth: NotionAuth, dataSourceId: string, opts: { editedOnOrAfter?: string; cursor?: string }): Promise<{ pages: NotionPage[]; nextCursor: string | null }> {
+    return this.run("data_sources.query", async () => {
+      const res = await this.client(auth).dataSources.query({
+        data_source_id: dataSourceId,
+        page_size: 100,
+        start_cursor: opts.cursor,
+        filter: opts.editedOnOrAfter ? { timestamp: "last_edited_time", last_edited_time: { on_or_after: opts.editedOnOrAfter } } : undefined,
+        sorts: [{ timestamp: "last_edited_time", direction: "ascending" }],
+      });
+      return { pages: res.results.filter(isFullPage).map(toNotionPage), nextCursor: res.has_more ? res.next_cursor : null };
+    });
+  }
+
+  createPage(auth: NotionAuth, dataSourceId: string, values: Record<string, NotionValue>): Promise<NotionPage> {
+    return this.run("pages.create", async () => {
+      const page = await this.client(auth).pages.create({
+        parent: { type: "data_source_id", data_source_id: dataSourceId },
+        properties: toPropertyValues(values) as PageProperties,
+      });
+      if (!isFullPage(page)) throw new AppError("NOTION_ERROR");
+      return toNotionPage(page);
+    });
+  }
+
+  updatePage(auth: NotionAuth, pageId: string, values: Record<string, NotionValue>): Promise<NotionPage> {
+    return this.run("pages.update", async () => {
+      const page = await this.client(auth).pages.update({ page_id: pageId, properties: toPropertyValues(values) as PageProperties });
+      if (!isFullPage(page)) throw new AppError("NOTION_ERROR");
+      return toNotionPage(page);
+    });
+  }
+
+  trashPage(auth: NotionAuth, pageId: string): Promise<void> {
+    return this.run("pages.trash", async () => {
+      await this.client(auth).pages.update({ page_id: pageId, in_trash: true });
     });
   }
 }
