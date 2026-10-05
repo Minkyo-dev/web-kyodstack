@@ -79,6 +79,8 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
 - A session and its items are created by `vocab_create_practice` (one transaction); a trigger caps attempts at three
   per item. The feedback verdict is a label only; practice never touches FSRS or Notion.
 - The diff is a token LCS in TS; the learner's answer enters the prompt only as sanitized JSON (≤ 500 chars).
+- Live check on 2026-10-05 with the configured Gemini key: `vocab-enrich-v1`, `vocab-practice-gen-v1` and
+  `vocab-practice-feedback-v1` replies all validated against their Zod schemas and passed the term/ref guards.
 
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.

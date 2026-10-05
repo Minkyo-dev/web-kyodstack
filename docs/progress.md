@@ -279,7 +279,7 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       `vocab-stats.spec.ts`)
 - [x] V4: AI budget pools, AI auto-fill, bulk add, Notion throttle (E2E `vocab-bulk.spec.ts` with the fake AI)
 - [x] V5: AI practice (CEFR A1–C2): generate, feedback, diff, history (SQL `vocab_practice.sql`, E2E
-      `vocab-practice.spec.ts` with the fake AI; live Gemini check pending a key in this environment)
+      `vocab-practice.spec.ts` with the fake AI; live Gemini schema check passed 2026-10-05)
 - [ ] V6 (optional): planner XP for vocab review days
 
 ## Open questions
