@@ -31,3 +31,11 @@ describe("escapeLike", () => {
     expect(escapeLike("50%_off\\")).toBe("50\\%\\_off\\\\");
   });
 });
+
+describe("ilikeAny (PostgREST or-filter)", () => {
+  it("quotes the value so commas, parentheses and quotes stay literal", async () => {
+    const { ilikeAny } = await import("@/features/vocab/utils/escape-like");
+    expect(ilikeAny(["term", "meaning"], 'a,b) "c"\\')).toBe('term.ilike."%a,b) \\"c\\"\\\\\\\\%",meaning.ilike."%a,b) \\"c\\"\\\\\\\\%"');
+    expect(ilikeAny(["term"], "50%")).toBe('term.ilike."%50\\\\%%"');
+  });
+});

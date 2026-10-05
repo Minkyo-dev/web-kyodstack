@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/** 단어장 tabs. Later phases add 단어 · 복습 · AI 연습 · 통계 (spec §10). */
+/** 단어장 tabs. Later phases add 복습 · AI 연습 · 통계 (spec §10). */
 const TABS = [
   { href: "/english", label: "홈", exact: true },
+  { href: "/english/words", label: "단어", exact: false },
   { href: "/english/settings", label: "설정", exact: false },
 ] as const;
 

@@ -1,16 +1,22 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { ExternalLink } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ConnectCard } from "@/features/vocab/components/connect-card";
 import { ReauthBanner } from "@/features/vocab/components/reauth-banner";
+import { SyncButton } from "@/features/vocab/components/sync-button";
+import { TopicCards } from "@/features/vocab/components/topic-cards";
 import { setupState } from "@/features/vocab/domain/connection";
+import { topicSummary } from "@/features/vocab/queries/word.queries";
 import { getConnectionView } from "@/features/vocab/services/connection.service";
+import { maybePull } from "@/features/vocab/services/sync.service";
 
 export default async function EnglishHomePage() {
   const user = await requireUserOrRedirect();
-  const view = await getConnectionView(await createClient(), user.id);
+  const supabase = await createClient();
+  const view = await getConnectionView(supabase, user.id);
   const state = setupState(view);
 
   if (state === "not_connected") return <ConnectCard />;
@@ -25,16 +31,37 @@ export default async function EnglishHomePage() {
       </section>
     );
   }
+  after(() => maybePull({ user, supabase }));
+  const summary = await topicSummary(supabase, user.id);
+
   return (
-    <section className="max-w-xl space-y-2 rounded-lg border bg-card p-5 text-sm">
-      <h2 className="font-semibold">Notion 단어장</h2>
-      <p className="text-muted-foreground">{view?.workspaceName ?? "Notion"}의 &lsquo;Kyod 단어장&rsquo;과 연결돼 있어요. 단어 목록과 복습은 다음 단계에서 이 화면에 표시됩니다.</p>
-      {view?.databaseUrl && (
-        <a href={view.databaseUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          Notion에서 열기
-          <ExternalLink aria-hidden />
-        </a>
-      )}
-    </section>
+    <div className="max-w-5xl space-y-6">
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-5 text-sm">
+        <div className="space-y-1">
+          <h2 className="font-semibold">Notion 단어장</h2>
+          <p className="text-muted-foreground">
+            {view?.workspaceName ?? "Notion"} · 단어 {summary.total}개 · 주제 {summary.topics.length}개
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/english/words" className={buttonVariants({ size: "sm" })}>
+            단어 보기
+          </Link>
+          {view?.databaseUrl && (
+            <a href={view.databaseUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Notion에서 열기
+              <ExternalLink aria-hidden />
+            </a>
+          )}
+        </div>
+        <div className="w-full">
+          <SyncButton lastPulledAt={view?.lastPulledAt ?? null} />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-semibold">주제별 단어장</h2>
+        <TopicCards topics={summary.topics} />
+      </section>
+    </div>
   );
 }
