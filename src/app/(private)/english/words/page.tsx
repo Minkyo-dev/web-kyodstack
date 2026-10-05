@@ -25,7 +25,8 @@ export default async function EnglishWordsPage({ searchParams }: { searchParams:
 
   const sp = await searchParams;
   const filter = wordFilterSchema.parse(Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, (Array.isArray(v) ? v[0] : v) || undefined])));
-  const [{ rows, truncated }, summary, timezone] = await Promise.all([listWords(supabase, user.id, filter), topicSummary(supabase, user.id), userTimezone(supabase, user.id)]);
+  const timezone = await userTimezone(supabase, user.id);
+  const [{ rows, truncated }, summary] = await Promise.all([listWords(supabase, user.id, filter, timezone), topicSummary(supabase, user.id)]);
   const filtered = Object.values(filter).some(Boolean);
 
   return (

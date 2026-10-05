@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import type { WordListItem } from "../queries/word.queries";
+import { setLearnedAction } from "../actions/review.actions";
 import { deleteWordAction, updateWordAction } from "../actions/word.actions";
 import { StudyStatusBadge } from "./study-status";
 import { WordForm } from "./word-form";
@@ -26,6 +27,7 @@ export function WordTable({ rows }: { rows: WordListItem[] }) {
               <th className="hidden px-3 py-2 font-medium md:table-cell">주제</th>
               <th className="hidden px-3 py-2 font-medium sm:table-cell">레벨</th>
               <th className="hidden px-3 py-2 font-medium sm:table-cell">상태</th>
+              <th className="hidden px-3 py-2 font-medium lg:table-cell">다음 복습</th>
             </tr>
           </thead>
           <tbody>
@@ -49,8 +51,12 @@ export function WordTable({ rows }: { rows: WordListItem[] }) {
                 </td>
                 <td className="hidden px-3 py-2 text-xs sm:table-cell">{w.cefr ?? "—"}</td>
                 <td className="hidden px-3 py-2 sm:table-cell">
-                  <StudyStatusBadge status={w.notionStatus} />
+                  <span className="flex items-center gap-1.5">
+                    <StudyStatusBadge status={w.status} />
+                    {w.mature && <MatureBadge />}
+                  </span>
                 </td>
+                <td className="hidden px-3 py-2 text-xs text-muted-foreground tabular-nums lg:table-cell">{w.nextReview ?? "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -75,7 +81,8 @@ function WordDrawerBody({ word, onDone }: { word: WordListItem; onDone: () => vo
       <SheetHeader className="p-0">
         <SheetTitle>{word.term}</SheetTitle>
         <SheetDescription className="flex items-center gap-3">
-          <StudyStatusBadge status={word.notionStatus} />
+          <StudyStatusBadge status={word.status} />
+          {word.mature && <MatureBadge />}
           {word.notionUrl && (
             <a href={word.notionUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs underline-offset-4 hover:underline">
               Notion에서 열기
@@ -96,6 +103,22 @@ function WordDrawerBody({ word, onDone }: { word: WordListItem; onDone: () => vo
           })
         }
       />
+      <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+        <Button
+          size="sm"
+          variant={word.mature && word.status !== "학습 완료" ? "default" : "outline"}
+          disabled={pending}
+          onClick={() =>
+            run(() => setLearnedAction({ wordId: word.id, learned: word.status !== "학습 완료" }), {
+              success: word.status === "학습 완료" ? "다시 복습 목록에 넣었어요." : "학습 완료로 표시했어요.",
+              onSuccess: onDone,
+            })
+          }
+        >
+          {word.status === "학습 완료" ? "학습 완료 해제" : "학습 완료로 표시"}
+        </Button>
+        {word.mature && word.status !== "학습 완료" && <span className="text-xs text-muted-foreground">3주 넘게 기억하고 있어요.</span>}
+      </div>
       <div className="border-t pt-4">
         {confirming ? (
           <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -114,5 +137,14 @@ function WordDrawerBody({ word, onDone }: { word: WordListItem; onDone: () => vo
         )}
       </div>
     </div>
+  );
+}
+
+function MatureBadge() {
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-sm border px-1 text-[11px] text-muted-foreground">
+      <Sparkles className="size-3" aria-hidden />
+      숙련
+    </span>
   );
 }

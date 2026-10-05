@@ -273,7 +273,8 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       connection (E2E `vocab-connect.spec.ts`)
 - [x] V1: word CRUD write-through, words page, incremental pull, reconcile, nightly `vocab-sync` (outbox moved to V2;
       SQL `vocab_words.sql`, E2E `vocab-words.spec.ts`)
-- [ ] V2: FSRS (`ts-fsrs`), queue, review screen + shortcuts + TTS + undo, 학습 완료, 상태/다음 복습 write-back
+- [x] V2: FSRS (`ts-fsrs` 5.4.2), queue, review screen + shortcuts + TTS + undo, 학습 완료, 상태/다음 복습 write-back
+      (outbox), Notion 상태 transitions, study settings (SQL `vocab_study.sql`, E2E `vocab-review.spec.ts`)
 - [ ] V3: due buckets + forecast, `vocab_due` push (notify-v2), stats + streak
 - [ ] V4: AI budget pools, AI auto-fill, bulk add
 - [ ] V5: AI practice (CEFR A1–C2): generate, feedback, diff, history

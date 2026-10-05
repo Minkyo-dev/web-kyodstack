@@ -46,6 +46,18 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
 - Values pulled from Notion are clipped/normalized rather than rejected; single add refuses a duplicate term.
 - The in-process throttle moves to V4 (bulk add).
 
+### V2 refinements (plan `2026-10-05-vocab-v2-flashcards.md`)
+- A stale review (another tab rated first) is SQLSTATE `V0409` in `vocab_apply_review`, mapped to the existing
+  `CONFLICT` code with its own message (no new error code). A repeated `client_review_id` is a no-op.
+- `vocab_reviews` allows own insert/delete under RLS; the RPCs are security invoker, so no hand-written ownership
+  checks are needed.
+- 학습 완료 on/off is one UPDATE on both cards (no RPC). The 상태 transitions made in Notion run inside
+  `vocab_upsert_words`; the outbox flush updates the mirror's `notion_status`/`notion_next_review` directly, so the
+  app's own write never looks like a user change.
+- `vocab_words.notion_next_review` remembers the value Notion has, so unchanged words aren't rewritten; 다음 복습 counts
+  only studied, active cards (a new card has no review date).
+- Good on a new card is a 10-minute learning step, so the card returns later in the same session (≤ 20 minutes).
+
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.
 - A Notion public integration must be registered, with its redirect URI and possibly website, privacy and terms

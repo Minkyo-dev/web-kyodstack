@@ -3,7 +3,9 @@ import { z } from "zod";
 import { fromDbError } from "@/lib/errors";
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { CEFR_LEVELS, STUDY_STATUSES } from "../domain/notion-schema";
-import type { Cefr } from "../domain/word-mapping";
+import type { FsrsState } from "../domain/srs";
+import { deriveStatus, isMature, nextReviewDate } from "../domain/status";
+import type { Cefr, StudyStatus } from "../domain/word-mapping";
 import { ilikeAny } from "../utils/escape-like";
 
 export const wordFilterSchema = z.object({
@@ -25,17 +27,25 @@ export type WordListItem = {
   note: string | null;
   topics: string[];
   cefr: Cefr | null;
-  notionStatus: string | null;
+  /** From the cards (the app's truth); Notion's 상태 follows through the outbox. */
+  status: StudyStatus;
+  nextReview: string | null;
+  mature: boolean;
   notionUrl: string | null;
 };
 
 export const WORD_LIST_LIMIT = 500;
 
-/** Live words (not deleted in Notion), newest first, filtered in SQL. */
-export async function listWords(supabase: SupabaseServerClient, userId: string, filter: WordFilter): Promise<{ rows: WordListItem[]; truncated: boolean }> {
+/** Live words (not deleted in Notion), newest first. Text, topic and level filter in SQL; status from the cards. */
+export async function listWords(
+  supabase: SupabaseServerClient,
+  userId: string,
+  filter: WordFilter,
+  timezone: string,
+): Promise<{ rows: WordListItem[]; truncated: boolean }> {
   let query = supabase
     .from("vocab_words")
-    .select("id, term, meaning, pos, ipa, example, synonyms, note, topics, cefr, notion_status, notion_url")
+    .select("id, term, meaning, pos, ipa, example, synonyms, note, topics, cefr, notion_url, vocab_cards(fsrs_state, due, suspended_at, scheduled_days)")
     .eq("user_id", userId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -43,24 +53,28 @@ export async function listWords(supabase: SupabaseServerClient, userId: string, 
   if (filter.q) query = query.or(ilikeAny(["term", "meaning"], filter.q));
   if (filter.topic) query = query.contains("topics", [filter.topic]);
   if (filter.level) query = query.eq("cefr", filter.level);
-  if (filter.status) query = query.eq("notion_status", filter.status);
   const { data, error } = await query;
   if (error) throw fromDbError(error);
-  const rows = data.slice(0, WORD_LIST_LIMIT).map((w) => ({
-    id: w.id,
-    term: w.term,
-    meaning: w.meaning,
-    pos: w.pos,
-    ipa: w.ipa,
-    example: w.example,
-    synonyms: w.synonyms,
-    note: w.note,
-    topics: w.topics,
-    cefr: w.cefr as Cefr | null,
-    notionStatus: w.notion_status,
-    notionUrl: w.notion_url,
-  }));
-  return { rows, truncated: data.length > WORD_LIST_LIMIT };
+  const rows = data.slice(0, WORD_LIST_LIMIT).map((w) => {
+    const cards = w.vocab_cards.map((c) => ({ fsrsState: c.fsrs_state as FsrsState, due: c.due, suspended: c.suspended_at !== null, scheduledDays: c.scheduled_days }));
+    return {
+      id: w.id,
+      term: w.term,
+      meaning: w.meaning,
+      pos: w.pos,
+      ipa: w.ipa,
+      example: w.example,
+      synonyms: w.synonyms,
+      note: w.note,
+      topics: w.topics,
+      cefr: w.cefr as Cefr | null,
+      status: deriveStatus(cards),
+      nextReview: nextReviewDate(cards, timezone),
+      mature: isMature(cards),
+      notionUrl: w.notion_url,
+    };
+  });
+  return { rows: filter.status ? rows.filter((r) => r.status === filter.status) : rows, truncated: data.length > WORD_LIST_LIMIT };
 }
 
 export type TopicCount = { name: string; count: number };

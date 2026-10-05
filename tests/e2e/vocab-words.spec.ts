@@ -77,7 +77,8 @@ test("add, edit, re-pull and delete a word through Notion", async ({ page }) => 
 
   // Topic card on home.
   await page.goto("/english");
-  await expect(page.getByRole("link", { name: /e2e\s*1개/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "e2e 단어 보기" })).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ has: page.getByRole("link", { name: "e2e 단어 보기" }) })).toContainText("1개 · 오늘 복습 0");
 
   // Delete moves the page to Notion's trash and removes the mirror row.
   await page.goto("/english/words", { waitUntil: "networkidle" });

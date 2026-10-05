@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 import { ConnectCard } from "@/features/vocab/components/connect-card";
 import { ReauthBanner } from "@/features/vocab/components/reauth-banner";
 import { SyncButton } from "@/features/vocab/components/sync-button";
+import { TodayCard } from "@/features/vocab/components/today-card";
 import { TopicCards } from "@/features/vocab/components/topic-cards";
 import { setupState } from "@/features/vocab/domain/connection";
 import { syncLabel } from "@/features/vocab/domain/sync";
 import { topicSummary, userTimezone } from "@/features/vocab/queries/word.queries";
 import { getConnectionView } from "@/features/vocab/services/connection.service";
+import { dueByTopic, loadReviewSession } from "@/features/vocab/services/review.service";
 import { maybePull } from "@/features/vocab/services/sync.service";
 
 export default async function EnglishHomePage() {
@@ -33,10 +35,18 @@ export default async function EnglishHomePage() {
     );
   }
   after(() => maybePull({ user, supabase }));
-  const [summary, timezone] = await Promise.all([topicSummary(supabase, user.id), userTimezone(supabase, user.id)]);
+  const ctx = { user, supabase };
+  const [summary, timezone, session, due] = await Promise.all([
+    topicSummary(supabase, user.id),
+    userTimezone(supabase, user.id),
+    loadReviewSession(ctx, { kind: "all" }),
+    dueByTopic(ctx),
+  ]);
+  const fresh = session.items.filter((i) => i.state.fsrsState === "new").length;
 
   return (
     <div className="max-w-5xl space-y-6">
+      <TodayCard reviews={session.items.length - fresh} fresh={fresh} />
       <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-5 text-sm">
         <div className="space-y-1">
           <h2 className="font-semibold">Notion 단어장</h2>
@@ -61,7 +71,7 @@ export default async function EnglishHomePage() {
       </section>
       <section className="space-y-3">
         <h2 className="font-semibold">주제별 단어장</h2>
-        <TopicCards topics={summary.topics} />
+        <TopicCards topics={summary.topics} due={due} />
       </section>
     </div>
   );

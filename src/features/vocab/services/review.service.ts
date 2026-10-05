@@ -235,3 +235,22 @@ export async function tomorrowDueCount(ctx: VocabCtx): Promise<number> {
   if (error) throw fromDbError(error);
   return count ?? 0;
 }
+
+/** Cards due today per topic (spec §10 topic cards), not capped by the daily limits. */
+export async function dueByTopic(ctx: VocabCtx): Promise<Map<string, number>> {
+  const timezone = await userTimezone(ctx.supabase, ctx.user.id);
+  const { end } = localDayRange(todayLocalDate(timezone), timezone);
+  const { data, error } = await ctx.supabase
+    .from("vocab_cards")
+    .select("id, vocab_words!inner(topics, deleted_at)")
+    .eq("user_id", ctx.user.id)
+    .is("suspended_at", null)
+    .neq("fsrs_state", "new")
+    .lt("due", end)
+    .is("vocab_words.deleted_at", null)
+    .limit(1000);
+  if (error) throw fromDbError(error);
+  const counts = new Map<string, number>();
+  for (const c of data) for (const t of c.vocab_words.topics) counts.set(t, (counts.get(t) ?? 0) + 1);
+  return counts;
+}
