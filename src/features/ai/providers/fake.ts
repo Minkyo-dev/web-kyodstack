@@ -18,6 +18,12 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  vocab_enrich: (prompt) => {
+    const terms = JSON.parse(prompt.slice(prompt.indexOf("["))) as string[];
+    return {
+      items: terms.map((term) => ({ term, meaning_ko: `${term}의 뜻`, pos: "명사", ipa: "/fake/", example_en: `This is ${term}.`, synonyms: [], cefr: "B1" })),
+    };
+  },
   brief_line: () => ({ line: "오늘의 한 가지부터 25분만 시작해 봐요." }),
   assistant_chat: (prompt) => {
     const wantsTask = /잡아|추가|만들어/.test(prompt.slice(prompt.lastIndexOf("OWNER NOW:")));

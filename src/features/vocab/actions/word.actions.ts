@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/lib/action";
 import { noInputSchema } from "../schemas/setup.schema";
-import { updateWordSchema, wordIdSchema, wordInputSchema } from "../schemas/word.schema";
+import { enrichSchema, updateWordSchema, wordIdSchema, wordInputSchema } from "../schemas/word.schema";
+import { enrichTerms } from "../services/enrich.service";
 import { reconcile } from "../services/sync.service";
 import { createWord, deleteWord, updateWord } from "../services/word.service";
 
@@ -38,4 +39,9 @@ export async function syncNowAction(input: unknown) {
     refreshEnglish();
     return result;
   });
+}
+
+/** [AI 채우기]: suggestions only, nothing is saved (spec §9.2). */
+export async function enrichWordsAction(input: unknown) {
+  return runAction("vocab.word.enrich", enrichSchema, input, (data, ctx) => enrichTerms(ctx, data.terms));
 }

@@ -68,3 +68,5 @@ export const updateWordSchema = z.object({
 });
 
 export const wordIdSchema = z.object({ id: z.uuid() });
+
+export const enrichSchema = z.object({ terms: z.array(z.string().trim().min(1).max(WORD_LIMITS.term)).min(1).max(20) });
