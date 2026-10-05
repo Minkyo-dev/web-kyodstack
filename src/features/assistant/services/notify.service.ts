@@ -9,6 +9,7 @@ import { isDueOn } from "@/features/direction/domain/habits";
 import type { ArchivableStatus, HabitRule } from "@/features/direction/domain/direction.types";
 import { OPEN_TASK_STATUSES } from "@/features/scheduler/domain/scheduler.constants";
 import { BLOCK_SOON_MINUTES, DEFAULT_PREFS, QUIET_CHANGE_DAYS, selectNotifications, type Notification, type NotifyInput, type NotifyPrefs } from "../domain/notify";
+import { vocabReminderFacts } from "@/features/vocab/services/reminder.service";
 import { sendPush, type PushTarget } from "./push.service";
 
 const PAUSES = "pauses:work_session_pauses!work_session_pauses_session_id_user_id_fkey(paused_at, resumed_at)";
@@ -72,11 +73,19 @@ export async function loadNotifyInput(admin: SupabaseServerClient, userId: strin
   const notifyPrefs: NotifyPrefs = p
     ? { block_soon: p.block_soon, checkin: p.checkin, habit_missed: p.habit_missed, change_quiet: p.change_quiet, vocab_due: p.vocab_due, quiet_start: p.quiet_start, quiet_end: p.quiet_end, daily_cap: p.daily_cap }
     : DEFAULT_PREFS;
+  const localTime = toLocalTime(now, timezone).slice(0, 5);
+  // The 단어장 queue is built only when the reminder could still fire today (ADR 0046).
+  let vocabDue: NotifyInput["vocabDue"] = null;
+  if (notifyPrefs.vocab_due) {
+    const sentVocab = await admin.from("notification_log").select("id").eq("user_id", userId).eq("dedupe_key", `vocab:${today}`).maybeSingle();
+    if (sentVocab.error) throw fromDbError(sentVocab.error);
+    if (!sentVocab.data) vocabDue = await vocabReminderFacts(admin, userId, localTime);
+  }
   return {
     now: now.toISOString(),
     localDate: today,
     localHour: Number(toLocalTime(now, timezone).slice(0, 2)),
-    localTime: toLocalTime(now, timezone).slice(0, 5),
+    localTime,
     weekStart: localWeek(today, timezone, settings.week_starts_on).startDate,
     eveningHour: settings.evening_hour,
     prefs: notifyPrefs,
@@ -92,7 +101,7 @@ export async function loadNotifyInput(admin: SupabaseServerClient, userId: strin
     checkinDone: reflection.data !== null,
     dayHadActivity: (dayBlocks.count ?? 0) > 0 || (daySessions.count ?? 0) > 0,
     quietChanges,
-    vocabDue: null,
+    vocabDue,
   };
 }
 

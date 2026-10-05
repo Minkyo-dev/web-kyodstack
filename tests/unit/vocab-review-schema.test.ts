@@ -41,3 +41,12 @@ describe("outboxBackoffMs", () => {
     expect([0, 1, 2, 5, 6, 9].map(outboxBackoffMs)).toEqual([60_000, 120_000, 240_000, 1_920_000, 3_600_000, 3_600_000]);
   });
 });
+
+describe("reminderSchema", () => {
+  it("takes an on/off switch and an HH:MM time", async () => {
+    const { reminderSchema } = await import("@/features/vocab/schemas/review.schema");
+    expect(reminderSchema.parse({ reminderEnabled: true, reminderTime: "07:30" })).toEqual({ reminderEnabled: true, reminderTime: "07:30" });
+    expect(reminderSchema.safeParse({ reminderEnabled: true, reminderTime: "24:00" }).success).toBe(false);
+    expect(reminderSchema.safeParse({ reminderEnabled: true, reminderTime: "7:30" }).success).toBe(false);
+  });
+});

@@ -28,3 +28,8 @@ export const studySettingsSchema = z.object({
   desiredRetention: z.coerce.number().min(0.7).max(0.97),
   directions: z.array(z.enum(["recognition", "recall"])).min(1).max(2).transform((d) => [...new Set(d)]),
 });
+
+export const reminderSchema = z.object({
+  reminderEnabled: z.boolean(),
+  reminderTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM 형식으로 입력해 주세요."),
+});

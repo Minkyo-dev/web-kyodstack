@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { runAction } from "@/lib/action";
 import { log } from "@/lib/logger";
 import { noInputSchema } from "../schemas/setup.schema";
-import { cardIdSchema, reviewSchema, setLearnedSchema, studySettingsSchema } from "../schemas/review.schema";
+import { cardIdSchema, reminderSchema, reviewSchema, setLearnedSchema, studySettingsSchema } from "../schemas/review.schema";
 import { flushOutbox, retryStuckWritebacks } from "../services/outbox.service";
 import { reviewCard, setLearned, tomorrowDueCount, undoReview } from "../services/review.service";
 import { updateStudySettings } from "../services/settings.service";
@@ -49,5 +49,12 @@ export async function retryWritebacksAction(input: unknown) {
     await retryStuckWritebacks(ctx);
     after(() => flushOutbox(ctx, 60).catch(() => undefined));
     revalidatePath("/english", "layout");
+  });
+}
+
+export async function updateReminderAction(input: unknown) {
+  return runAction("vocab.settings.reminder", reminderSchema, input, async (data, ctx) => {
+    await updateStudySettings(ctx, data);
+    revalidatePath("/english/settings");
   });
 }
