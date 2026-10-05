@@ -8,8 +8,8 @@ const directionOrder = (d: Direction) => (d === "recognition" ? 0 : 1);
 
 /**
  * Today's queue (spec §7.3): due reviews by due time, then new cards by word age (recognition first), each capped
- * by what is left of today's limits; a word appears once per day (sibling bury); one new card after every three
- * reviews.
+ * by what is left of today's limits; only one direction of a word per day (sibling bury — a card already
+ * reviewed today may come back for its learning step); one new card after every three reviews.
  */
 export function buildQueue(input: {
   cards: QueueCard[];
@@ -17,6 +17,7 @@ export function buildQueue(input: {
   doneReviewsToday: number;
   newIntroducedToday: number;
   reviewedTodayWordIds: ReadonlySet<string>;
+  reviewedTodayCardIds: ReadonlySet<string>;
   settings: QueueSettings;
 }): QueueCard[] {
   const { settings } = input;
@@ -29,12 +30,13 @@ export function buildQueue(input: {
     .filter((c) => c.fsrsState === "new")
     .sort((a, b) => a.wordCreatedAt.localeCompare(b.wordCreatedAt) || a.wordId.localeCompare(b.wordId) || directionOrder(a.direction) - directionOrder(b.direction));
 
-  const used = new Set(input.reviewedTodayWordIds);
+  const used = new Set<string>();
   const pick = (list: QueueCard[], cap: number) => {
     const out: QueueCard[] = [];
     for (const c of list) {
       if (out.length >= cap) break;
-      if (used.has(c.wordId)) continue;
+      const siblingDoneToday = input.reviewedTodayWordIds.has(c.wordId) && !input.reviewedTodayCardIds.has(c.id);
+      if (used.has(c.wordId) || siblingDoneToday) continue;
       used.add(c.wordId);
       out.push(c);
     }

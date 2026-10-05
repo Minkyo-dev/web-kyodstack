@@ -8,7 +8,7 @@ const settings = { newPerDay: 20, reviewsPerDay: 200, directions: ["recognition"
 const card = (id: string, wordId: string, over: Partial<QueueCard> = {}): QueueCard => ({
   id, wordId, direction: "recognition", fsrsState: "review", due: "2026-10-05T12:00:00.000Z", suspended: false, wordCreatedAt: "2026-10-01T00:00:00.000Z", ...over,
 });
-const base = { todayEnd, doneReviewsToday: 0, newIntroducedToday: 0, reviewedTodayWordIds: new Set<string>(), settings };
+const base = { todayEnd, doneReviewsToday: 0, newIntroducedToday: 0, reviewedTodayWordIds: new Set<string>(), reviewedTodayCardIds: new Set<string>(), settings };
 
 describe("buildQueue (spec §7.3)", () => {
   it("takes due reviews by due time and stops at the local end of today", () => {
@@ -32,6 +32,16 @@ describe("buildQueue (spec §7.3)", () => {
         card("w1-call", "w1", { direction: "recall" }),
         card("w2-call", "w2", { direction: "recall" }),
       ],
+    });
+    expect(q.map((c) => c.id)).toEqual(["w1-rec"]);
+  });
+
+  it("brings back a card that was reviewed today and is due again (learning step), but not its sibling", () => {
+    const q = buildQueue({
+      ...base,
+      reviewedTodayWordIds: new Set(["w1"]),
+      reviewedTodayCardIds: new Set(["w1-rec"]),
+      cards: [card("w1-rec", "w1", { fsrsState: "learning" }), card("w1-call", "w1", { direction: "recall", fsrsState: "new" })],
     });
     expect(q.map((c) => c.id)).toEqual(["w1-rec"]);
   });

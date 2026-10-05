@@ -5,7 +5,7 @@ import { ConnectCard } from "@/features/vocab/components/connect-card";
 import { ConnectionPanel } from "@/features/vocab/components/connection-panel";
 import { DatabaseSetup } from "@/features/vocab/components/database-setup";
 import { ReauthBanner } from "@/features/vocab/components/reauth-banner";
-import { StudySettingsForm, WritebackStatus } from "@/features/vocab/components/study-settings-form";
+import { ReminderForm, StudySettingsForm, WritebackStatus } from "@/features/vocab/components/study-settings-form";
 import { connectErrorMessage, setupState } from "@/features/vocab/domain/connection";
 import { getConnectionView } from "@/features/vocab/services/connection.service";
 import { pendingWritebacks } from "@/features/vocab/services/outbox.service";
@@ -57,6 +57,12 @@ export default async function EnglishSettingsPage({ searchParams }: { searchPara
         <h2 className="font-semibold">학습</h2>
         <div className="rounded-lg border bg-card p-5">
           <StudySettingsForm settings={settings} />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h2 className="font-semibold">알림</h2>
+        <div className="rounded-lg border bg-card p-5">
+          <ReminderForm enabled={settings.reminderEnabled} time={settings.reminderTime} />
         </div>
       </section>
     </div>

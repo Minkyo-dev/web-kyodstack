@@ -58,6 +58,14 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
   only studied, active cards (a new card has no review date).
 - Good on a new card is a 10-minute learning step, so the card returns later in the same session (≤ 20 minutes).
 
+### V3 refinements (plan `2026-10-05-vocab-v3-reminders-stats.md`)
+- Stats come from `vocab_review_days(p_user_id, p_timezone, p_since)` (SQL, per local day, `AT TIME ZONE`), then pure TS;
+  PostgREST's row cap rules out aggregating raw reviews in the app.
+- `notify-v2` priority: block_soon → checkin → vocab_due → habit_missed → change_quiet. The 5-minute job builds the
+  vocab queue only when the switch is on, the reminder time has come and `vocab:<date>` isn't logged yet.
+- Card-state counts on the stats page are per card (two per word), not per word.
+- Sibling bury holds back only the other direction: a card already reviewed today returns for its learning step.
+
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.
 - A Notion public integration must be registered, with its redirect URI and possibly website, privacy and terms

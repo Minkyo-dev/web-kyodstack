@@ -42,3 +42,4 @@ must also stay sparse and respectful (umbrella principle 3).
 - `pg_net` lives in the `extensions` schema (migration `pg_net_extensions_schema`, advisor 0014).
 - iPhone users must add the app to the home screen before they can enable push.
 - A 5-minute tick means `block_soon` arrives 10–15 minutes ahead, not exactly 10.
+- 2026-10-05: rules `notify-v2` add `vocab_due` (the 단어장 daily reminder, ADR 0046); the log and prefs gained the kind.

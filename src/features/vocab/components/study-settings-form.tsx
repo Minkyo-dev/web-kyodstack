@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { nativeSelectClass } from "@/components/ui/native-select";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import type { StudySettings } from "../services/settings.service";
-import { retryWritebacksAction, updateStudySettingsAction } from "../actions/review.actions";
+import { retryWritebacksAction, updateReminderAction, updateStudySettingsAction } from "../actions/review.actions";
 
 const RETENTIONS = [
   { value: "0.85", label: "85% · 복습 적게" },
@@ -92,5 +92,37 @@ export function WritebackStatus({ pending, stuck }: { pending: number; stuck: nu
         다시 시도
       </Button>
     </div>
+  );
+}
+
+/** 설정 → 알림 (spec §8.2): the daily vocab_due push time. Devices are registered in the planner's 알림 settings. */
+export function ReminderForm({ enabled, time }: { enabled: boolean; time: string }) {
+  const { run, pending } = useActionRunner();
+  return (
+    <form
+      className="space-y-3 text-sm"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        run(() => updateReminderAction({ reminderEnabled: fd.get("reminderEnabled") === "on", reminderTime: String(fd.get("reminderTime") ?? "") }), {
+          success: "알림 설정을 저장했어요.",
+        });
+      }}
+    >
+      <label className="flex items-center gap-2">
+        <input type="checkbox" name="reminderEnabled" defaultChecked={enabled} />
+        복습할 단어가 있으면 하루 한 번 알려 주기
+      </label>
+      <div className="flex items-center gap-2">
+        <Label htmlFor="reminderTime">알림 시각</Label>
+        <Input id="reminderTime" name="reminderTime" type="time" defaultValue={time} className="w-32" required />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        푸시는 이 기기를 플래너 ⚙ → 알림에서 켜 둔 경우에 도착해요. 조용한 시간과 하루 알림 수 제한을 따릅니다.
+      </p>
+      <Button type="submit" size="sm" disabled={pending}>
+        저장
+      </Button>
+    </form>
   );
 }

@@ -78,19 +78,21 @@ function stateToRow(s: CardState) {
 async function todayCounts(ctx: VocabCtx, dayStart: string) {
   const { data, error } = await ctx.supabase
     .from("vocab_reviews")
-    .select("before, vocab_cards!inner(word_id)")
+    .select("card_id, before, vocab_cards!inner(word_id)")
     .eq("user_id", ctx.user.id)
     .gte("reviewed_at", dayStart);
   if (error) throw fromDbError(error);
   let doneReviews = 0;
   let newIntroduced = 0;
   const wordIds = new Set<string>();
+  const cardIds = new Set<string>();
   for (const r of data) {
+    cardIds.add(r.card_id);
     if ((r.before as { fsrs_state?: string }).fsrs_state === "new") newIntroduced += 1;
     else doneReviews += 1;
     wordIds.add(r.vocab_cards.word_id);
   }
-  return { doneReviews, newIntroduced, wordIds };
+  return { doneReviews, newIntroduced, wordIds, cardIds };
 }
 
 /** The session queue for a scope (spec §7.3), with each card's state and word. */
@@ -137,6 +139,7 @@ export async function loadReviewSession(ctx: VocabCtx, scope: ReviewScope): Prom
     doneReviewsToday: counts.doneReviews,
     newIntroducedToday: counts.newIntroduced,
     reviewedTodayWordIds: counts.wordIds,
+    reviewedTodayCardIds: counts.cardIds,
     settings,
   });
   const items = queue.map((q) => {
