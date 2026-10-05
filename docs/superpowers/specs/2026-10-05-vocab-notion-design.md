@@ -1,7 +1,7 @@
 # 단어장 (vocabulary) backed by Notion — design
 
 - Date: 2026-10-05
-- Status: approved design; not implemented. Phases V0–V6 below each get their own plan.
+- Status: implemented 2026-10-05 (V0–V6, plans `docs/superpowers/plans/2026-10-05-vocab-v*.md`); deviations in ADR 0046
 - Related: ADR 0046 (this feature's decisions), ADR 0009/0018/0041 (AI provider, guardrails, budget), ADR 0043
   (web push), ADR 0010 (jobs), ADR 0031 (E2E user)
 
