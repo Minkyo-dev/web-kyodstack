@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { runAction } from "@/lib/action";
+import { evaluateProgress } from "@/features/gamification/services/progress.service";
 import { log } from "@/lib/logger";
 import { noInputSchema } from "../schemas/setup.schema";
 import { cardIdSchema, reminderSchema, reviewSchema, setLearnedSchema, studySettingsSchema } from "../schemas/review.schema";
@@ -26,15 +27,24 @@ export async function setLearnedAction(input: unknown) {
   });
 }
 
-/** End of a session: tomorrow's count for the summary; the Notion write-backs go out after the response. */
+/**
+ * End of a session: tomorrow's count for the summary; planner XP for a review day (ADR 0046 V6, opt-in users only);
+ * the Notion write-backs go out after the response.
+ */
 export async function finishSessionAction(input: unknown) {
-  return runAction("vocab.review.finish", noInputSchema, input, async (_data, ctx) => {
-    after(() =>
-      flushOutbox(ctx, 60).catch((error) => log({ action: "vocab.outbox.flush", userId: ctx.user.id, success: false, detail: String(error) })),
-    );
-    revalidatePath("/english", "layout");
-    return { tomorrowDue: await tomorrowDueCount(ctx) };
-  });
+  return runAction(
+    "vocab.review.finish",
+    noInputSchema,
+    input,
+    async (_data, ctx) => {
+      after(() =>
+        flushOutbox(ctx, 60).catch((error) => log({ action: "vocab.outbox.flush", userId: ctx.user.id, success: false, detail: String(error) })),
+      );
+      revalidatePath("/english", "layout");
+      return { tomorrowDue: await tomorrowDueCount(ctx) };
+    },
+    { progress: (ctx) => evaluateProgress(ctx) },
+  );
 }
 
 export async function updateStudySettingsAction(input: unknown) {

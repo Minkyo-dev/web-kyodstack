@@ -2,7 +2,7 @@
 - Status: accepted (V0 implemented 2026-10-05)
 - Date: 2026-10-05
 - Spec: docs/superpowers/specs/2026-10-05-vocab-notion-design.md
-- Amends: ADR 0018 (AI budget gets pools), ADR 0043 (notify rules gain `vocab_due`)
+- Amends: ADR 0018 (AI budget gets pools), ADR 0043 (notify rules gain `vocab_due`), ADR 0016 (XP rule `vocab`)
 
 ## Context
 The owner wants a vocabulary utility in which each user's own Notion database is the word table. On top of it
@@ -81,6 +81,11 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
 - The diff is a token LCS in TS; the learner's answer enters the prompt only as sanitized JSON (≤ 500 chars).
 - Live check on 2026-10-05 with the configured Gemini key: `vocab-enrich-v1`, `vocab-practice-gen-v1` and
   `vocab-practice-feedback-v1` replies all validated against their Zod schemas and passed the term/ref guards.
+
+### V6 (plan `2026-10-05-vocab-v6-planner-xp.md`)
+- XP rule `vocab` ("단어 복습"): a local day with ≥ 10 flashcard reviews earns +20 once (day cap 20; source = the
+  day's first review). Evaluated after a review session and by the existing nightly reconcile; opt-in users only
+  (ADR 0016). This amends ADR 0016's rule list.
 
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CircleCheck, Keyboard, Pencil, Undo2, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ProgressSinkContext } from "@/hooks/progress-sink";
 import { cn } from "@/lib/utils";
 import { blankTerm, suggestRating } from "../domain/answer-match";
 import { applyRating, previewIntervals, type CardState, type ReviewRating } from "../domain/srs";
@@ -55,10 +56,12 @@ export function ReviewSession({ items, retention, scopeLabel }: { items: ReviewI
   const previews = useMemo(() => (current ? previewIntervals(current.state, new Date(), { retention }) : null), [current, retention]);
   const suggestion = current && revealed && current.direction === "recall" ? suggestRating(typed, current.word.term) : null;
 
+  const sink = useContext(ProgressSinkContext);
   const finish = useCallback(async () => {
     const res = await finishSessionAction({});
+    if (res.ok && res.progress) sink(res.progress); // planner XP for a review day (ADR 0046 V6)
     setSummary(res.ok ? res.data : { tomorrowDue: 0 });
-  }, []);
+  }, [sink]);
 
   useEffect(() => {
     if (!current && !summary && reviewed > 0) void finish();

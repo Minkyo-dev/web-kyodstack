@@ -280,7 +280,7 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
 - [x] V4: AI budget pools, AI auto-fill, bulk add, Notion throttle (E2E `vocab-bulk.spec.ts` with the fake AI)
 - [x] V5: AI practice (CEFR A1–C2): generate, feedback, diff, history (SQL `vocab_practice.sql`, E2E
       `vocab-practice.spec.ts` with the fake AI; live Gemini schema check passed 2026-10-05)
-- [ ] V6 (optional): planner XP for vocab review days
+- [x] V6: planner XP for vocab review days (rule `vocab`: +20 once for a local day with ≥ 10 reviews; opt-in users)
 
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
