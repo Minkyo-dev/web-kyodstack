@@ -3015,6 +3015,158 @@ export type Database = {
           },
         ]
       }
+      vocab_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          done_at: string | null
+          id: string
+          last_error_code: string | null
+          next_attempt_at: string
+          payload: Json
+          user_id: string
+          word_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          last_error_code?: string | null
+          next_attempt_at?: string
+          payload: Json
+          user_id: string
+          word_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          last_error_code?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          user_id?: string
+          word_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_outbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vocab_outbox_word_id_user_id_fkey"
+            columns: ["word_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "vocab_words"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      vocab_reviews: {
+        Row: {
+          after: Json
+          algo_version: string
+          before: Json
+          card_id: string
+          client_review_id: string
+          created_at: string
+          duration_ms: number | null
+          id: string
+          rating: number
+          reviewed_at: string
+          user_id: string
+        }
+        Insert: {
+          after: Json
+          algo_version: string
+          before: Json
+          card_id: string
+          client_review_id: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          rating: number
+          reviewed_at: string
+          user_id: string
+        }
+        Update: {
+          after?: Json
+          algo_version?: string
+          before?: Json
+          card_id?: string
+          client_review_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          rating?: number
+          reviewed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_reviews_card_id_user_id_fkey"
+            columns: ["card_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "vocab_cards"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "vocab_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vocab_settings: {
+        Row: {
+          default_cefr: string
+          desired_retention: number
+          directions: string[]
+          new_per_day: number
+          reminder_enabled: boolean
+          reminder_time: string
+          reviews_per_day: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          default_cefr?: string
+          desired_retention?: number
+          directions?: string[]
+          new_per_day?: number
+          reminder_enabled?: boolean
+          reminder_time?: string
+          reviews_per_day?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          default_cefr?: string
+          desired_retention?: number
+          directions?: string[]
+          new_per_day?: number
+          reminder_enabled?: boolean
+          reminder_time?: string
+          reviews_per_day?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vocab_words: {
         Row: {
           cefr: string | null
@@ -3026,6 +3178,7 @@ export type Database = {
           meaning: string | null
           note: string | null
           notion_last_edited_at: string | null
+          notion_next_review: string | null
           notion_page_id: string
           notion_status: string | null
           notion_url: string | null
@@ -3046,6 +3199,7 @@ export type Database = {
           meaning?: string | null
           note?: string | null
           notion_last_edited_at?: string | null
+          notion_next_review?: string | null
           notion_page_id: string
           notion_status?: string | null
           notion_url?: string | null
@@ -3066,6 +3220,7 @@ export type Database = {
           meaning?: string | null
           note?: string | null
           notion_last_edited_at?: string | null
+          notion_next_review?: string | null
           notion_page_id?: string
           notion_status?: string | null
           notion_url?: string | null
@@ -3861,6 +4016,20 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      vocab_apply_review: {
+        Args: {
+          p_card: Json
+          p_card_id: string
+          p_expected_reps: number
+          p_review: Json
+        }
+        Returns: Json
+      }
+      vocab_enqueue_writeback: {
+        Args: { p_payload: Json; p_user_id: string; p_word_id: string }
+        Returns: undefined
+      }
+      vocab_undo_review: { Args: { p_card_id: string }; Returns: Json }
       vocab_upsert_words: {
         Args: { p_rows: Json; p_user_id: string }
         Returns: {
@@ -3873,6 +4042,7 @@ export type Database = {
           meaning: string | null
           note: string | null
           notion_last_edited_at: string | null
+          notion_next_review: string | null
           notion_page_id: string
           notion_status: string | null
           notion_url: string | null
