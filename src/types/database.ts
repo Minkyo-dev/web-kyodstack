@@ -1479,6 +1479,71 @@ export type Database = {
           },
         ]
       }
+      notion_connections: {
+        Row: {
+          access_token_enc: string | null
+          bot_id: string | null
+          created_at: string
+          data_source_id: string | null
+          database_id: string | null
+          database_url: string | null
+          last_pulled_at: string | null
+          last_reconciled_at: string | null
+          property_ids: Json | null
+          refresh_token_enc: string | null
+          schema_version: number | null
+          status: string
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+          workspace_name: string | null
+        }
+        Insert: {
+          access_token_enc?: string | null
+          bot_id?: string | null
+          created_at?: string
+          data_source_id?: string | null
+          database_id?: string | null
+          database_url?: string | null
+          last_pulled_at?: string | null
+          last_reconciled_at?: string | null
+          property_ids?: Json | null
+          refresh_token_enc?: string | null
+          schema_version?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Update: {
+          access_token_enc?: string | null
+          bot_id?: string | null
+          created_at?: string
+          data_source_id?: string | null
+          database_id?: string | null
+          database_url?: string | null
+          last_pulled_at?: string | null
+          last_reconciled_at?: string | null
+          property_ids?: Json | null
+          refresh_token_enc?: string | null
+          schema_version?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+          workspace_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notion_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paths: {
         Row: {
           approach: string
