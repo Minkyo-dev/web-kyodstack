@@ -27,3 +27,8 @@ export function wordDiff(from: string, to: string): DiffPart[] {
   while (j < b.length) out.push({ type: "add", text: b[j++] });
   return out;
 }
+
+/** Whether a rendered token gets a space before it (none before closing punctuation or a possessive). */
+export function spaceBefore(token: string): boolean {
+  return !/^([.,!?;:%)\]}"”’]|'s\b)/.test(token);
+}

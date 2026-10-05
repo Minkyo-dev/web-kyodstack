@@ -111,3 +111,10 @@ describe("practice action schemas", () => {
     expect(submitAnswerSchema.parse({ itemId: id, answer: " I go. " }).answer).toBe("I go.");
   });
 });
+
+describe("spaceBefore", () => {
+  it("puts no space before closing punctuation", async () => {
+    const { spaceBefore } = await import("@/features/vocab/domain/word-diff");
+    expect([".", ",", "!", "?", ")", "'s", "school"].map(spaceBefore)).toEqual([false, false, false, false, false, false, true]);
+  });
+});

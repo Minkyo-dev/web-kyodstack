@@ -73,6 +73,13 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
 - The bulk E2E needs a dev server started with `NOTION_GATEWAY=fake AI_PROVIDER=fake`; Playwright's own server
   keeps the real AI setting so other specs are unchanged.
 
+### V5 refinements (plan `2026-10-05-vocab-v5-ai-practice.md`)
+- Words reach the model as refs `w1…w10`; code maps them back, so the model never echoes UUIDs. A second target below
+  B2 is dropped rather than rejected; a missing word, an unknown ref or a sentence without Hangul rejects the reply.
+- A session and its items are created by `vocab_create_practice` (one transaction); a trigger caps attempts at three
+  per item. The feedback verdict is a label only; practice never touches FSRS or Notion.
+- The diff is a token LCS in TS; the learner's answer enters the prompt only as sanitized JSON (≤ 500 chars).
+
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.
 - A Notion public integration must be registered, with its redirect URI and possibly website, privacy and terms

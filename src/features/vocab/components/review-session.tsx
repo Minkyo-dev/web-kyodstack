@@ -40,6 +40,7 @@ export function ReviewSession({ items, retention, scopeLabel }: { items: ReviewI
   const [summary, setSummary] = useState<{ tomorrowDue: number } | null>(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [againWords, setAgainWords] = useState<string[]>([]);
   const shownAt = useRef(0);
   const [speechReady, setSpeechReady] = useState(false);
 
@@ -78,6 +79,7 @@ export function ReviewSession({ items, retention, scopeLabel }: { items: ReviewI
       return rest;
     });
     setCounts((c) => ({ ...c, [rating]: c[rating] + 1 }));
+    if (rating === 1) setAgainWords((w) => (w.includes(item.word.id) ? w : [...w, item.word.id]));
     setRevealed(false);
     setTyped("");
     const pending = reviewCardAction({ cardId: item.cardId, rating, durationMs, clientReviewId: crypto.randomUUID(), expectedReps: item.state.reps }).then((res) => {
@@ -169,10 +171,15 @@ export function ReviewSession({ items, retention, scopeLabel }: { items: ReviewI
           {reviewed}장 · 다시 {counts[1]} · 어려움 {counts[2]} · 알맞음 {counts[3]} · 쉬움 {counts[4]}
         </p>
         <p className="text-sm">내일 복습 예정 {summary.tomorrowDue}장</p>
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           <Link href="/english" className={buttonVariants({ variant: "outline" })}>
             홈으로
           </Link>
+          {againWords.length > 0 && (
+            <Link href={`/english/practice?words=${againWords.slice(0, 10).join(",")}`} className={buttonVariants()}>
+              틀린 단어로 AI 연습
+            </Link>
+          )}
           {history.length > 0 && (
             <Button variant="ghost" onClick={() => void undo()} disabled={busy}>
               <Undo2 aria-hidden />

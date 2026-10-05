@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/** 단어장 tabs (spec §10). V5 adds AI 연습. */
+/** 단어장 tabs (spec §10). */
 const TABS = [
   { href: "/english", label: "홈", exact: true },
   { href: "/english/words", label: "단어", exact: false },
   { href: "/english/review", label: "복습", exact: false },
+  { href: "/english/practice", label: "AI 연습", exact: false },
   { href: "/english/stats", label: "통계", exact: false },
   { href: "/english/settings", label: "설정", exact: false },
 ] as const;
