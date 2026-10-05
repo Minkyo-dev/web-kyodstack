@@ -3,7 +3,7 @@ import { PAGE_HELP_KEYS, pageHelp } from "@/lib/page-help";
 
 describe("pageHelp", () => {
   it("explains every private page: what it is and how to use it", () => {
-    expect(PAGE_HELP_KEYS).toEqual(["scheduler", "directive", "projects", "review", "progress", "finance"]);
+    expect(PAGE_HELP_KEYS).toEqual(["scheduler", "directive", "projects", "review", "progress", "finance", "english"]);
     for (const key of PAGE_HELP_KEYS) {
       const h = pageHelp(key);
       expect(h.title.length).toBeGreaterThan(0);

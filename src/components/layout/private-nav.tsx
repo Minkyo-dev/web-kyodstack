@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, LayoutDashboard, Wallet } from "lucide-react";
+import { BookOpenText, CalendarClock, LayoutDashboard, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard, exact: true },
   { href: "/scheduler", label: "플래너", icon: CalendarClock, exact: false },
   { href: "/finance", label: "가계부", icon: Wallet, exact: false },
+  { href: "/english", label: "단어장", icon: BookOpenText, exact: false },
 ] as const;
 
 export function PrivateNav() {

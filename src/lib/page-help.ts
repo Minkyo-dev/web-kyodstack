@@ -1,7 +1,7 @@
 import { josa, TERMS as t } from "@/lib/terms";
 
 /** Help shown behind the (?) icon next to each private page's title: what the page is and how to use it. */
-export const PAGE_HELP_KEYS = ["scheduler", "directive", "projects", "review", "progress", "finance"] as const;
+export const PAGE_HELP_KEYS = ["scheduler", "directive", "projects", "review", "progress", "finance", "english"] as const;
 export type PageHelpKey = (typeof PAGE_HELP_KEYS)[number];
 export type PageHelp = { title: string; concept: string; howTo: string[] };
 
@@ -83,6 +83,17 @@ export function pageHelp(key: PageHelpKey): PageHelp {
           "설정 → 예산에서 카테고리별 한 달 예산을 정하면 대시보드와 캘린더에 남은 예산과 적정 사용 속도가 보입니다.",
           "계좌마다 '시작 잔액 설정'으로 실제 잔액을 한 번 입력하면 순자산과 자산 흐름이 보입니다. 가끔 '잔액 맞추기'로 차이를 바로잡으세요.",
           "배우자는 설정 → 가계 구성원의 초대 코드로 같은 가계에 참여합니다.",
+        ],
+      };
+    case "english":
+      return {
+        title: "단어장",
+        concept:
+          "내 Notion 데이터베이스를 단어장으로 씁니다. 단어 내용은 Notion에 저장되고, 복습 일정과 기록은 이 앱이 관리합니다. 학습 상태와 다음 복습일은 Notion에도 표시됩니다.",
+        howTo: [
+          "설정에서 'Notion 연결'을 누르고, Notion 화면에서 단어장을 둘 페이지를 골라 공유합니다.",
+          "공유한 페이지 중 하나를 고르면 'Kyod 단어장' 데이터베이스가 그 아래에 만들어집니다.",
+          "Notion에서 속성을 지우거나 유형을 바꿨다면 설정의 '속성 복구'로 되돌립니다. 이름만 바꾼 속성은 그대로 동작합니다.",
         ],
       };
   }

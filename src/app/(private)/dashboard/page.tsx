@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Wallet } from "lucide-react";
+import { ArrowRight, BookOpenText, CalendarClock, Wallet } from "lucide-react";
 
 export const metadata: Metadata = { title: "대시보드", robots: { index: false } };
 
 const TOOLS = [
   { href: "/scheduler", title: "Work Scheduler", body: "계획 → 실행 → 기록 → 회고", icon: CalendarClock },
   { href: "/finance", title: "가계부", body: "우리 집 돈의 흐름 → 날짜 → 거래", icon: Wallet },
+  { href: "/english", title: "단어장", body: "Notion 단어 → 복습 → AI 연습", icon: BookOpenText },
 ] as const;
 
 export default function DashboardPage() {
