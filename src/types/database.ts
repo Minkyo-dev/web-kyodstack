@@ -1446,6 +1446,7 @@ export type Database = {
           quiet_start: number
           updated_at: string
           user_id: string
+          vocab_due: boolean
         }
         Insert: {
           block_soon?: boolean
@@ -1457,6 +1458,7 @@ export type Database = {
           quiet_start?: number
           updated_at?: string
           user_id: string
+          vocab_due?: boolean
         }
         Update: {
           block_soon?: boolean
@@ -1468,6 +1470,7 @@ export type Database = {
           quiet_start?: number
           updated_at?: string
           user_id?: string
+          vocab_due?: boolean
         }
         Relationships: [
           {
@@ -4028,6 +4031,16 @@ export type Database = {
       vocab_enqueue_writeback: {
         Args: { p_payload: Json; p_user_id: string; p_word_id: string }
         Returns: undefined
+      }
+      vocab_review_days: {
+        Args: { p_since: string; p_timezone: string; p_user_id: string }
+        Returns: {
+          again: number
+          local_date: string
+          reviews: number
+          studied: number
+          studied_ok: number
+        }[]
       }
       vocab_undo_review: { Args: { p_card_id: string }; Returns: Json }
       vocab_upsert_words: {
