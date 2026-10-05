@@ -28,10 +28,8 @@ const serverSchema = z.object({
   /** Must equal the redirect URI registered on the integration; defaults to <request origin>/api/notion/callback. */
   NOTION_REDIRECT_URI: z.url().optional(),
   /** base64 of 32 random bytes (`openssl rand -base64 32`); encrypts Notion tokens at rest. */
-  NOTION_TOKEN_KEY: z
-    .string()
-    .refine((v) => Buffer.from(v, "base64").length === 32, "NOTION_TOKEN_KEY must be 32 bytes, base64")
-    .optional(),
+  // Shape is checked by parseTokenKey where it's used, so a wrong value can't take down every page.
+  NOTION_TOKEN_KEY: z.string().min(1).optional(),
   /** "client" (default) or "fake" (tests/E2E; refused in production). */
   NOTION_GATEWAY: z.enum(["client", "fake"]).optional(),
 });

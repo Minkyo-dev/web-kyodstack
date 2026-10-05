@@ -20,7 +20,7 @@ production. `.env.example` lists the names. All server-only values are validated
 | `VAPID_SUBJECT` | web push | a contact URL or `mailto:`; the repo URL is used (`https://github.com/Minkyo-dev/web-kyodstack`) |
 | `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET` | 단어장 (ADR 0046) | the Notion **public** integration (§7) |
 | `NOTION_REDIRECT_URI` | optional | defaults to `<request origin>/api/notion/callback`; set it when the deployed host differs from the registered URI |
-| `NOTION_TOKEN_KEY` | 단어장 | `openssl rand -base64 32`. Encrypts Notion tokens at rest. Rotating it makes every stored token unreadable: each user's connection flips to 다시 연결 on next use |
+| `NOTION_TOKEN_KEY` | 단어장 | `openssl rand -base64 32` — our own encryption key, **not** the Notion secret (that one is `NOTION_CLIENT_SECRET`). Encrypts Notion tokens at rest; a wrong value only disables the Notion features and the settings page says what to fix. Rotating it makes every stored token unreadable: each user's connection flips to 다시 연결 on next use |
 | `NOTION_GATEWAY` | dev/E2E only | `fake` serves a deterministic Notion (refused in production); unset = the real API |
 
 - The Gemini free tier allows about 5 requests per minute. Bursts get 429. The fallback model and the SDK retries

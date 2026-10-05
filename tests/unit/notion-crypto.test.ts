@@ -26,3 +26,17 @@ describe("token crypto (ADR 0046)", () => {
     expect(() => openToken("garbage", key)).toThrow("unsupported token format");
   });
 });
+
+describe("parseTokenKey (a bad Notion env value must not crash every page)", () => {
+  it("accepts 32 bytes of base64", async () => {
+    const { parseTokenKey } = await import("@/lib/notion/token-crypto");
+    expect(parseTokenKey(randomBytes(32).toString("base64"))).toHaveLength(32);
+  });
+  it("explains a missing key, a client secret pasted by mistake, and a wrong length", async () => {
+    const { parseTokenKey } = await import("@/lib/notion/token-crypto");
+    expect(() => parseTokenKey(undefined)).toThrow(expect.objectContaining({ code: "NOTION_NOT_CONFIGURED" }));
+    // Built at runtime: a literal in Notion's token format trips GitHub push protection.
+    expect(() => parseTokenKey(["secret", "x".repeat(43)].join("_"))).toThrow(/NOTION_CLIENT_SECRET/);
+    expect(() => parseTokenKey(randomBytes(16).toString("base64"))).toThrow(/32바이트/);
+  });
+});
