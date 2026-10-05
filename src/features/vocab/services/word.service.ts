@@ -15,8 +15,15 @@ const WORD_COLUMNS = "id, notion_page_id, term, meaning, pos, ipa, example, syno
 export async function upsertPages(ctx: VocabCtx, pages: NotionPage[], ids: PropertyIds): Promise<WordRow[]> {
   if (pages.length === 0) return [];
   const rows = pages.map((page) => {
-    const { notionStatus, ...fields } = pageToWordFields(page, ids);
-    return { ...fields, notion_status: notionStatus, notion_page_id: page.id, notion_url: page.url, notion_last_edited_at: page.lastEditedTime };
+    const { notionStatus, notionNextReview, ...fields } = pageToWordFields(page, ids);
+    return {
+      ...fields,
+      notion_status: notionStatus,
+      notion_next_review: notionNextReview,
+      notion_page_id: page.id,
+      notion_url: page.url,
+      notion_last_edited_at: page.lastEditedTime,
+    };
   });
   const { data, error } = await ctx.supabase.rpc("vocab_upsert_words", { p_user_id: ctx.user.id, p_rows: rows });
   if (error) throw fromDbError(error);

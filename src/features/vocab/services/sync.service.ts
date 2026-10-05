@@ -7,6 +7,7 @@ import { setupState } from "../domain/connection";
 import type { PropertyIds } from "../domain/notion-schema";
 import { isPullStale, missingFromNotion, pullSince } from "../domain/sync";
 import { getConnectionView, requireDatabase, updateConnection, withNotion, type VocabCtx } from "./connection.service";
+import { flushOutbox } from "./outbox.service";
 import { markDeleted, upsertPages } from "./word.service";
 
 /** Pages through the data source query, upserting each batch; returns the live page ids it saw. */
@@ -57,11 +58,13 @@ export function reconcile(ctx: VocabCtx): Promise<{ pulled: number; deleted: num
   });
 }
 
-/** Page entry (via after()): pull when the mirror is older than 5 minutes. Never throws. */
+/** Page entry (via after()): send pending write-backs, and pull when the mirror is older than 5 minutes. Never throws. */
 export async function maybePull(ctx: VocabCtx): Promise<void> {
   try {
     const view = await getConnectionView(ctx.supabase, ctx.user.id);
-    if (setupState(view) !== "ready" || !isPullStale(view?.lastPulledAt ?? null)) return;
+    if (setupState(view) !== "ready") return;
+    await flushOutbox(ctx, 30);
+    if (!isPullStale(view?.lastPulledAt ?? null)) return;
     await pullChanges(ctx);
   } catch (error) {
     log({ action: "vocab.sync.pull", userId: ctx.user.id, success: false, errorCode: error instanceof AppError ? error.code : "INTERNAL_ERROR", detail: error instanceof AppError ? undefined : String(error) });
@@ -75,9 +78,11 @@ export async function reconcileAll(admin: SupabaseServerClient): Promise<{ users
   const summary = { users: data.length, pulled: 0, deleted: 0, failed: 0 };
   for (const { user_id } of data) {
     try {
-      const r = await reconcile({ supabase: admin, user: { id: user_id } });
+      const ctx = { supabase: admin, user: { id: user_id } };
+      const r = await reconcile(ctx);
       summary.pulled += r.pulled;
       summary.deleted += r.deleted;
+      await flushOutbox(ctx, 1000);
     } catch (err) {
       summary.failed += 1;
       log({ action: "job.vocab_sync.user", userId: user_id, success: false, errorCode: err instanceof AppError ? err.code : "INTERNAL_ERROR" });

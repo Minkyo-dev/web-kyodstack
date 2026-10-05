@@ -24,3 +24,10 @@ export function syncLabel(lastPulledAt: string | null, timezone: string): string
   if (!lastPulledAt) return "아직 없음";
   return new Intl.DateTimeFormat("ko-KR", { timeZone: timezone, month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(lastPulledAt));
 }
+
+/** Outbox retry delay after `attempts` failures: 1 min, doubling, capped at 1 h (spec §6.4). */
+export function outboxBackoffMs(attempts: number): number {
+  return Math.min(60 * 60_000, 60_000 * 2 ** attempts);
+}
+/** After this many failures a write-back waits for [다시 시도] in settings. */
+export const OUTBOX_MAX_ATTEMPTS = 10;

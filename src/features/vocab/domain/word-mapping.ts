@@ -51,8 +51,9 @@ function choice(value: NotionValue | undefined): string | null {
 }
 
 /** Notion page → mirror fields. Never throws on user content: clips, normalizes and drops what doesn't fit. */
-export function pageToWordFields(page: NotionPage, ids: PropertyIds): WordFields & { notionStatus: string | null } {
+export function pageToWordFields(page: NotionPage, ids: PropertyIds): WordFields & { notionStatus: string | null; notionNextReview: string | null } {
   const props = page.properties;
+  const next = props[ids.nextReview];
   const cefr = choice(props[ids.cefr]);
   const topics = props[ids.topics];
   return {
@@ -66,11 +67,12 @@ export function pageToWordFields(page: NotionPage, ids: PropertyIds): WordFields
     topics: topics?.type === "multi_select" ? normalizeTopics(topics.names) : [],
     cefr: (CEFR_LEVELS as readonly string[]).includes(cefr ?? "") ? (cefr as Cefr) : null,
     notionStatus: choice(props[ids.status]),
+    notionNextReview: next?.type === "date" && next.start ? next.start.slice(0, 10) : null,
   };
 }
 
 /** Mirror fields → Notion values for exactly the keys present in the patch. */
-export function wordToValues(patch: Partial<WordFields> & { status?: StudyStatus }, ids: PropertyIds): Record<string, NotionValue> {
+export function wordToValues(patch: Partial<WordFields> & { status?: StudyStatus; nextReview?: string | null }, ids: PropertyIds): Record<string, NotionValue> {
   const values: Record<string, NotionValue> = {};
   if (patch.term !== undefined) values[ids.term] = { type: "title", text: patch.term };
   for (const key of TEXT_KEYS) {
@@ -81,6 +83,7 @@ export function wordToValues(patch: Partial<WordFields> & { status?: StudyStatus
   if (patch.cefr !== undefined) values[ids.cefr] = { type: "select", name: patch.cefr };
   if (patch.topics !== undefined) values[ids.topics] = { type: "multi_select", names: patch.topics };
   if (patch.status !== undefined) values[ids.status] = { type: "status", name: patch.status };
+  if (patch.nextReview !== undefined) values[ids.nextReview] = { type: "date", start: patch.nextReview };
   return values;
 }
 

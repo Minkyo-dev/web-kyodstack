@@ -17,7 +17,13 @@ describe("word ⇄ Notion values (spec §5.3)", () => {
     const values = wordToValues({ ...full, status: "새 단어" }, ids);
     expect(values[ids.status]).toEqual({ type: "status", name: "새 단어" });
     expect(values[ids.note]).toEqual({ type: "rich_text", text: "" });
-    expect(pageToWordFields(page(values), ids)).toEqual({ ...full, notionStatus: "새 단어" });
+    expect(pageToWordFields(page(values), ids)).toEqual({ ...full, notionStatus: "새 단어", notionNextReview: null });
+  });
+
+  it("reads and writes 다음 복습 as a date", () => {
+    expect(wordToValues({ nextReview: "2026-10-08" }, ids)).toEqual({ [ids.nextReview]: { type: "date", start: "2026-10-08" } });
+    expect(wordToValues({ nextReview: null }, ids)).toEqual({ [ids.nextReview]: { type: "date", start: null } });
+    expect(pageToWordFields(page({ [ids.term]: { type: "title", text: "x" }, [ids.nextReview]: { type: "date", start: "2026-10-08T09:00:00.000-04:00" } }), ids).notionNextReview).toBe("2026-10-08");
   });
 
   it("sends only the fields in the patch", () => {
@@ -43,6 +49,7 @@ describe("word ⇄ Notion values (spec §5.3)", () => {
     expect(fields.example).toBeNull();
     expect(fields.topics).toEqual(["IT", "ab", "t".repeat(50), "k0", "k1", "k2", "k3", "k4", "k5", "k6"]);
     expect(fields.notionStatus).toBeNull();
+    expect(fields.notionNextReview).toBeNull();
   });
 
   it("ignores properties that are missing or of another type", () => {
