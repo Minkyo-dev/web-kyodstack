@@ -22,6 +22,18 @@ const serverSchema = z.object({
   VAPID_SUBJECT: z.string().min(1).optional(),
   /** Vercel Cron sends "Authorization: Bearer $CRON_SECRET"; either secret authorizes jobs. */
   CRON_SECRET: z.string().min(16).optional(),
+  /** Notion public integration (ADR 0046). */
+  NOTION_CLIENT_ID: z.string().min(1).optional(),
+  NOTION_CLIENT_SECRET: z.string().min(1).optional(),
+  /** Must equal the redirect URI registered on the integration; defaults to <request origin>/api/notion/callback. */
+  NOTION_REDIRECT_URI: z.url().optional(),
+  /** base64 of 32 random bytes (`openssl rand -base64 32`); encrypts Notion tokens at rest. */
+  NOTION_TOKEN_KEY: z
+    .string()
+    .refine((v) => Buffer.from(v, "base64").length === 32, "NOTION_TOKEN_KEY must be 32 bytes, base64")
+    .optional(),
+  /** "client" (default) or "fake" (tests/E2E; refused in production). */
+  NOTION_GATEWAY: z.enum(["client", "fake"]).optional(),
 });
 
 export const serverEnv = serverSchema.parse(process.env);

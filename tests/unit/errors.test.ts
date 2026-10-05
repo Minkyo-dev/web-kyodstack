@@ -25,3 +25,11 @@ describe("fail", () => {
     });
   });
 });
+
+describe("Notion error codes", () => {
+  it("have user-facing Korean messages", () => {
+    for (const code of ["NOTION_NOT_CONNECTED", "NOTION_REAUTH_REQUIRED", "NOTION_RATE_LIMITED", "NOTION_UNAVAILABLE", "NOTION_SCHEMA_MISMATCH", "NOTION_ERROR"] as const) {
+      expect(new AppError(code).message).toMatch(/[가-힣]/);
+    }
+  });
+});

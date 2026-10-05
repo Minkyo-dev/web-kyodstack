@@ -11,6 +11,12 @@ export const ERROR_CODES = [
   "AI_PROVIDER_ERROR",
   "AI_OUTPUT_INVALID",
   "AI_BUDGET_EXCEEDED",
+  "NOTION_NOT_CONNECTED",
+  "NOTION_REAUTH_REQUIRED",
+  "NOTION_RATE_LIMITED",
+  "NOTION_UNAVAILABLE",
+  "NOTION_SCHEMA_MISMATCH",
+  "NOTION_ERROR",
   "INTERNAL_ERROR",
 ] as const;
 
@@ -27,6 +33,12 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   AI_PROVIDER_ERROR: "AI 응답을 받지 못했습니다. 잠시 후 다시 시도해 주세요.",
   AI_OUTPUT_INVALID: "AI 응답 형식이 올바르지 않습니다. 다시 시도해 주세요.",
   AI_BUDGET_EXCEEDED: "오늘 AI 사용량을 다 썼어요. 내일 다시 시도해 주세요.",
+  NOTION_NOT_CONNECTED: "Notion을 먼저 연결해 주세요.",
+  NOTION_REAUTH_REQUIRED: "Notion 연결이 만료됐어요. 다시 연결해 주세요.",
+  NOTION_RATE_LIMITED: "Notion이 잠시 바빠요. 잠시 후 다시 시도해 주세요.",
+  NOTION_UNAVAILABLE: "Notion에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.",
+  NOTION_SCHEMA_MISMATCH: "Notion 단어장의 속성이 바뀌었어요. 설정에서 속성을 복구해 주세요.",
+  NOTION_ERROR: "Notion 요청을 처리하지 못했어요.",
   INTERNAL_ERROR: "알 수 없는 오류가 발생했습니다.",
 };
 
