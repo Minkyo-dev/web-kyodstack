@@ -1,20 +1,19 @@
 import "server-only";
-import type { ActionContext } from "@/lib/action";
 import { AppError, fromDbError } from "@/lib/errors";
 import type { NotionPageRef } from "@/lib/notion/types";
 import {
   applyRepair, checkSchema, mapCreatedProperties, planRepair, VOCAB_DB_TITLE, VOCAB_PROPERTIES, VOCAB_SCHEMA_VERSION, type SchemaIssue,
 } from "../domain/notion-schema";
-import { getConnectionView, withNotion } from "./connection.service";
+import { getConnectionView, withNotion, type VocabCtx } from "./connection.service";
 
 export type SchemaState = { state: "ok" } | { state: "mismatch"; issues: SchemaIssue[] } | { state: "missing_db" };
 
-export function listParentPages(ctx: ActionContext): Promise<NotionPageRef[]> {
+export function listParentPages(ctx: VocabCtx): Promise<NotionPageRef[]> {
   return withNotion(ctx, (gateway, auth) => gateway.searchPages(auth));
 }
 
 /** Creates "Kyod 단어장" under a page the user shared (spec §5.2 step 3). One DB per connection. */
-export async function createVocabDatabase(ctx: ActionContext, parentPageId: string): Promise<{ databaseUrl: string }> {
+export async function createVocabDatabase(ctx: VocabCtx, parentPageId: string): Promise<{ databaseUrl: string }> {
   const view = await getConnectionView(ctx.supabase, ctx.user.id);
   if (view?.databaseId) throw new AppError("CONFLICT", "이미 단어장이 연결돼 있어요.");
   return withNotion(ctx, async (gateway, auth) => {
@@ -31,7 +30,7 @@ export async function createVocabDatabase(ctx: ActionContext, parentPageId: stri
   });
 }
 
-export function inspectSchema(ctx: ActionContext): Promise<SchemaState> {
+export function inspectSchema(ctx: VocabCtx): Promise<SchemaState> {
   return withNotion(ctx, async (gateway, auth, conn) => {
     if (!conn.dataSourceId || !conn.propertyIds) return { state: "missing_db" };
     try {
@@ -45,7 +44,7 @@ export function inspectSchema(ctx: ActionContext): Promise<SchemaState> {
 }
 
 /** Re-adds missing or retyped properties (uniquely named) and adopts their ids (spec §5.3). */
-export function repairSchema(ctx: ActionContext): Promise<{ repaired: number }> {
+export function repairSchema(ctx: VocabCtx): Promise<{ repaired: number }> {
   return withNotion(ctx, async (gateway, auth, conn) => {
     if (!conn.dataSourceId || !conn.propertyIds) throw new AppError("NOTION_NOT_CONNECTED");
     const actual = await gateway.getDataSourceProperties(auth, conn.dataSourceId);

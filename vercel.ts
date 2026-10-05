@@ -25,5 +25,7 @@ export const config: VercelConfig = {
     { path: "/api/internal/jobs/duration-profile-refresh", schedule: "0 8 * * *" },
     // Subscription charges (ADR 0029); each household's own timezone decides "today"
     { path: "/api/internal/jobs/finance-subscriptions", schedule: "0 9 * * *" },
+    // 단어장 (ADR 0046): nightly Notion reconcile (full pull + deletions)
+    { path: "/api/internal/jobs/vocab-sync", schedule: "0 7 * * *" },
   ],
 };
