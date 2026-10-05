@@ -97,3 +97,17 @@ describe("practice AI contracts", () => {
     expect(gen).toEqual({ level: "C1", rule: CEFR_RUBRIC.C1.rule, words: [{ ref: "w1", term: "term-a", meaning: "뜻-a", pos: "명사" }] });
   });
 });
+
+describe("practice action schemas", () => {
+  it("needs a topic for the topic source and words for a manual set", async () => {
+    const { createPracticeSchema, submitAnswerSchema } = await import("@/features/vocab/schemas/practice.schema");
+    const id = "6f1c1f9e-1b2a-4c3d-8e4f-5a6b7c8d9e0f";
+    expect(createPracticeSchema.parse({ source: "hard", size: "7", cefr: "B2" })).toMatchObject({ source: "hard", size: 7, cefr: "B2" });
+    expect(createPracticeSchema.safeParse({ source: "topic", size: 5, cefr: "B1" }).success).toBe(false);
+    expect(createPracticeSchema.safeParse({ source: "manual", size: 5, cefr: "B1", wordIds: [] }).success).toBe(false);
+    expect(createPracticeSchema.safeParse({ source: "manual", size: 5, cefr: "B1", wordIds: [id] }).success).toBe(true);
+    expect(createPracticeSchema.safeParse({ source: "hard", size: 11, cefr: "B1" }).success).toBe(false);
+    expect(submitAnswerSchema.safeParse({ itemId: id, answer: "   " }).success).toBe(false);
+    expect(submitAnswerSchema.parse({ itemId: id, answer: " I go. " }).answer).toBe("I go.");
+  });
+});

@@ -18,6 +18,23 @@ export class FakeProvider implements AiProvider {
 }
 
 const FAKE_OUTPUTS: Record<string, (prompt: string) => unknown> = {
+  vocab_practice_generate: (prompt) => {
+    const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { words: { ref: string; meaning: string }[] };
+    return { items: input.words.map((w, i) => ({ target_refs: [w.ref], prompt_ko: `연습 문장 ${i + 1}: ${w.meaning || "단어"}을(를) 써 보세요.`, hint_ko: i === 0 ? "현재형" : "" })) };
+  },
+  vocab_practice_feedback: (prompt) => {
+    const input = JSON.parse(prompt.slice(prompt.indexOf("{"))) as { answer: string; targets: { term: string }[] };
+    const hasError = /\bgoes\b/.test(input.answer);
+    const corrected = input.answer.replace(/\bgoes\b/, "go");
+    return {
+      verdict: hasError ? "minor_issues" : "correct",
+      target_usage: { used: input.answer.includes(input.targets[0]?.term ?? ""), correct: true, note_ko: "목표 표현을 확인했어요." },
+      corrections: hasError ? [{ original: "goes", corrected: "go", category: "grammar", explanation_ko: "주어가 I일 때는 go를 써요." }] : [],
+      corrected_sentence: corrected,
+      natural_sentence: "These days, smartphones are everywhere.",
+      alternatives: [{ sentence: "Smartphones are all over the place now.", register: "casual", nuance_ko: "더 구어적인 표현이에요." }],
+    };
+  },
   vocab_enrich: (prompt) => {
     const terms = JSON.parse(prompt.slice(prompt.indexOf("["))) as string[];
     return {
