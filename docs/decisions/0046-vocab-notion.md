@@ -66,6 +66,13 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
 - Card-state counts on the stats page are per card (two per word), not per word.
 - Sibling bury holds back only the other direction: a card already reviewed today returns for its learning step.
 
+### V4 refinements (plan `2026-10-05-vocab-v4-ai-fill-bulk.md`)
+- 단어장 prompts and schemas live in `features/vocab/ai/`, not `features/ai/prompts`, so `features/ai` never imports
+  the vocabulary domain. `callAi` accepts any `{ user: { id }, supabase }` and picks the pool from the kind prefix.
+- [AI 채우기] writes only into empty form inputs; the bulk grid takes AI suggestions only for rows without a meaning.
+- The bulk E2E needs a dev server started with `NOTION_GATEWAY=fake AI_PROVIDER=fake`; Playwright's own server
+  keeps the real AI setting so other specs are unchanged.
+
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.
 - A Notion public integration must be registered, with its redirect URI and possibly website, privacy and terms

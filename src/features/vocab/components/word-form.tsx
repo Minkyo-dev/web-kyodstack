@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +10,7 @@ import { nativeSelectClass } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { CEFR_LEVELS, POS_OPTIONS } from "../domain/notion-schema";
 import type { WordFields } from "../domain/word-mapping";
+import type { TermSuggestion } from "../services/enrich.service";
 
 export type WordFormValues = Omit<WordFields, "topics"> & { topics: string[] };
 
@@ -20,18 +23,46 @@ export function WordForm({
   pending,
   fieldErrors,
   onSubmit,
+  aiFill,
 }: {
   initial: WordFormValues;
   submitLabel: string;
   pending: boolean;
   fieldErrors?: Record<string, string[]>;
   onSubmit: (values: Record<string, unknown>) => void;
+  /** [AI 채우기]: fills only the fields that are still empty; nothing is saved until [저장]. */
+  aiFill?: (term: string) => Promise<TermSuggestion | null>;
 }) {
   const [topicsText, setTopicsText] = useState(initial.topics.join(", "));
+  const [filling, setFilling] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const fillEmpty = async () => {
+    const form = formRef.current;
+    if (!form || !aiFill) return;
+    const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+    const term = field("term")?.value.trim();
+    if (!term) return void toast.message("단어를 먼저 입력해 주세요.");
+    setFilling(true);
+    const s = await aiFill(term);
+    setFilling(false);
+    if (!s) return;
+    const values: Record<string, string | null> = { meaning: s.meaning, pos: s.pos, ipa: s.ipa, example: s.example, synonyms: s.synonyms, cefr: s.cefr };
+    let filled = 0;
+    for (const [name, value] of Object.entries(values)) {
+      const el = field(name);
+      if (el && value && !el.value.trim()) {
+        el.value = value;
+        filled += 1;
+      }
+    }
+    toast.success(filled ? "AI가 빈 칸을 채웠어요. 확인한 뒤 저장해 주세요." : "채울 빈 칸이 없어요.");
+  };
   const err = (k: string) => fieldErrors?.[k]?.[0] ?? fieldErrors?.[`patch.${k}`]?.[0];
 
   return (
     <form
+      ref={formRef}
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
@@ -51,7 +82,15 @@ export function WordForm({
       }}
     >
       <Field id="term" label="단어" error={err("term")}>
-        <Input id="term" name="term" defaultValue={initial.term} required maxLength={200} autoComplete="off" />
+        <div className="flex gap-2">
+          <Input id="term" name="term" defaultValue={initial.term} required maxLength={200} autoComplete="off" />
+          {aiFill && (
+            <Button type="button" variant="outline" onClick={() => void fillEmpty()} disabled={filling}>
+              <Sparkles aria-hidden />
+              {filling ? "채우는 중…" : "AI 채우기"}
+            </Button>
+          )}
+        </div>
       </Field>
       <Field id="meaning" label="뜻" error={err("meaning")}>
         <Textarea id="meaning" name="meaning" defaultValue={initial.meaning ?? ""} rows={2} maxLength={1000} />

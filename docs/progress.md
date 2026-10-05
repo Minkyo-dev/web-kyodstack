@@ -277,7 +277,7 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       (outbox), Notion 상태 transitions, study settings (SQL `vocab_study.sql`, E2E `vocab-review.spec.ts`)
 - [x] V3: due buckets + forecast, `vocab_due` push (notify-v2), stats + streak (SQL `vocab_stats.sql`, E2E
       `vocab-stats.spec.ts`)
-- [ ] V4: AI budget pools, AI auto-fill, bulk add
+- [x] V4: AI budget pools, AI auto-fill, bulk add, Notion throttle (E2E `vocab-bulk.spec.ts` with the fake AI)
 - [ ] V5: AI practice (CEFR A1–C2): generate, feedback, diff, history
 - [ ] V6 (optional): planner XP for vocab review days
 

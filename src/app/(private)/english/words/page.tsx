@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Rows3 } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { requireUserOrRedirect } from "@/lib/auth";
@@ -32,8 +35,14 @@ export default async function EnglishWordsPage({ searchParams }: { searchParams:
   return (
     <div className="max-w-5xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full sm:max-w-sm">
-          <QuickAdd />
+        <div className="flex w-full items-center gap-2 sm:max-w-md">
+          <div className="flex-1">
+            <QuickAdd />
+          </div>
+          <Link href="/english/words/bulk" className={buttonVariants({ variant: "outline" })}>
+            <Rows3 aria-hidden />
+            일괄 추가
+          </Link>
         </div>
         <SyncButton lastSynced={syncLabel(view?.lastPulledAt ?? null, timezone)} />
       </div>

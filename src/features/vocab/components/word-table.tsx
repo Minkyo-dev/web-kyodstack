@@ -9,6 +9,7 @@ import type { WordListItem } from "../queries/word.queries";
 import { setLearnedAction } from "../actions/review.actions";
 import { deleteWordAction, updateWordAction } from "../actions/word.actions";
 import { StudyStatusBadge } from "./study-status";
+import { suggestFor } from "./ai-fill";
 import { WordForm } from "./word-form";
 
 /** Dense word list; a row opens the drawer with the word in context (spec §10 단어). */
@@ -94,6 +95,7 @@ function WordDrawerBody({ word, onDone }: { word: WordListItem; onDone: () => vo
       <WordForm
         initial={word}
         submitLabel="저장"
+        aiFill={suggestFor}
         pending={pending}
         fieldErrors={errors}
         onSubmit={(values) =>

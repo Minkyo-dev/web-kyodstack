@@ -5,7 +5,7 @@ import type { SupabaseServerClient } from "@/lib/supabase/server";
 import { CEFR_LEVELS, STUDY_STATUSES } from "../domain/notion-schema";
 import type { FsrsState } from "../domain/srs";
 import { deriveStatus, isMature, nextReviewDate } from "../domain/status";
-import type { Cefr, StudyStatus } from "../domain/word-mapping";
+import { normalizeTerm, type Cefr, type StudyStatus } from "../domain/word-mapping";
 import { ilikeAny } from "../utils/escape-like";
 
 export const wordFilterSchema = z.object({
@@ -94,4 +94,11 @@ export async function userTimezone(supabase: SupabaseServerClient, userId: strin
   const { data, error } = await supabase.from("profiles").select("timezone").eq("id", userId).maybeSingle();
   if (error) throw fromDbError(error);
   return data?.timezone ?? "America/Toronto";
+}
+
+/** Normalized terms of the live words, for duplicate flags in bulk add (first 1000 rows, PostgREST's cap). */
+export async function liveTerms(supabase: SupabaseServerClient, userId: string): Promise<string[]> {
+  const { data, error } = await supabase.from("vocab_words").select("term").eq("user_id", userId).is("deleted_at", null).limit(1000);
+  if (error) throw fromDbError(error);
+  return data.map((w) => normalizeTerm(w.term));
 }

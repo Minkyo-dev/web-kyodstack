@@ -112,6 +112,7 @@ select status_code, content, created from net._http_response order by created de
 - **단어장 E2E uses the fake Notion.** Playwright's own server starts with `NOTION_GATEWAY=fake`. Against an external
   server (`E2E_BASE_URL`), `vocab-*.spec.ts` are skipped unless that server was started with
   `NOTION_GATEWAY=fake npx next dev -p <port>` and the run also sets `NOTION_GATEWAY=fake`.
+  `vocab-bulk.spec.ts` also needs `AI_PROVIDER=fake` on both the server and the run.
 - **Local-only edits.** The owner's `package.json` dev-port change (`next dev --port 3001`) is intentionally left
   uncommitted.
 

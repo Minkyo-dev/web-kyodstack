@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { createWordAction } from "../actions/word.actions";
+import { suggestFor } from "./ai-fill";
 import { EMPTY_WORD, WordForm } from "./word-form";
 
 /** "단어 + Enter" opens the full form with the word filled in; saving writes to Notion first. */
@@ -39,6 +40,7 @@ export function QuickAdd() {
             key={term}
             initial={{ ...EMPTY_WORD, term: term.trim() }}
             submitLabel="Notion에 저장"
+            aiFill={suggestFor}
             pending={pending}
             fieldErrors={errors}
             onSubmit={(values) =>
