@@ -8,7 +8,9 @@ const COMPLETION_XP = 20;
 const COMMITMENT_XP = 10;
 const COMMITMENT_MIN_SCORE = 0.75;
 const HABIT_XP = 10;
-const DAY_CAP: Record<XpRule, number | null> = { focus: 120, completion: 5 * COMPLETION_XP, commitment: null, quest: null, habit: 3 * HABIT_XP };
+const VOCAB_XP = 20;
+const VOCAB_MIN_REVIEWS = 10;
+const DAY_CAP: Record<XpRule, number | null> = { focus: 120, completion: 5 * COMPLETION_XP, commitment: null, quest: null, habit: 3 * HABIT_XP, vocab: VOCAB_XP };
 
 export function focusXp(minutes: number): number {
   if (minutes < FOCUS_MIN_MINUTES) return 0;
@@ -22,7 +24,7 @@ type Candidate = Omit<NewXpEvent, "localDate"> & { at: string };
 /** New events for one local day. Skips sources already in the ledger; daily caps count what is already there. */
 export function evaluateDay(facts: DayFacts, existing: ExistingXp[]): NewXpEvent[] {
   const have = new Set(existing.map((e) => `${e.rule}:${e.sourceId}`));
-  const used: Record<XpRule, number> = { focus: 0, completion: 0, commitment: 0, quest: 0, habit: 0 };
+  const used: Record<XpRule, number> = { focus: 0, completion: 0, commitment: 0, quest: 0, habit: 0, vocab: 0 };
   for (const e of existing) used[e.rule] += e.xp;
 
   const candidates: Candidate[] = [
@@ -57,6 +59,9 @@ export function evaluateDay(facts: DayFacts, existing: ExistingXp[]): NewXpEvent
       xp: HABIT_XP,
       metadata: {},
     })),
+    ...(facts.vocabReviews && facts.vocabReviews.count >= VOCAB_MIN_REVIEWS
+      ? [{ rule: "vocab", sourceType: "vocab_review", sourceId: facts.vocabReviews.firstId, at: facts.vocabReviews.at, xp: VOCAB_XP, metadata: { reviews: facts.vocabReviews.count } } satisfies Candidate]
+      : []),
   ].sort((a, b) => a.at.localeCompare(b.at) || a.sourceId.localeCompare(b.sourceId));
 
   const out: NewXpEvent[] = [];

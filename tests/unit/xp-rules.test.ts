@@ -79,6 +79,7 @@ const raw = (over: Partial<XpRaw> = {}): XpRaw => ({
   blocks: [],
   revisions: [],
   habitChecks: [],
+  vocabReviews: [],
   ...over,
 });
 
@@ -138,5 +139,32 @@ describe("habit xp", () => {
     );
     expect(facts[0].habitChecks).toEqual([]);
     expect(facts[1].habitChecks).toEqual([{ id: id(7), createdAt: "2026-10-01T01:00:00Z" }]);
+  });
+});
+
+describe("vocab review days (ADR 0046 V6)", () => {
+  const vocab = (count: number, firstId = id(70)) => ({ firstId, at: "2026-09-29T14:00:00Z", count });
+  it("gives +20 once for a day with at least 10 reviews", () => {
+    expect(evaluateDay(day({ vocabReviews: vocab(9) }), [])).toEqual([]);
+    expect(evaluateDay(day({ vocabReviews: vocab(10) }), [])).toEqual([
+      { rule: "vocab", sourceType: "vocab_review", sourceId: id(70), localDate: "2026-09-29", xp: 20, metadata: { reviews: 10 } },
+    ]);
+  });
+  it("never awards twice in a day, even when the first review was undone", () => {
+    expect(evaluateDay(day({ vocabReviews: vocab(30, id(71)) }), [{ rule: "vocab", sourceId: id(70), xp: 20 }])).toEqual([]);
+  });
+  it("counts reviews by the local day", () => {
+    const raw = {
+      now: "2026-09-30T12:00:00Z", timezone: "America/Toronto", settings: { planned_work_days: [1, 2, 3, 4, 5], min_meaningful_minutes: 10, commit_lead_minutes: 0 },
+      sessions: [], completedTasks: [], taskFocus: {}, blocks: [], revisions: [], habitChecks: [],
+      vocabReviews: [
+        { id: id(80), reviewed_at: "2026-09-30T03:59:00Z" }, // 23:59 on the 29th locally
+        { id: id(81), reviewed_at: "2026-09-30T04:01:00Z" },
+        { id: id(82), reviewed_at: "2026-09-30T05:00:00Z" },
+      ],
+    } as unknown as XpRaw;
+    const [d29, d30] = buildDayFacts(raw, ["2026-09-29", "2026-09-30"]);
+    expect(d29.vocabReviews).toEqual({ firstId: id(80), at: "2026-09-30T03:59:00Z", count: 1 });
+    expect(d30.vocabReviews).toEqual({ firstId: id(81), at: "2026-09-30T04:01:00Z", count: 2 });
   });
 });

@@ -1,8 +1,8 @@
 import type { PauseLike, StatInput } from "@/features/analytics/domain/stats.types";
 
-export const XP_RULES = ["focus", "completion", "commitment", "quest", "habit"] as const;
+export const XP_RULES = ["focus", "completion", "commitment", "quest", "habit", "vocab"] as const;
 export type XpRule = (typeof XP_RULES)[number];
-export const XP_RULE_LABEL: Record<XpRule, string> = { focus: "집중", completion: "완료", commitment: "약속 지킴", quest: "퀘스트", habit: "습관" };
+export const XP_RULE_LABEL: Record<XpRule, string> = { focus: "집중", completion: "완료", commitment: "약속 지킴", quest: "퀘스트", habit: "습관", vocab: "단어 복습" };
 
 export type DayFacts = {
   date: string;
@@ -10,11 +10,13 @@ export type DayFacts = {
   completions: { taskId: string; completedAt: string; focusedMinutes: number }[];
   commitments: { blockId: string; resolvedAt: string; score: number }[];
   habitChecks: { id: string; createdAt: string }[];
+  /** 단어장 flashcard reviews that local day (ADR 0046 V6): the first review is the XP source. */
+  vocabReviews?: { firstId: string; at: string; count: number } | null;
 };
 export type ExistingXp = { rule: XpRule; sourceId: string; xp: number };
 export type NewXpEvent = {
   rule: XpRule;
-  sourceType: "work_session" | "task" | "schedule_block" | "quest" | "habit_check";
+  sourceType: "work_session" | "task" | "schedule_block" | "quest" | "habit_check" | "vocab_review";
   sourceId: string;
   localDate: string;
   xp: number;
@@ -38,4 +40,5 @@ export type XpRaw = {
   blocks: StatInput["blocks"];
   revisions: StatInput["revisions"];
   habitChecks: { id: string; local_date: string; created_at: string }[];
+  vocabReviews: { id: string; reviewed_at: string }[];
 };

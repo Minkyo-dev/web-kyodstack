@@ -38,7 +38,7 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
   const end = localDayRange(to, timezone).end;
   const lookback = localDayRange(addLocalDays(from, -2, timezone), timezone).start;
 
-  const [sessions, blocks, completed, habitChecks] = await Promise.all([
+  const [sessions, blocks, completed, habitChecks, vocabReviews] = await Promise.all([
     supabase
       .from("work_sessions")
       .select(`id, task_id, schedule_block_id, source, started_at, ended_at, ${PAUSES}`)
@@ -68,8 +68,9 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
       .gte("local_date", from)
       .lte("local_date", to)
       .limit(LIMIT),
+    supabase.from("vocab_reviews").select("id, reviewed_at").eq("user_id", userId).gte("reviewed_at", start).lt("reviewed_at", end).limit(LIMIT),
   ]);
-  for (const r of [sessions, blocks, completed, habitChecks]) if (r.error) throw fromDbError(r.error);
+  for (const r of [sessions, blocks, completed, habitChecks, vocabReviews]) if (r.error) throw fromDbError(r.error);
 
   const revisions: XpRaw["revisions"] = [];
   for (const ids of chunks(blocks.data!.map((b) => b.id))) {
@@ -109,6 +110,7 @@ export async function loadXpRaw(supabase: SupabaseServerClient, userId: string, 
     blocks: blocks.data!,
     revisions,
     habitChecks: habitChecks.data!,
+    vocabReviews: vocabReviews.data!,
   };
 }
 
