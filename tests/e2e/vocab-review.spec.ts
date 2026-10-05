@@ -62,18 +62,24 @@ test("review with the keyboard: reveal, rate, undo, again, 학습 완료, write-
   await page.keyboard.press("3");
   await expect(card).toContainText("[e2e] alpha");
 
-  // D marks alpha 학습 완료. beta's 10-minute learning step brings it back once more; Easy (4) sends it to days.
-  await page.keyboard.press("d");
+  // A focused button keeps its own Enter (keyboard users who Tab): "어려움" for alpha, which comes back once more.
+  await page.keyboard.press("Space");
+  await page.getByRole("button", { name: /어려움/ }).focus();
+  await page.keyboard.press("Enter");
   await expect(card).toContainText("[e2e] beta");
+
+  // beta's 10-minute learning step is done with Easy; then D marks alpha 학습 완료 and the session ends.
   await page.keyboard.press("Space");
   await page.keyboard.press("4");
+  await expect(card).toContainText("[e2e] alpha");
+  await page.keyboard.press("d");
   await expect(page.getByText("오늘 복습을 마쳤어요")).toBeVisible();
 
   const db = await dbAsUser();
   const { data: words } = await db.from("vocab_words").select("id, term").like("term", "[e2e]%").order("term");
   const [alpha, beta] = words!;
   const { data: reviews } = await db.from("vocab_reviews").select("rating, vocab_cards!inner(word_id)").order("created_at");
-  expect(reviews?.map((r) => r.rating)).toEqual([1, 3, 4]);
+  expect(reviews?.map((r) => r.rating)).toEqual([1, 3, 2, 4]);
   const { data: alphaCards } = await db.from("vocab_cards").select("suspended_at").eq("word_id", alpha.id);
   expect(alphaCards?.every((c) => c.suspended_at !== null)).toBe(true);
 
@@ -81,6 +87,8 @@ test("review with the keyboard: reveal, rate, undo, again, 학습 완료, write-
   await expect
     .poll(async () => (await db.from("vocab_words").select("term, notion_status").in("id", [alpha.id, beta.id]).order("term")).data?.map((w) => w.notion_status))
     .toEqual(["학습 완료", "학습 중"]);
+  // Written rows are closed, so the next flush doesn't send them again.
+  await expect.poll(async () => (await db.from("vocab_outbox").select("id").is("done_at", null)).data?.length).toBe(0);
 
   await page.goto("/english/words", { waitUntil: "networkidle" });
   await expect(page.getByRole("row", { name: /\[e2e\] alpha/ })).toContainText("학습 완료");

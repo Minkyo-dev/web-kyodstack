@@ -143,7 +143,8 @@ export function ReviewSession({ items, retention, scopeLabel }: { items: ReviewI
       if (editing || summary || e.metaKey || e.ctrlKey || e.altKey) return;
       if (target && (target.closest("input, textarea, select, [contenteditable=true]") || target.closest("[role=dialog]"))) return;
       if (e.key === " " || e.key === "Enter") {
-        if (!current) return;
+        // A focused button or link keeps its own activation (keyboard users who Tab to a rating).
+        if (!current || target?.closest("button, a")) return;
         e.preventDefault();
         if (!revealed) setRevealed(true);
         else if (suggestion) rate(suggestion);
