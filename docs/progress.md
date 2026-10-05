@@ -267,6 +267,16 @@ Check a box only after the verification commands in `AGENTS.md` pass for that st
       no longer fails near local midnight (a block crossing midnight rendered as two FullCalendar segments)
 - [ ] Finance upgrade C: analytics (next)
 
+## 단어장 (docs/superpowers/specs/2026-10-05-vocab-notion-design.md, ADR 0046)
+- [ ] V0: Notion OAuth + encrypted tokens, `lib/notion` gateway (client/fake), migration `vocab_core` (RLS, RPCs,
+      SQL tests), DB creation with the v1 schema, `/english` shell + settings connection
+- [ ] V1: word CRUD write-through, words page, incremental pull, reconcile, outbox, nightly `vocab-sync`
+- [ ] V2: FSRS (`ts-fsrs`), queue, review screen + shortcuts + TTS + undo, 학습 완료, 상태/다음 복습 write-back
+- [ ] V3: due buckets + forecast, `vocab_due` push (notify-v2), stats + streak
+- [ ] V4: AI budget pools, AI auto-fill, bulk add
+- [ ] V5: AI practice (CEFR A1–C2): generate, feedback, diff, history
+- [ ] V6 (optional): planner XP for vocab review days
+
 ## Open questions
 - Legacy tables (blog_posts, user_roles, invite_tokens, …) still have advisor warnings: `is_admin()` is
   executable by anon, and the policies use `auth.uid()` without `(select …)`. Fix these when the portfolio/blog is rebuilt.
