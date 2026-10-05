@@ -2943,6 +2943,149 @@ export type Database = {
           },
         ]
       }
+      vocab_cards: {
+        Row: {
+          created_at: string
+          difficulty: number | null
+          direction: string
+          due: string
+          elapsed_days: number
+          fsrs_state: string
+          id: string
+          lapses: number
+          last_review: string | null
+          learning_steps: number
+          reps: number
+          scheduled_days: number
+          stability: number | null
+          suspended_at: string | null
+          user_id: string
+          word_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number | null
+          direction: string
+          due?: string
+          elapsed_days?: number
+          fsrs_state?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          learning_steps?: number
+          reps?: number
+          scheduled_days?: number
+          stability?: number | null
+          suspended_at?: string | null
+          user_id: string
+          word_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number | null
+          direction?: string
+          due?: string
+          elapsed_days?: number
+          fsrs_state?: string
+          id?: string
+          lapses?: number
+          last_review?: string | null
+          learning_steps?: number
+          reps?: number
+          scheduled_days?: number
+          stability?: number | null
+          suspended_at?: string | null
+          user_id?: string
+          word_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_cards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vocab_cards_word_id_user_id_fkey"
+            columns: ["word_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "vocab_words"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      vocab_words: {
+        Row: {
+          cefr: string | null
+          created_at: string
+          deleted_at: string | null
+          example: string | null
+          id: string
+          ipa: string | null
+          meaning: string | null
+          note: string | null
+          notion_last_edited_at: string | null
+          notion_page_id: string
+          notion_status: string | null
+          notion_url: string | null
+          pos: string | null
+          synonyms: string | null
+          term: string
+          topics: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cefr?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          example?: string | null
+          id?: string
+          ipa?: string | null
+          meaning?: string | null
+          note?: string | null
+          notion_last_edited_at?: string | null
+          notion_page_id: string
+          notion_status?: string | null
+          notion_url?: string | null
+          pos?: string | null
+          synonyms?: string | null
+          term: string
+          topics?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cefr?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          example?: string | null
+          id?: string
+          ipa?: string | null
+          meaning?: string | null
+          note?: string | null
+          notion_last_edited_at?: string | null
+          notion_page_id?: string
+          notion_status?: string | null
+          notion_url?: string | null
+          pos?: string | null
+          synonyms?: string | null
+          term?: string
+          topics?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_words_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_reviews: {
         Row: {
           created_at: string
@@ -3716,6 +3859,35 @@ export type Database = {
           to: "schedule_blocks"
           isOneToOne: true
           isSetofReturn: false
+        }
+      }
+      vocab_upsert_words: {
+        Args: { p_rows: Json; p_user_id: string }
+        Returns: {
+          cefr: string | null
+          created_at: string
+          deleted_at: string | null
+          example: string | null
+          id: string
+          ipa: string | null
+          meaning: string | null
+          note: string | null
+          notion_last_edited_at: string | null
+          notion_page_id: string
+          notion_status: string | null
+          notion_url: string | null
+          pos: string | null
+          synonyms: string | null
+          term: string
+          topics: string[]
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "vocab_words"
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
       xp_level: { Args: { p_total: number }; Returns: number }
