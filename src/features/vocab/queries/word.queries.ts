@@ -74,3 +74,10 @@ export async function topicSummary(supabase: SupabaseServerClient, userId: strin
   const topics = [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
   return { total: data.length, topics };
 }
+
+/** The profile timezone (default America/Toronto) for local-time labels. */
+export async function userTimezone(supabase: SupabaseServerClient, userId: string): Promise<string> {
+  const { data, error } = await supabase.from("profiles").select("timezone").eq("id", userId).maybeSingle();
+  if (error) throw fromDbError(error);
+  return data?.timezone ?? "America/Toronto";
+}

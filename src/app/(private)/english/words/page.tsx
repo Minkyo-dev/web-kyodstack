@@ -8,7 +8,8 @@ import { SyncButton } from "@/features/vocab/components/sync-button";
 import { WordFilters } from "@/features/vocab/components/word-filters";
 import { WordTable } from "@/features/vocab/components/word-table";
 import { setupState } from "@/features/vocab/domain/connection";
-import { WORD_LIST_LIMIT, listWords, topicSummary, wordFilterSchema } from "@/features/vocab/queries/word.queries";
+import { syncLabel } from "@/features/vocab/domain/sync";
+import { WORD_LIST_LIMIT, listWords, topicSummary, userTimezone, wordFilterSchema } from "@/features/vocab/queries/word.queries";
 import { getConnectionView } from "@/features/vocab/services/connection.service";
 import { maybePull } from "@/features/vocab/services/sync.service";
 
@@ -24,7 +25,7 @@ export default async function EnglishWordsPage({ searchParams }: { searchParams:
 
   const sp = await searchParams;
   const filter = wordFilterSchema.parse(Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, (Array.isArray(v) ? v[0] : v) || undefined])));
-  const [{ rows, truncated }, summary] = await Promise.all([listWords(supabase, user.id, filter), topicSummary(supabase, user.id)]);
+  const [{ rows, truncated }, summary, timezone] = await Promise.all([listWords(supabase, user.id, filter), topicSummary(supabase, user.id), userTimezone(supabase, user.id)]);
   const filtered = Object.values(filter).some(Boolean);
 
   return (
@@ -33,7 +34,7 @@ export default async function EnglishWordsPage({ searchParams }: { searchParams:
         <div className="w-full sm:max-w-sm">
           <QuickAdd />
         </div>
-        <SyncButton lastPulledAt={view?.lastPulledAt ?? null} />
+        <SyncButton lastSynced={syncLabel(view?.lastPulledAt ?? null, timezone)} />
       </div>
       <WordFilters key={JSON.stringify(filter)} filter={filter} topics={summary.topics} />
       {rows.length === 0 ? (

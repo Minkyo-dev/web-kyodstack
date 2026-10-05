@@ -19,3 +19,11 @@ describe("missingFromNotion (spec §6.5)", () => {
     expect(missingFromNotion(mirror, new Set(["p1", "p3"]))).toEqual(["w2"]);
   });
 });
+
+describe("syncLabel", () => {
+  it("formats the last pull in the user's timezone, server-side", async () => {
+    const { syncLabel } = await import("@/features/vocab/domain/sync");
+    expect(syncLabel(null, "America/Toronto")).toBe("아직 없음");
+    expect(syncLabel("2026-10-05T16:28:00.000Z", "America/Toronto")).toBe("10. 5. 오후 12:28");
+  });
+});

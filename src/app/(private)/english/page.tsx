@@ -9,7 +9,8 @@ import { ReauthBanner } from "@/features/vocab/components/reauth-banner";
 import { SyncButton } from "@/features/vocab/components/sync-button";
 import { TopicCards } from "@/features/vocab/components/topic-cards";
 import { setupState } from "@/features/vocab/domain/connection";
-import { topicSummary } from "@/features/vocab/queries/word.queries";
+import { syncLabel } from "@/features/vocab/domain/sync";
+import { topicSummary, userTimezone } from "@/features/vocab/queries/word.queries";
 import { getConnectionView } from "@/features/vocab/services/connection.service";
 import { maybePull } from "@/features/vocab/services/sync.service";
 
@@ -32,7 +33,7 @@ export default async function EnglishHomePage() {
     );
   }
   after(() => maybePull({ user, supabase }));
-  const summary = await topicSummary(supabase, user.id);
+  const [summary, timezone] = await Promise.all([topicSummary(supabase, user.id), userTimezone(supabase, user.id)]);
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -55,7 +56,7 @@ export default async function EnglishHomePage() {
           )}
         </div>
         <div className="w-full">
-          <SyncButton lastPulledAt={view?.lastPulledAt ?? null} />
+          <SyncButton lastSynced={syncLabel(view?.lastPulledAt ?? null, timezone)} />
         </div>
       </section>
       <section className="space-y-3">

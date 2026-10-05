@@ -137,3 +137,5 @@ Never edit an applied migration, not even a comment. Add a new one instead.
    - Pick it → 단어장 만들기.
    - In Notion, check that "Kyod 단어장" has the 11 properties and that 상태 offers 새 단어 / 학습 중 / 학습 완료.
    - Record in ADR 0046 whether Notion returned a `refresh_token` (spec §15).
+6. The nightly `vocab-sync` job (Vercel Cron, `vercel.ts`, 07:00 UTC) reconciles every connected word table with the
+   service role. Run it by hand with `curl -H "Authorization: Bearer $INTERNAL_JOB_SECRET" https://<host>/api/internal/jobs/vocab-sync`.

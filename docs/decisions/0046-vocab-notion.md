@@ -37,6 +37,15 @@ allows about 3 requests per second and returns 100 rows per page. A review queue
   bulk writes.
 - The connection stores `database_url`, so the UI links to the DB without a Notion call.
 
+### V1 refinements (plan `2026-10-05-vocab-v1-words-sync.md`)
+- The write-back outbox and the `상태` transitions (§6.3) move to V2, where the cards change; V1 only mirrors
+  `notion_status`.
+- One security-invoker RPC, `vocab_upsert_words(p_user_id, p_rows)`, writes mirror rows and both cards; an incoming
+  page older than the stored `notion_last_edited_at` is ignored, and a returning page clears `deleted_at`.
+- Reconcile is a full pull plus deletion marking (Notion's query never returns trashed pages); [지금 동기화] runs it.
+- Values pulled from Notion are clipped/normalized rather than rejected; single add refuses a duplicate term.
+- The in-process throttle moves to V4 (bulk add).
+
 ## Consequences
 - New server env: `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`, `NOTION_REDIRECT_URI`, `NOTION_TOKEN_KEY`.
 - A Notion public integration must be registered, with its redirect URI and possibly website, privacy and terms
