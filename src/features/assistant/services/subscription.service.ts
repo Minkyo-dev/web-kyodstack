@@ -59,7 +59,7 @@ export async function loadNotificationSettings(ctx: Pick<ActionContext, "supabas
   const p = prefs.data;
   return {
     prefs: p
-      ? { block_soon: p.block_soon, habit_missed: p.habit_missed, checkin: p.checkin, change_quiet: p.change_quiet, quiet_start: p.quiet_start, quiet_end: p.quiet_end, daily_cap: p.daily_cap }
+      ? { block_soon: p.block_soon, habit_missed: p.habit_missed, checkin: p.checkin, change_quiet: p.change_quiet, vocab_due: p.vocab_due, quiet_start: p.quiet_start, quiet_end: p.quiet_end, daily_cap: p.daily_cap }
       : DEFAULT_PREFS,
     endpoints: subs.data.map((s) => s.endpoint),
     /** The VAPID public key is public by design; null → push can't be enabled (keys not configured). */

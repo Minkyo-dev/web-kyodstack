@@ -21,6 +21,7 @@ export const notificationPrefsSchema = z.object({
   habit_missed: z.boolean(),
   checkin: z.boolean(),
   change_quiet: z.boolean(),
+  vocab_due: z.boolean().default(true),
   quiet_start: hour,
   quiet_end: hour,
   daily_cap: z.coerce.number().int().min(1).max(10),

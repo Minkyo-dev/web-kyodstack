@@ -7,6 +7,7 @@ const base: NotifyInput = {
   now: NOW,
   localDate: "2026-10-02",
   localHour: 10,
+  localTime: "10:00",
   weekStart: "2026-09-28",
   eveningHour: 18,
   prefs: DEFAULT_PREFS,
@@ -16,6 +17,7 @@ const base: NotifyInput = {
   checkinDone: false,
   dayHadActivity: true,
   quietChanges: [],
+  vocabDue: null,
 };
 const block = (id: string, min: number, over = {}) => ({ id, startsAt: at(min), taskTitle: `작업 ${id}`, taskOpen: true, status: "planned", ...over });
 
@@ -66,5 +68,24 @@ describe("respect", () => {
   it("switches and quiet hours", () => {
     expect(selectNotifications({ ...busy, prefs: { ...DEFAULT_PREFS, block_soon: false, checkin: false } }).map((n) => n.kind)).toEqual(["habit_missed", "change_quiet"]);
     expect(selectNotifications({ ...busy, localHour: 23 })).toEqual([]);
+  });
+});
+
+describe("vocab_due (ADR 0046, notify-v2)", () => {
+  const evening = { ...base, localHour: 20, localTime: "20:30", dayHadActivity: false, vocabDue: { reviews: 3, newCards: 2, reminderTime: "20:30" } };
+  it("fires once the local time reaches the reminder time, with today's counts", () => {
+    expect(selectNotifications({ ...evening, localTime: "20:29" })).toEqual([]);
+    expect(selectNotifications(evening)).toEqual([
+      { kind: "vocab_due", dedupeKey: "vocab:2026-10-02", title: "오늘 복습할 단어 3개 · 새 단어 2개", body: "몇 분이면 끝나요. 지금 한 번 볼까요?", url: "/english/review" },
+    ]);
+  });
+  it("stays quiet with nothing to review, the switch off, or no vocab facts", () => {
+    expect(selectNotifications({ ...evening, vocabDue: { reviews: 0, newCards: 0, reminderTime: "20:30" } })).toEqual([]);
+    expect(selectNotifications({ ...evening, prefs: { ...DEFAULT_PREFS, vocab_due: false } })).toEqual([]);
+    expect(selectNotifications({ ...evening, vocabDue: null })).toEqual([]);
+  });
+  it("ranks after the check-in and before habits", () => {
+    const busy = { ...evening, dayHadActivity: true, missedHabits: ["운동"], quietChanges: [{ id: "m1", title: "영어" }] };
+    expect(selectNotifications(busy).map((n) => n.kind)).toEqual(["checkin", "vocab_due", "habit_missed", "change_quiet"]);
   });
 });

@@ -70,12 +70,13 @@ export async function loadNotifyInput(admin: SupabaseServerClient, userId: strin
 
   const p = prefs.data;
   const notifyPrefs: NotifyPrefs = p
-    ? { block_soon: p.block_soon, checkin: p.checkin, habit_missed: p.habit_missed, change_quiet: p.change_quiet, quiet_start: p.quiet_start, quiet_end: p.quiet_end, daily_cap: p.daily_cap }
+    ? { block_soon: p.block_soon, checkin: p.checkin, habit_missed: p.habit_missed, change_quiet: p.change_quiet, vocab_due: p.vocab_due, quiet_start: p.quiet_start, quiet_end: p.quiet_end, daily_cap: p.daily_cap }
     : DEFAULT_PREFS;
   return {
     now: now.toISOString(),
     localDate: today,
     localHour: Number(toLocalTime(now, timezone).slice(0, 2)),
+    localTime: toLocalTime(now, timezone).slice(0, 5),
     weekStart: localWeek(today, timezone, settings.week_starts_on).startDate,
     eveningHour: settings.evening_hour,
     prefs: notifyPrefs,
@@ -91,6 +92,7 @@ export async function loadNotifyInput(admin: SupabaseServerClient, userId: strin
     checkinDone: reflection.data !== null,
     dayHadActivity: (dayBlocks.count ?? 0) > 0 || (daySessions.count ?? 0) > 0,
     quietChanges,
+    vocabDue: null,
   };
 }
 

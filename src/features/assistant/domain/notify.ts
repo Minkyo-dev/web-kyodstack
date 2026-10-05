@@ -1,11 +1,11 @@
 /**
- * Notification rules `notify-v1` (ADR 0043). Pure and deterministic, in the owner's local time; the job gathers the
+ * Notification rules `notify-v2` (ADR 0043; v2 adds the 단어장 reminder `vocab_due`, ADR 0046). Pure and deterministic, in the owner's local time; the job gathers the
  * facts, this decides what (if anything) to send.
  */
 import { TERMS } from "@/lib/terms";
 
-export const NOTIFY_VERSION = "notify-v1";
-export const NOTIFY_KINDS = ["block_soon", "checkin", "habit_missed", "change_quiet"] as const;
+export const NOTIFY_VERSION = "notify-v2";
+export const NOTIFY_KINDS = ["block_soon", "checkin", "vocab_due", "habit_missed", "change_quiet"] as const;
 export type NotifyKind = (typeof NOTIFY_KINDS)[number];
 export const BLOCK_SOON_MINUTES = 15;
 export const QUIET_CHANGE_DAYS = 14;
@@ -18,6 +18,7 @@ export const DEFAULT_PREFS: NotifyPrefs = {
   checkin: true,
   habit_missed: true,
   change_quiet: true,
+  vocab_due: true,
   quiet_start: 22,
   quiet_end: 7,
   daily_cap: 4,
@@ -27,6 +28,8 @@ export type NotifyInput = {
   now: string;
   localDate: string;
   localHour: number;
+  /** "HH:MM" local, for minute-precise reminders. */
+  localTime: string;
   weekStart: string;
   eveningHour: number;
   prefs: NotifyPrefs;
@@ -40,6 +43,8 @@ export type NotifyInput = {
   dayHadActivity: boolean;
   /** Active changes with no focus session and no habit check in the last 14 days. */
   quietChanges: { id: string; title: string }[];
+  /** Today's 단어장 queue and the user's reminder time; null without a word table or with the reminder off. */
+  vocabDue: { reviews: number; newCards: number; reminderTime: string } | null;
 };
 
 export type Notification = { kind: NotifyKind; dedupeKey: string; title: string; body: string; url: string };
@@ -83,6 +88,15 @@ export function selectNotifications(i: NotifyInput): Notification[] {
       title: "하루 마무리 시간이에요",
       body: "잘한 한 가지와 내일의 한 가지를 정해 둘까요?",
       url: "/scheduler",
+    });
+  }
+  if (i.prefs.vocab_due && i.vocabDue && i.localTime >= i.vocabDue.reminderTime && i.vocabDue.reviews + i.vocabDue.newCards > 0) {
+    out.push({
+      kind: "vocab_due",
+      dedupeKey: `vocab:${i.localDate}`,
+      title: `오늘 복습할 단어 ${i.vocabDue.reviews}개 · 새 단어 ${i.vocabDue.newCards}개`,
+      body: "몇 분이면 끝나요. 지금 한 번 볼까요?",
+      url: "/english/review",
     });
   }
   if (i.prefs.habit_missed && i.localHour >= HABIT_HOUR && i.missedHabits.length > 0) {

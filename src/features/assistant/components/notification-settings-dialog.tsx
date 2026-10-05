@@ -18,7 +18,7 @@ import { DEFAULT_PREFS, type NotifyPrefs } from "../domain/notify";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const KINDS: {
-  key: keyof Pick<NotifyPrefs, "block_soon" | "checkin" | "habit_missed" | "change_quiet">;
+  key: keyof Pick<NotifyPrefs, "block_soon" | "checkin" | "vocab_due" | "habit_missed" | "change_quiet">;
   label: string;
   hint: string;
 }[] = [
@@ -28,6 +28,7 @@ const KINDS: {
     label: "저녁 체크인",
     hint: "활동한 날, 저녁 시간에 하루 마무리가 없으면",
   },
+  { key: "vocab_due", label: "단어 복습", hint: "단어장 설정의 알림 시각에, 복습할 단어가 있으면 하루 한 번" },
   {
     key: "habit_missed",
     label: `어제 놓친 ${TERMS.habit}`,
