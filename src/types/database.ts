@@ -3069,6 +3069,143 @@ export type Database = {
           },
         ]
       }
+      vocab_practice_attempts: {
+        Row: {
+          answer: string
+          created_at: string
+          feedback: Json
+          id: string
+          item_id: string
+          model: string | null
+          prompt_version: string | null
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          feedback: Json
+          id?: string
+          item_id: string
+          model?: string | null
+          prompt_version?: string | null
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          feedback?: Json
+          id?: string
+          item_id?: string
+          model?: string | null
+          prompt_version?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_practice_attempts_item_id_user_id_fkey"
+            columns: ["item_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "vocab_practice_items"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "vocab_practice_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vocab_practice_items: {
+        Row: {
+          hint_ko: string | null
+          id: string
+          position: number
+          prompt_ko: string
+          session_id: string
+          target_word_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          hint_ko?: string | null
+          id?: string
+          position: number
+          prompt_ko: string
+          session_id: string
+          target_word_ids: string[]
+          user_id: string
+        }
+        Update: {
+          hint_ko?: string | null
+          id?: string
+          position?: number
+          prompt_ko?: string
+          session_id?: string
+          target_word_ids?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_practice_items_session_id_user_id_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "vocab_practice_sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "vocab_practice_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vocab_practice_sessions: {
+        Row: {
+          cefr: string
+          created_at: string
+          id: string
+          model: string | null
+          prompt_version: string
+          source: string
+          source_ref: string | null
+          user_id: string
+          word_ids: string[]
+        }
+        Insert: {
+          cefr: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt_version: string
+          source: string
+          source_ref?: string | null
+          user_id: string
+          word_ids: string[]
+        }
+        Update: {
+          cefr?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt_version?: string
+          source?: string
+          source_ref?: string | null
+          user_id?: string
+          word_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vocab_practice_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vocab_reviews: {
         Row: {
           after: Json
@@ -4027,6 +4164,19 @@ export type Database = {
           p_review: Json
         }
         Returns: Json
+      }
+      vocab_create_practice: {
+        Args: {
+          p_cefr: string
+          p_items: Json
+          p_model: string
+          p_prompt_version: string
+          p_source: string
+          p_source_ref: string
+          p_user_id: string
+          p_word_ids: string[]
+        }
+        Returns: string
       }
       vocab_enqueue_writeback: {
         Args: { p_payload: Json; p_user_id: string; p_word_id: string }
